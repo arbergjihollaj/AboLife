@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AboLife Projektplan</title>
+<style>
+:root {
+  --bg:#0f1117; --panel:#171a23; --panel2:#1d2230; --text:#f4f1e8; --muted:#a9adbb;
+  --line:rgba(255,255,255,.10); --accent:#d7b56d; --accent2:#74c69d; --danger:#f28482; --blue:#8ecae6;
+  --shadow:0 18px 50px rgba(0,0,0,.35); --radius:24px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 20% -10%,rgba(215,181,109,.18),transparent 34%),radial-gradient(circle at 90% 10%,rgba(116,198,157,.13),transparent 28%),var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;line-height:1.62}
+a{color:var(--blue)}
+.layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:28px;max-width:1440px;margin:0 auto;padding:28px}
+aside{position:sticky;top:28px;height:calc(100vh - 56px);padding:22px;border:1px solid var(--line);border-radius:var(--radius);background:rgba(23,26,35,.78);backdrop-filter:blur(18px);box-shadow:var(--shadow);overflow:auto}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#806b3d);display:grid;place-items:center;font-weight:800;color:#151515}
+.sub{color:var(--muted);font-size:14px}
+.nav a{display:block;text-decoration:none;color:var(--muted);padding:8px 10px;border-radius:12px;font-size:14px}
+.nav a:hover{background:rgba(255,255,255,.06);color:var(--text)}
+main{min-width:0}
+.hero{border:1px solid var(--line);border-radius:32px;background:linear-gradient(135deg,rgba(29,34,48,.96),rgba(18,20,28,.96));box-shadow:var(--shadow);padding:34px;margin-bottom:24px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;inset:auto -60px -80px auto;width:280px;height:280px;border-radius:50%;background:rgba(215,181,109,.13)}
+h1{font-size:clamp(38px,5vw,72px);line-height:1;margin:0 0 12px;letter-spacing:-.05em}
+.hero p{max-width:900px;color:var(--muted);font-size:18px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:24px}
+.kpi{padding:18px;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.045)}
+.kpi strong{display:block;font-size:24px;color:var(--text)}
+.kpi span{color:var(--muted);font-size:13px}
+.section{border:1px solid var(--line);border-radius:var(--radius);background:rgba(23,26,35,.82);box-shadow:0 8px 28px rgba(0,0,0,.22);padding:26px;margin:18px 0}
+h2{font-size:30px;margin:0 0 16px;letter-spacing:-.025em}
+h3{margin-top:24px;color:#f8e7b0}
+p{margin:10px 0;color:#e8e6df}
+ul{padding-left:22px;color:#e8e6df}
+li{margin:6px 0}
+blockquote{border-left:4px solid var(--accent);background:rgba(215,181,109,.08);border-radius:0 18px 18px 0;padding:14px 18px;margin:16px 0;color:var(--text)}
+pre{background:#0a0c11;border:1px solid var(--line);border-radius:18px;padding:18px;overflow:auto;color:#dbe6ff}
+code{font-family:"SF Mono",ui-monospace,Menlo,monospace;background:rgba(255,255,255,.07);padding:.15em .38em;border-radius:7px}
+pre code{background:transparent;padding:0}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:18px;margin:16px 0}
+table{width:100%;border-collapse:collapse;background:rgba(255,255,255,.025)}
+th,td{padding:13px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:rgba(215,181,109,.10);color:#f9e7b1;font-weight:700}
+tr:last-child td{border-bottom:none}
+.callouts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0 4px}
+.callout{padding:18px;border-radius:20px;border:1px solid var(--line);background:rgba(255,255,255,.045)}
+.callout b{display:block;margin-bottom:4px}
+.badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:rgba(255,255,255,.055);border-radius:999px;padding:7px 12px;color:var(--muted);font-size:13px;margin:4px 6px 4px 0}
+.progress-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;margin:18px 0}
+.mock-card{border:1px solid var(--line);border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));padding:20px}
+.ring{width:156px;height:156px;border-radius:50%;background:conic-gradient(var(--accent) 0 72%,rgba(255,255,255,.09) 72% 100%);display:grid;place-items:center;margin:10px auto 18px}
+.ring div{width:108px;height:108px;border-radius:50%;background:var(--panel);display:grid;place-items:center;text-align:center}
+.bar{height:12px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden;margin:10px 0 4px}
+.fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+.timeline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:18px 0}
+.step{padding:16px;border-radius:18px;background:rgba(255,255,255,.045);border:1px solid var(--line)}
+.step small{color:var(--accent);font-weight:700}
+.footer{color:var(--muted);text-align:center;padding:28px}
+@media(max-width:980px){.layout{grid-template-columns:1fr;padding:16px}aside{position:relative;height:auto;top:auto}.kpis,.callouts,.progress-grid,.timeline{grid-template-columns:1fr}}
+@media print{body{background:white;color:#111}aside{display:none}.layout{display:block;padding:0}.section,.hero{box-shadow:none;background:white;color:#111;break-inside:avoid}p,li,td{color:#222}}
+
+
+/* Layout-Fix: verhindert horizontales Überlaufen durch lange Code-Blöcke/Tabellen */
+html, body { width: 100%; overflow-x: hidden; }
+.layout { grid-template-columns: 280px minmax(0, 980px); justify-content: center; align-items: start; }
+main { width: 100%; max-width: 980px; overflow: hidden; }
+.section, .hero { width: 100%; max-width: 100%; }
+pre { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; max-width: 100%; }
+code { white-space: normal; word-break: break-word; }
+table { display: block; width: 100%; max-width: 100%; overflow-x: auto; border-spacing: 0; }
+th, td { min-width: 120px; }
+@media (max-width: 980px) {
+  .layout { display: block; padding: 16px; }
+  aside { position: relative; height: auto; top: 0; margin-bottom: 18px; }
+  .kpis, .cards, .matrix, .timeline { grid-template-columns: 1fr !important; }
+  h1 { font-size: 42px; }
+}
+
+</style>
+</head>
+<body>
+<div class="layout">
+<aside>
+  <div class="logo"><div class="mark">A</div><div><strong>AboLife</strong><div class="sub">Projektgrundlage</div></div></div>
+  <div class="sub">Visuelle Übersicht aus der Markdown-Projektdatei. Fokus: MVP, Architektur, UI und Codex-Workflow.</div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+  <nav class="nav">
+    <a href="#kurzfazit">Kurzfazit</a>
+    <a href="#projektübersicht">Projektübersicht</a>
+    <a href="#bester-mvp">MVP</a>
+    <a href="#tech-stack">Tech-Stack</a>
+    <a href="#architekturvorschlag">Architektur</a>
+    <a href="#datenmodell-übersicht">Datenmodell</a>
+    <a href="#ui-ux-richtung">UI/UX</a>
+    <a href="#dashboard-konzept">Dashboard</a>
+    <a href="#roadmap-nach-phasen">Roadmap</a>
+    <a href="#codex-workflow">Codex</a>
+  </nav>
+</aside>
+<main>
+  <div class="hero">
+    <span class="badge">macOS App</span><span class="badge">SwiftUI</span><span class="badge">lokal-first</span><span class="badge">Dashboard-first</span>
+    <h1>AboLife Projektplan</h1>
+    <p>Eine persönliche macOS-App, die Ernährung, Training, Finanzen, Gewohnheiten und Wochenreviews in einem ruhigen täglichen Dashboard verbindet.</p>
+    <div class="kpis">
+      <div class="kpi"><strong>MVP</strong><span>Dashboard + Quick Add</span></div>
+      <div class="kpi"><strong>lokal</strong><span>Offline & privat</span></div>
+      <div class="kpi"><strong>später</strong><span>Telegram / iPhone / KI</span></div>
+      <div class="kpi"><strong>Regel</strong><span>eine Karte = eine Aussage</span></div>
+    </div>
+  </div>
+  <div class="section">
+    <h2>Visuelles Dashboard-Prinzip</h2>
+    <div class="progress-grid">
+      <div class="mock-card">
+        <h3 style="margin-top:0">Daily Core</h3>
+        <div class="ring"><div><strong>72%</strong><span class="sub">heute</span></div></div>
+        <p class="sub">Ein großer Zustand statt vieler gleich lauter Zahlen.</p>
+      </div>
+      <div class="mock-card">
+        <h3 style="margin-top:0">Kernkarten</h3>
+        <p><strong>Kalorien</strong> · 1.450 / 2.200 kcal</p><div class="bar"><div class="fill" style="width:66%"></div></div>
+        <p><strong>Protein</strong> · 95 / 160 g</p><div class="bar"><div class="fill" style="width:59%"></div></div>
+        <p><strong>Budget</strong> · 42 € Tagesbudget übrig</p><div class="bar"><div class="fill" style="width:74%"></div></div>
+      </div>
+    </div>
+  </div>
+<h1 id="abolife-projektplan">AboLife Projektplan</h1>
+<blockquote>
+<p><strong>Zentrale Projektdatei für Planung, Codex und spätere Umsetzung</strong></p>
+<p>Stand: 11. Juni 2026</p>
+<p>Ziel: Eine persönliche macOS-App, die Ernährung, Training, Finanzen, Gewohnheiten und Wochenreviews in einem ruhigen täglichen Dashboard verbindet.</p>
+</blockquote>
+<p>---</p>
+<section class="section"><h2 id="0-kurzfazit">0. Kurzfazit</h2>
+<p>AboLife ist als persönliches Projekt sinnvoll, <strong>wenn Version 1 nicht als vollständiges Life-OS gebaut wird</strong>. Der stärkste Kern ist ein ruhiges, tägliches Entscheidungs-Dashboard, das schnell zeigt:</p>
+<ul>
+<li>Wie läuft mein Tag?</li>
+<li>Bin ich bei Ernährung und Protein auf Kurs?</li>
+<li>Habe ich Training oder Bewegung erledigt?</li>
+<li>Bin ich finanziell im Rahmen?</li>
+<li>Welche Gewohnheiten fehlen noch?</li>
+<li>Was lerne ich aus dieser Woche?</li>
+</ul>
+<p><strong>Empfohlene Richtung:</strong> native macOS-App mit SwiftUI, lokaler Datenbank, Dashboard-first, Quick Add und klar begrenztem MVP.</p>
+<p>---</p>
+<section class="section"><h2 id="1-projektübersicht">1. Projektübersicht</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Punkt</th><th>Entscheidung</th></tr></thead>
+<tbody>
+<tr><td>Projektname</td><td><strong>AboLife</strong></td></tr>
+<tr><td>Plattform v1</td><td>native macOS-App</td></tr>
+<tr><td>Zielgruppe</td><td>nur persönliche Nutzung</td></tr>
+<tr><td>Kernnutzen</td><td>tägliche Selbststeuerung durch Dashboard + Quick Add + Review</td></tr>
+<tr><td>Datenhaltung</td><td>lokal, offline nutzbar</td></tr>
+<tr><td>KI</td><td>später optional, nicht Kern der App</td></tr>
+<tr><td>Mobile Nutzung</td><td>später über iPhone-App, App Shortcuts oder Telegram</td></tr>
+<tr><td>Design</td><td>Apple-like, ruhig, hochwertig, grafisch, aber nicht überladen</td></tr>
+</tbody>
+</table></div>
+<p>---</p>
+<section class="section"><h2 id="2-kernidee">2. Kernidee</h2>
+<p>AboLife ist kein einzelner Kalorientracker, kein einzelner Finanzplaner und keine reine Fitness-App. Die App ist ein <strong>persönliches Lebens-Dashboard</strong>, das mehrere Alltagsbereiche verbindet, aber nur so weit, wie es für tägliche Entscheidungen wirklich nützlich ist.</p>
+<h3 id="kernformulierung">Kernformulierung</h3>
+<blockquote>
+<p><strong>AboLife ist eine persönliche macOS-App, die Ernährung, Training, Finanzen und tägliche Gewohnheiten in einem ruhigen Dashboard verbindet. Die App hilft mir, täglich bessere Entscheidungen zu treffen, ohne fünf verschiedene Apps benutzen zu müssen. Der Fokus liegt auf einfachem Tracking, sichtbarem Fortschritt und realistischen Routinen.</strong></p>
+</blockquote>
+<p>---</p>
+<section class="section"><h2 id="3-problem-das-die-app-löst">3. Problem, das die App löst</h2>
+<p>Das eigentliche Problem ist nicht: „Ich brauche eine App für Kalorien.“</p>
+<p>Das eigentliche Problem ist:</p>
+<blockquote>
+<p><strong>Ich habe keinen klaren, dauerhaft nutzbaren Plan, wie ich Training, Ernährung, Finanzen und Gewohnheiten in meinen Alltag integriere.</strong></p>
+</blockquote>
+<p>AboLife soll genau das vereinfachen:</p>
+<pre><code>Unstrukturierter Alltag
+        ↓
+Schnelles Erfassen
+        ↓
+Klares Tagesdashboard
+        ↓
+Wöchentlicher Review
+        ↓
+Bessere Entscheidungen</code></pre>
+<p>---</p>
+<section class="section"><h2 id="4-was-an-der-idee-schlau-ist">4. Was an der Idee schlau ist</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Stärke</th><th>Warum das sinnvoll ist</th></tr></thead>
+<tbody>
+<tr><td>Persönlicher Fokus</td><td>Kein Login, kein Billing, keine Öffentlichkeit, keine Durchschnittsnutzer. Die App darf exakt für dich gebaut werden.</td></tr>
+<tr><td>Dashboard-first</td><td>Die App beantwortet sofort: „Bin ich heute auf Kurs?“</td></tr>
+<tr><td>Quick Add</td><td>Wenig Reibung ist wichtiger als komplexe Features. Wenn Eintragen nervt, wird die App nicht genutzt.</td></tr>
+<tr><td>Lokale Daten</td><td>Schnell, privat, offline, einfach zu kontrollieren.</td></tr>
+<tr><td>Manuelles Tracking in v1</td><td>Realistisch, robust und unabhängig von unsicheren Food-Datenbanken oder APIs.</td></tr>
+<tr><td>Weekly Review</td><td>Verhindert, dass die App nur ein Archiv wird. Sie wird zu einem Lernsystem.</td></tr>
+<tr><td>Grafiken mit klarer Hierarchie</td><td>Viele Visuals sind möglich, solange jede Karte nur eine Hauptaussage hat.</td></tr>
+<tr><td>Telegram später</td><td>Gute Idee für unterwegs, aber nicht Teil des Kerns.</td></tr>
+</tbody>
+</table></div>
+<p>---</p>
+<section class="section"><h2 id="5-was-riskant-oder-unschlau-ist">5. Was riskant oder unschlau ist</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Risiko</th><th>Warum gefährlich</th><th>Gegenmaßnahme</th></tr></thead>
+<tbody>
+<tr><td>Alles in Version 1 bauen</td><td>Ernährung, Training, Finanzen, Habits, Sync und KI wären mehrere Produkte gleichzeitig.</td><td>MVP hart begrenzen.</td></tr>
+<tr><td>Telegram zu früh</td><td>Braucht Bot, Server/Long Polling, Sicherheit und Sync-Logik.</td><td>Erst nach stabilem lokalen Kern.</td></tr>
+<tr><td>Food-Datenbank zu früh</td><td>Lebensmitteldaten sind oft unvollständig, regional unterschiedlich oder API-abhängig.</td><td>V1: manuell + Favoriten/Templates.</td></tr>
+<tr><td>Schöne UI ohne Datenmodell</td><td>Spätere Trends, Reviews und Migrationen werden chaotisch.</td><td>UI-Prototyp ja, aber mit klaren Datenverträgen.</td></tr>
+<tr><td>HealthKit auf macOS</td><td>macOS ist für Health-Daten kein guter v1-Startpunkt.</td><td>Health später iPhone-first.</td></tr>
+<tr><td>KI als Kern</td><td>Macht Produkt unklar und abhängig von API/Prompt-Logik.</td><td>KI nur optional für spätere Auswertung.</td></tr>
+<tr><td>App bauen statt Leben strukturieren</td><td>Entwicklung fühlt sich produktiv an, kann aber Verhalten ersetzen.</td><td>Weekly Review und kleine tägliche Kernmetriken einbauen.</td></tr>
+</tbody>
+</table></div>
+<p>---</p>
+<section class="section"><h2 id="6-beste-vorgehensweise">6. Beste Vorgehensweise</h2>
+<h3 id="grundregel">Grundregel</h3>
+<blockquote>
+<p><strong>Erst planen, dann UI-Prototyp, dann Datenmodell, dann echte Module. Nicht alles parallel.</strong></p>
+</blockquote>
+<h3 id="phasen">Phasen</h3>
+<pre><code>Phase 0  Konzept &amp; Spezifikation
+Phase 1  UI-Prototyp mit Mock-Daten
+Phase 2  Lokale Datenbank + Datenmodell
+Phase 3  Quick Add + erste echte Einträge
+Phase 4  Ernährung, Training, Finanzen, Habits
+Phase 5  Weekly Review + Statistiken
+Phase 6  Backup/Export
+Phase 7  Spätere Erweiterungen: Telegram, iPhone, KI, Health</code></pre>
+<p>---</p>
+<section class="section"><h2 id="7-mvp-abgrenzung">7. MVP-Abgrenzung</h2>
+<h3 id="muss-in-version-1-rein">Muss in Version 1 rein</h3>
+<ul>
+<li>native macOS-App</li>
+<li>Dashboard als Hauptscreen</li>
+<li>Quick Add</li>
+<li>Kalorien- und Proteintracking, manuell</li>
+<li>Training heute / Workout erledigen</li>
+<li>einfache Ausgaben und Monatsbudget</li>
+<li>3–5 tägliche Habits</li>
+<li>Wochenreview</li>
+<li>7-Tage-Mini-Trends</li>
+<li>lokale Speicherung</li>
+<li>Empty States</li>
+<li>Backup/Export-Grundlage</li>
+</ul>
+<h3 id="sollte-in-version-1-rein">Sollte in Version 1 rein</h3>
+<ul>
+<li>Mahlzeiten-Favoriten oder Templates</li>
+<li>wiederverwendbare Workout-Templates</li>
+<li>Gewicht als einfacher manueller Wert</li>
+<li>Tastenkürzel für Quick Add</li>
+<li>Mock-/Seed-Daten für UI-Previews</li>
+</ul>
+<h3 id="später">Später</h3>
+<ul>
+<li>Telegram-Bot</li>
+<li>iPhone-App</li>
+<li>Web-App</li>
+<li>Food-Search / Barcode</li>
+<li>Apple Health</li>
+<li>Kalender/Reminders</li>
+<li>KI-Auswertung</li>
+<li>Cloud-Sync</li>
+</ul>
+<h3 id="auf-keinen-fall-in-version-1">Auf keinen Fall in Version 1</h3>
+<ul>
+<li>Banking-Sync</li>
+<li>Barcode-Scanner</li>
+<li>OCR für Essen oder Rechnungen</li>
+<li>AI-Coach</li>
+<li>komplexes Cross-Device-Sync</li>
+<li>vollwertige Food-Datenbank</li>
+<li>Web-App parallel zur Mac-App</li>
+</ul>
+<p>---</p>
+<section class="section"><h2 id="8-empfohlener-tech-stack">8. Empfohlener Tech-Stack</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Bereich</th><th>Empfehlung</th><th>Begründung</th></tr></thead>
+<tbody>
+<tr><td>UI</td><td><strong>SwiftUI</strong></td><td>Native macOS-App, Apple-like Design, guter Fit für Dashboard und Sidebar.</td></tr>
+<tr><td>State</td><td><strong>Observation</strong></td><td>Moderner SwiftUI-State für Stores/ViewModels.</td></tr>
+<tr><td>Datenbank</td><td><strong>SQLite + GRDB</strong></td><td>Explizites Schema, Migrationen, Aggregationen für Trends/Reviews, gute Exportierbarkeit.</td></tr>
+<tr><td>Charts</td><td><strong>Swift Charts + eigene Ring-Komponente</strong></td><td>Native Charts für Trends; Daily-Core-Ring besser als eigene SwiftUI-Komponente.</td></tr>
+<tr><td>Tests</td><td><strong>Swift Testing + XCTest</strong></td><td>Unit-Tests modern, UI-Tests weiterhin mit XCTest.</td></tr>
+<tr><td>Backup</td><td>SQLite Backup + JSON/CSV Export</td><td>Restore-fähig und zusätzlich lesbar/exportierbar.</td></tr>
+<tr><td>Projektverwaltung</td><td>GitHub Issues / Projects / Milestones</td><td>Für Solo-Projekt ausreichend und direkt am Code.</td></tr>
+<tr><td>Dokumentation</td><td>Markdown im Repo</td><td>Codex-freundlich, versionierbar, leicht zu pflegen.</td></tr>
+</tbody>
+</table></div>
+<h3 id="alternative">Alternative</h3>
+<p>SwiftData ist okay, wenn AboLife bewusst Apple-only und single-device bleibt. Für langfristige Erweiterungen mit Telegram, Export, Web oder sauberer Datenanalyse ist <strong>GRDB + SQLite</strong> wahrscheinlich stabiler.</p>
+<p>---</p>
+<section class="section"><h2 id="9-architekturvorschlag">9. Architekturvorschlag</h2>
+<p>AboLife sollte keine übertriebene Clean-Architecture-Kathedrale werden. Es braucht eine klare, feature-orientierte Struktur.</p>
+<pre><code>AboLife/
+├── App/
+│   ├── AboLifeApp.swift
+│   ├── AppRouter.swift
+│   └── Settings/
+│
+├── Foundation/
+│   ├── Types/
+│   ├── Extensions/
+│   ├── Formatters/
+│   └── Validation/
+│
+├── DesignSystem/
+│   ├── Colors/
+│   ├── Typography/
+│   ├── CardStyles/
+│   └── Components/
+│
+├── Persistence/
+│   ├── Database/
+│   ├── Migrations/
+│   ├── Models/
+│   ├── Repositories/
+│   ├── Queries/
+│   └── SeedData/
+│
+├── Features/
+│   ├── Dashboard/
+│   ├── Nutrition/
+│   ├── Training/
+│   ├── Finance/
+│   ├── Habits/
+│   ├── Review/
+│   └── BodyMetrics/
+│
+├── Charts/
+│   ├── CoreRingView.swift
+│   ├── TrendChart.swift
+│   ├── BudgetBarChart.swift
+│   └── ProgressViews.swift
+│
+├── Services/
+│   ├── BackupService.swift
+│   ├── ExportService.swift
+│   ├── ImportService.swift
+│   └── FutureIntegrations/
+│
+├── PreviewSupport/
+│   ├── PreviewData.swift
+│   ├── PreviewDatabase.swift
+│   └── SampleStates.swift
+│
+└── Tests/
+    ├── Unit/
+    ├── Integration/
+    └── UI/</code></pre>
+<h3 id="architektur-regel">Architektur-Regel</h3>
+<ul>
+<li>Views zeigen UI.</li>
+<li>Stores/ViewModels halten UI-State und Actions.</li>
+<li>Repositories sprechen mit der Datenbank.</li>
+<li>Services machen Nebenwirkungen wie Export, Backup oder spätere Integrationen.</li>
+<li>Primärdaten werden gespeichert, Summen und Trends werden abgeleitet.</li>
+</ul>
+<p>---</p>
+<section class="section"><h2 id="10-datenmodell-übersicht">10. Datenmodell-Übersicht</h2>
+<h3 id="zentrale-modelle">Zentrale Modelle</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Modell</th><th>Zweck</th></tr></thead>
+<tbody>
+<tr><td><code>DailyLog</code></td><td>Tagesanker für Notiz, Bewertung und Tageszusammenfassung.</td></tr>
+<tr><td><code>NutritionEntry</code></td><td>Mahlzeit oder Ernährungseintrag mit kcal und Protein.</td></tr>
+<tr><td><code>WorkoutSession</code></td><td>Ein abgeschlossenes oder geplantes Training.</td></tr>
+<tr><td><code>ExerciseEntry</code></td><td>Einzelne Übung innerhalb eines Workouts.</td></tr>
+<tr><td><code>FinanceEntry</code></td><td>Ausgabe oder Einnahme.</td></tr>
+<tr><td><code>HabitEntry</code></td><td>Erledigter oder gemessener Habit pro Tag.</td></tr>
+<tr><td><code>BodyMetricEntry</code></td><td>Gewicht, Schlaf oder Tagesbewertung.</td></tr>
+<tr><td><code>AppSettings</code></td><td>Ziele, Budget, Standardwerte, Wocheinstellungen.</td></tr>
+<tr><td><code>WeeklyReview</code></td><td>Reflexion und Zusammenfassung einer Woche.</td></tr>
+</tbody>
+</table></div>
+<h3 id="datenprinzip">Datenprinzip</h3>
+<pre><code>Einträge sind Wahrheit.
+Summen sind berechnet.
+Reviews sind bewusste Auswertung.</code></pre>
+<p>Das verhindert, dass die App später widersprüchliche Zahlen speichert.</p>
+<p>---</p>
+<section class="section"><h2 id="11-ui-ux-richtung">11. UI/UX-Richtung</h2>
+<h3 id="design-ziel">Design-Ziel</h3>
+<p>AboLife soll wirken wie:</p>
+<ul>
+<li>Apple-like</li>
+<li>ruhig</li>
+<li>hochwertig</li>
+<li>persönlich</li>
+<li>visuell stark</li>
+<li>nicht überladen</li>
+<li>nicht wie eine hektische Fitness-App</li>
+<li>nicht wie eine Broker-App</li>
+<li>nicht wie ein To-do-Chaos</li>
+</ul>
+<h3 id="ui-regeln">UI-Regeln</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Regel</th><th>Bedeutung</th></tr></thead>
+<tbody>
+<tr><td>Eine Karte = eine Hauptaussage</td><td>Jede Card hat genau einen Fokus.</td></tr>
+<tr><td>Maximal eine Hauptgrafik pro Karte</td><td>Kein visuelles Durcheinander.</td></tr>
+<tr><td>Keine Tabellen im Dashboard</td><td>Details gehören in Modulansichten.</td></tr>
+<tr><td>Dashboard zeigt heute und diese Woche</td><td>Keine tiefe Historie auf dem Startscreen.</td></tr>
+<tr><td>Empty States sind Pflicht</td><td>Die App muss auch ohne Daten hochwertig wirken.</td></tr>
+<tr><td>Grafiken unterstützen Entscheidungen</td><td>Keine Deko-Charts.</td></tr>
+<tr><td>Ruhige Farben</td><td>Akzentfarben sparsam und bewusst.</td></tr>
+</tbody>
+</table></div>
+<p>---</p>
+<section class="section"><h2 id="12-dashboard-konzept">12. Dashboard-Konzept</h2>
+<h3 id="hauptfrage">Hauptfrage</h3>
+<blockquote>
+<p><strong>Was ist heute wichtig und bin ich auf Kurs?</strong></p>
+</blockquote>
+<h3 id="aufbau">Aufbau</h3>
+<pre><code>┌──────────────────────────────────────────────┐
+│ Hero: Daily Core Ring                         │
+│ Heute, Tagesstatus, nächster sinnvoller Schritt│
+└──────────────────────────────────────────────┘
+
+┌──────────────────────┐ ┌──────────────────────┐
+│ Kalorien              │ │ Protein               │
+│ 1450 / 2200 kcal      │ │ 95 / 160 g            │
+│ Progress + Mini Trend │ │ Progress + Mini Trend │
+└──────────────────────┘ └──────────────────────┘
+
+┌──────────────────────┐ ┌──────────────────────┐
+│ Training              │ │ Finanzen              │
+│ Push Day offen        │ │ Monatsbudget ruhig    │
+│ 2 / 3 diese Woche     │ │ Restbetrag sichtbar   │
+└──────────────────────┘ └──────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│ Wochenstatus                                  │
+│ Mo ●  Di ●  Mi ◐  Do ●  Fr ○  Sa ○  So ○      │
+└──────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────┐
+│ Quick Add: Mahlzeit | Workout | Ausgabe | ... │
+└──────────────────────────────────────────────┘</code></pre>
+<h3 id="wichtigster-button">Wichtigster Button</h3>
+<pre><code>+ Quick Add</code></pre>
+<p>Quick Add öffnet schnelle Eingaben für:</p>
+<ul>
+<li>Mahlzeit</li>
+<li>Workout</li>
+<li>Ausgabe</li>
+<li>Gewicht</li>
+<li>Notiz</li>
+<li>Habit</li>
+</ul>
+<p>---</p>
+<section class="section"><h2 id="13-visualisierungs-konzept">13. Visualisierungs-Konzept</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Visualisierung</th><th>Einsatz</th></tr></thead>
+<tbody>
+<tr><td>Daily-Core-Ring</td><td>Gesamtstatus des Tages.</td></tr>
+<tr><td>Kalorienbalken</td><td>Tagesziel und Restkalorien.</td></tr>
+<tr><td>Proteinbalken</td><td>Fortschritt Richtung Proteinziel.</td></tr>
+<tr><td>7-Tage-Sparkline</td><td>Kleine Trends ohne große Analyse.</td></tr>
+<tr><td>Wochen-Dot-Grid</td><td>Welche Tage liefen gut?</td></tr>
+<tr><td>Finanz-Monatsbalken</td><td>Sparen, Ausgaben, Restbudget.</td></tr>
+<tr><td>Training-Frequenz</td><td>2/3 Workouts diese Woche.</td></tr>
+<tr><td>Review-Scores</td><td>Wöchentliche Einschätzung.</td></tr>
+</tbody>
+</table></div>
+<h3 id="grafisch-reich-aber-ruhig">Grafisch reich, aber ruhig</h3>
+<pre><code>1 große Hauptgrafik
+2–4 wichtige Karten
+kleine Mini-Charts nur unterstützend
+viel Abstand
+klare Prioritäten</code></pre>
+<p>---</p>
+<section class="section"><h2 id="14-telegram-und-spätere-erweiterungen">14. Telegram und spätere Erweiterungen</h2>
+<p>Telegram ist sinnvoll, aber nicht für v1.</p>
+<h3 id="warum-sinnvoll">Warum sinnvoll?</h3>
+<p>Du könntest unterwegs Einträge machen:</p>
+<pre><code>/meal Döner 850 kcal 45 protein
+/workout done push 35min
+/expense Mensa 4.20
+/weight 82.4</code></pre>
+<h3 id="warum-später">Warum später?</h3>
+<p>Telegram braucht:</p>
+<ul>
+<li>Bot-Token</li>
+<li>Update-Verarbeitung</li>
+<li>Long Polling oder Webhook</li>
+<li>Sicherheitslogik</li>
+<li>eventuell Server oder Bridge-Service</li>
+<li>Sync mit lokaler App</li>
+</ul>
+<h3 id="empfohlene-spätere-architektur">Empfohlene spätere Architektur</h3>
+<pre><code>Telegram Bot
+    ↓
+Bridge / Inbox-Service
+    ↓
+AboLife Import-Inbox
+    ↓
+Lokale Datenbank</code></pre>
+<p>Nicht direkt:</p>
+<pre><code>Telegram schreibt direkt in die Mac-Datenbank</code></pre>
+<h3 id="mögliche-alternative">Mögliche Alternative</h3>
+<p>Für Apple-Workflows könnten später <strong>App Intents + Shortcuts</strong> natürlicher sein als Telegram.</p>
+<p>---</p>
+<section class="section"><h2 id="15-roadmap">15. Roadmap</h2>
+<h3 id="phase-0-planung">Phase 0: Planung</h3>
+<ul>
+<li>Projektdateien erstellen</li>
+<li>MVP festlegen</li>
+<li>Tech-Stack entscheiden</li>
+<li>Datenmodell definieren</li>
+<li>UI-Regeln festlegen</li>
+</ul>
+<h3 id="phase-1-ui-prototyp">Phase 1: UI-Prototyp</h3>
+<ul>
+<li>macOS-App-Shell</li>
+<li>Sidebar</li>
+<li>Dashboard mit Mock-Daten</li>
+<li>Core Ring</li>
+<li>Kartenlayout</li>
+<li>Quick Add als Mock</li>
+</ul>
+<h3 id="phase-2-lokale-persistenz">Phase 2: Lokale Persistenz</h3>
+<ul>
+<li>SQLite/GRDB einbauen</li>
+<li>Migrationen</li>
+<li>Repositories</li>
+<li>Seed-Daten</li>
+<li>erste Tests</li>
+</ul>
+<h3 id="phase-3-quick-add-real-machen">Phase 3: Quick Add real machen</h3>
+<ul>
+<li>NutritionEntry</li>
+<li>WorkoutSession</li>
+<li>FinanceEntry</li>
+<li>HabitEntry</li>
+<li>BodyMetricEntry</li>
+</ul>
+<h3 id="phase-4-module">Phase 4: Module</h3>
+<ul>
+<li>Ernährung</li>
+<li>Training</li>
+<li>Finanzen</li>
+<li>Habits</li>
+<li>Körperwerte</li>
+</ul>
+<h3 id="phase-5-review-und-statistiken">Phase 5: Review und Statistiken</h3>
+<ul>
+<li>Weekly Review</li>
+<li>7-Tage-Trends</li>
+<li>Monatsübersicht</li>
+<li>Completion-Rates</li>
+</ul>
+<h3 id="phase-6-stabilisierung">Phase 6: Stabilisierung</h3>
+<ul>
+<li>Backup</li>
+<li>Export</li>
+<li>Tests</li>
+<li>Fehlerzustände</li>
+<li>UI-Polish</li>
+</ul>
+<h3 id="phase-7-später">Phase 7: Später</h3>
+<ul>
+<li>Telegram</li>
+<li>iPhone-App</li>
+<li>App Shortcuts</li>
+<li>Health</li>
+<li>Kalender</li>
+<li>KI</li>
+<li>Sync</li>
+</ul>
+<p>---</p>
+<section class="section"><h2 id="16-codex-workflow">16. Codex-Workflow</h2>
+<h3 id="rolle-von-codex">Rolle von Codex</h3>
+<blockquote>
+<p>Codex ist nicht der Projektleiter. Codex ist der Entwickler.</p>
+</blockquote>
+<p>Du gibst Codex kleine, klare Aufgaben mit Grenzen.</p>
+<h3 id="gute-codex-tasks">Gute Codex-Tasks</h3>
+<pre><code>Baue nur die ProteinProgressCard mit Mock-Daten.</code></pre>
+<pre><code>Erstelle nur die Datenbankmigration für NutritionEntry.</code></pre>
+<pre><code>Schreibe Tests für die Budgetberechnung.</code></pre>
+<h3 id="schlechte-codex-tasks">Schlechte Codex-Tasks</h3>
+<pre><code>Baue die ganze App.</code></pre>
+<pre><code>Mach das Dashboard fertig.</code></pre>
+<pre><code>Implementiere Training, Ernährung und Finanzen.</code></pre>
+<h3 id="dauerhafte-codex-regeln">Dauerhafte Codex-Regeln</h3>
+<ul>
+<li>keine neuen Packages ohne Erlaubnis</li>
+<li>keine Telegram-, KI-, Health- oder Sync-Arbeit in MVP-Tasks</li>
+<li>keine stillen Refactorings</li>
+<li>keine persistierten Summen ohne Begründung</li>
+<li>jede Datenbankänderung braucht Migration</li>
+<li>jede Kernkarte braucht Empty/Partial/Full-State</li>
+<li>jede UI-Komponente braucht Preview-Daten</li>
+<li>nach Änderungen Build/Test prüfen</li>
+<li>immer Scope gegen <code>MVP_SCOPE.md</code> prüfen</li>
+</ul>
+<p>---</p>
+<section class="section"><h2 id="17-empfohlene-repo-dokumente">17. Empfohlene Repo-Dokumente</h2>
+<pre><code>docs/
+├── PRODUCT_SPEC.md
+├── MVP_SCOPE.md
+├── ARCHITECTURE.md
+├── DATA_MODEL.md
+├── UI_SPEC.md
+├── ROADMAP.md
+├── CODEX_RULES.md
+├── TEST_PLAN.md
+├── EXPORT_BACKUP.md
+└── DECISIONS.md</code></pre>
+<h3 id="zweck">Zweck</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Datei</th><th>Zweck</th></tr></thead>
+<tbody>
+<tr><td><code>PRODUCT_SPEC.md</code></td><td>Was ist AboLife und warum existiert es?</td></tr>
+<tr><td><code>MVP_SCOPE.md</code></td><td>Was ist v1 und was nicht?</td></tr>
+<tr><td><code>ARCHITECTURE.md</code></td><td>Technische Entscheidungen.</td></tr>
+<tr><td><code>DATA_MODEL.md</code></td><td>Modelle, Felder, Beziehungen.</td></tr>
+<tr><td><code>UI_SPEC.md</code></td><td>Layout, Karten, Visualisierungen, States.</td></tr>
+<tr><td><code>ROADMAP.md</code></td><td>Reihenfolge der Umsetzung.</td></tr>
+<tr><td><code>CODEX_RULES.md</code></td><td>Regeln für Codex-Arbeit.</td></tr>
+<tr><td><code>TEST_PLAN.md</code></td><td>Was getestet werden muss.</td></tr>
+<tr><td><code>EXPORT_BACKUP.md</code></td><td>Backup, Restore, Export.</td></tr>
+<tr><td><code>DECISIONS.md</code></td><td>Architekturentscheidungen mit Begründung.</td></tr>
+</tbody>
+</table></div>
+<p>---</p>
+<section class="section"><h2 id="18-erster-sinnvoller-codex-prompt">18. Erster sinnvoller Codex-Prompt</h2>
+<pre><code>Erstelle für mein privates macOS-Projekt „AboLife“ zunächst nur die Projektdokumentation und noch keinen App-Code.
+
+Ziel:
+Ich will Version 1 einer persönlichen, lokalen, offline nutzbaren macOS-App planen, die Dashboard, Quick Add, Kalorien/Protein, Training, Finanzen, Habits und Weekly Review verbindet.
+
+Wichtig:
+- Noch keine Implementierung von Views, Datenbank oder Packages
+- Noch keine iPhone-, Web-, Telegram-, Health-, Kalender- oder KI-Integration
+- Keine neuen Dependencies vorschlagen
+- Arbeite nur dokumentationsorientiert
+- Schreibe klar, konkret und knapp
+- Sprache: de-DE
+
+Bitte lege diese Dateien mit sinnvollem Inhalt an:
+- PRODUCT_SPEC.md
+- MVP_SCOPE.md
+- ARCHITECTURE.md
+- DATA_MODEL.md
+- UI_SPEC.md
+- ROADMAP.md
+- CODEX_RULES.md
+
+Anforderungen:
+- PRODUCT_SPEC.md: Produktziel, Kernproblem, Zielbild, Nicht-Zielbild, täglicher Nutzen
+- MVP_SCOPE.md: Muss rein / sollte rein / später / nicht in Version 1
+- ARCHITECTURE.md: Empfehlung für SwiftUI + lokale Persistenz, kurze Begründung, keine Overengineering-Architektur
+- DATA_MODEL.md: Vorschlag für DailyLog, NutritionEntry, WorkoutSession, ExerciseEntry, FinanceEntry, HabitEntry, BodyMetricEntry, AppSettings, WeeklyReview
+- UI_SPEC.md: Dashboard-Struktur, Sidebar, Quick Add, Kartenregeln, Empty States, Dark/Light-Verhalten
+- ROADMAP.md: Phasen von Konzept bis spätere Integrationen
+- CODEX_RULES.md: strikte Arbeitsregeln für spätere Codex-Tasks
+
+Zusatzregel:
+Jede Datei soll Entscheidungen explizit machen und Scope begrenzen. Keine generischen Phrasen, keine Marketing-Sprache.</code></pre>
+<p>---</p>
+<section class="section"><h2 id="19-nächster-schritt">19. Nächster Schritt</h2>
+<p>Der nächste sinnvolle Schritt ist nicht direkt Xcode.</p>
+<h3 id="reihenfolge-ab-jetzt">Reihenfolge ab jetzt</h3>
+<pre><code>1. Diese Projektdatei prüfen
+2. Daraus visuelle HTML-Datei erstellen
+3. Repo-Dokumente generieren
+4. Erst danach Codex mit Dokumentations-Prompt starten
+5. Danach UI-Prototyp mit Mock-Daten bauen</code></pre>
+<h3 id="heute-konkret">Heute konkret</h3>
+<ul>
+<li><code>ABOLIFE_PROJECT_PLAN.md</code> als Hauptdatei speichern</li>
+<li>HTML-Übersicht daraus erzeugen</li>
+<li>danach <code>docs/</code>-Dateien für Codex erstellen</li>
+</ul>
+<p>---</p>
+<section class="section"><h2 id="20-finale-entscheidungsempfehlung">20. Finale Entscheidungsempfehlung</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>Frage</th><th>Empfehlung</th></tr></thead>
+<tbody>
+<tr><td>Soll AboLife gebaut werden?</td><td>Ja, aber strikt MVP-first.</td></tr>
+<tr><td>Name</td><td>AboLife behalten. Für privat sehr passend.</td></tr>
+<tr><td>Plattform v1</td><td>native macOS-App.</td></tr>
+<tr><td>Stack</td><td>SwiftUI + GRDB/SQLite + Swift Charts.</td></tr>
+<tr><td>Start</td><td>Dokumentation, dann UI-Prototyp mit Mock-Daten.</td></tr>
+<tr><td>Nicht jetzt</td><td>Telegram, iPhone, Health, KI, Web, Sync.</td></tr>
+<tr><td>Wichtigste Produktregel</td><td>Quick Add + Dashboard müssen täglich nützlich sein.</td></tr>
+</tbody>
+</table></div>
+<p>---</p>
+<h1 id="ende">Ende</h1>
+<p>AboLife sollte nicht als perfektes Life-OS starten. Es sollte als <strong>kleines, hochwertiges tägliches Kontrollzentrum</strong> starten, das Ernährung, Training, Finanzen und Gewohnheiten so verbindet, dass du bessere Entscheidungen triffst.</p>
+<p>Wenn Version 1 täglich nutzbar ist, kann alles Weitere später wachsen.</p>
+  <div class="footer">AboLife · Projektgrundlage · erstellt aus ABOLIFE_PROJECT_PLAN.md</div>
+</main>
+</div>
+</body>
+</html>
