@@ -72,6 +72,12 @@ Stand Phase 3B:
 - Dashboard lädt erste persistierte Summaries für Tag, Woche und Monat.
 - Detailmodule, komplexe Aggregationen und WeeklyReview-Persistenz bleiben spätere Phasen.
 
+Stand Phase 4A:
+
+- Die Ernährung-Detailseite ersetzt den Placeholder und lädt gespeicherte `NutritionEntry`-Daten aus SQLite.
+- Die Seite zeigt eine einfache Tagesübersicht für Kalorien und Protein, heutige Mahlzeiten und Löschen einzelner Einträge.
+- Bewusst nicht enthalten: Food-Datenbank, Barcode, API-Integrationen, KI, Rezepte, Templates/Favorites oder Wochenanalyse.
+
 ## Phase 3: Quick Add + erste echte Einträge
 
 Ziel: tägliche Nutzung ermöglichen.

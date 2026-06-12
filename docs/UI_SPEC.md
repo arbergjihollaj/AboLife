@@ -189,3 +189,10 @@ Detailseiten dürfen mehr Daten enthalten als das Dashboard.
 
 Dashboard zeigt Überblick.
 Detailseiten zeigen Historie, Listen, Bearbeitung und tiefergehende Charts.
+
+### Phase 4A Ernährung
+
+- Die Ernährung-Seite ist eine einfache Tagesansicht mit Header, Kalorien-/Protein-Progresskarten und Mahlzeitenliste.
+- Mahlzeiten werden aus lokalen `NutritionEntry`-Daten angezeigt und können gelöscht werden.
+- Empty State: „Heute noch keine Mahlzeit erfasst.“ mit Hinweis auf Quick Add.
+- Nicht Teil dieser Phase: Food-Datenbank, Barcode, KI, Rezepte, Templates/Favorites und Wochenanalyse.

@@ -5,47 +5,54 @@ struct FloatingQuickAddBar: View {
     let onActivate: (QuickAddKind) -> Void
 
     private var leadingActions: [QuickAddAction] {
-        actions.filter { $0.kind == .meal || $0.kind == .workout }
+        orderedActions(for: [.meal, .workout])
     }
 
     private var trailingActions: [QuickAddAction] {
-        actions.filter { $0.kind == .expense || $0.kind == .habit }
+        orderedActions(for: [.expense, .habit])
     }
 
     var body: some View {
         ViewThatFits(in: .horizontal) {
             dockContent(isCompact: false)
-                .frame(maxWidth: 560)
+                .frame(maxWidth: 520)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 dockContent(isCompact: true)
-                    .padding(.horizontal, 2)
+                    .padding(.horizontal, 3)
             }
-            .frame(maxWidth: 390)
+            .frame(maxWidth: 372)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
         .background {
             AboLifeLiquidGlassSurface(
                 shape: Capsule(),
-                tint: AboLifeColors.review.opacity(0.045),
+                tint: AboLifeColors.review.opacity(0.035),
                 isProminent: true,
                 isInteractive: true
             )
         }
         .overlay(alignment: .top) {
             Capsule()
-                .fill(Color.white.opacity(0.16))
+                .fill(Color.white.opacity(0.18))
                 .frame(height: 1)
-                .padding(.horizontal, 34)
+                .padding(.horizontal, 36)
+                .blendMode(.screen)
+        }
+        .overlay(alignment: .bottom) {
+            Capsule()
+                .fill(Color.white.opacity(0.035))
+                .frame(height: 1)
+                .padding(.horizontal, 44)
                 .blendMode(.screen)
         }
         .clipShape(Capsule())
-        .shadow(color: AboLifeColors.shadow.opacity(0.22), radius: 15, x: 0, y: 10)
+        .shadow(color: AboLifeColors.shadow.opacity(0.18), radius: 13, x: 0, y: 9)
     }
 
     private func dockContent(isCompact: Bool) -> some View {
-        HStack(spacing: isCompact ? 8 : 10) {
+        HStack(spacing: isCompact ? 7 : 9) {
             actionGroup(leadingActions, isCompact: isCompact)
 
             separator
@@ -58,8 +65,14 @@ struct FloatingQuickAddBar: View {
         }
     }
 
+    private func orderedActions(for kinds: [QuickAddKind]) -> [QuickAddAction] {
+        kinds.compactMap { kind in
+            actions.first { $0.kind == kind }
+        }
+    }
+
     private func actionGroup(_ actions: [QuickAddAction], isCompact: Bool) -> some View {
-        HStack(spacing: isCompact ? 4 : 6) {
+        HStack(spacing: isCompact ? 3 : 5) {
             ForEach(actions) { action in
                 actionButton(action, isCompact: isCompact)
             }
@@ -71,25 +84,25 @@ struct FloatingQuickAddBar: View {
             onActivate(.general)
         } label: {
             Image(systemName: "plus")
-                .font(.system(size: 21, weight: .semibold, design: .rounded))
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .foregroundStyle(AboLifeColors.primaryText)
-                .frame(width: 50, height: 50)
+                .frame(width: 52, height: 52)
                 .background {
                     Circle()
-                        .fill(AboLifeColors.review.opacity(0.24))
+                        .fill(AboLifeColors.review.opacity(0.18))
                         .background(.ultraThinMaterial, in: Circle())
                         .overlay(alignment: .topLeading) {
                             Circle()
                                 .fill(AboLifeColors.glassHighlightGradient)
-                                .opacity(0.72)
+                                .opacity(0.66)
                                 .blendMode(.screen)
                         }
                         .overlay {
                             Circle()
-                                .strokeBorder(AboLifeColors.liquidGlassEdgeGradient, lineWidth: 0.95)
+                                .strokeBorder(AboLifeColors.liquidGlassEdgeGradient, lineWidth: 0.85)
                         }
                 }
-                .shadow(color: AboLifeColors.review.opacity(0.16), radius: 9, x: 0, y: 5)
+                .shadow(color: AboLifeColors.review.opacity(0.12), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Quick Add")
@@ -103,11 +116,11 @@ struct FloatingQuickAddBar: View {
                 Image(systemName: action.systemImage)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(action.tint)
-                    .frame(width: 24, height: 24)
-                    .background(action.tint.opacity(0.07), in: Circle())
+                    .frame(width: 25, height: 25)
+                    .background(action.tint.opacity(0.075), in: Circle())
                     .overlay {
                         Circle()
-                            .strokeBorder(AboLifeColors.glassStrokeMuted.opacity(0.65), lineWidth: 0.6)
+                            .strokeBorder(AboLifeColors.glassStrokeMuted.opacity(0.72), lineWidth: 0.6)
                     }
 
                 Text(action.title)
@@ -116,7 +129,7 @@ struct FloatingQuickAddBar: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
             }
-            .frame(width: isCompact ? 64 : 74, height: 48)
+            .frame(width: isCompact ? 62 : 70, height: 47)
             .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -124,15 +137,15 @@ struct FloatingQuickAddBar: View {
 
     private var separator: some View {
         Capsule()
-            .fill(AboLifeColors.glassStrokeMuted.opacity(0.95))
-            .frame(width: 1, height: 30)
+            .fill(AboLifeColors.glassStrokeMuted.opacity(0.82))
+            .frame(width: 1, height: 28)
             .overlay {
                 Capsule()
-                    .fill(Color.white.opacity(0.05))
+                    .fill(Color.white.opacity(0.08))
                     .frame(width: 1, height: 14)
                     .offset(y: -6)
             }
-            .padding(.horizontal, 2)
+            .padding(.horizontal, 1)
     }
 }
 

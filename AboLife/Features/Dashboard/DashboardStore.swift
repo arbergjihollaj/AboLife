@@ -186,6 +186,10 @@ final class DashboardStore: ObservableObject {
         return clamp((calories + protein + training + habits + budget) / 5)
     }
 
+    func refreshFromPersistence() {
+        loadDashboardData()
+    }
+
     private func refreshSnapshot() {
         snapshot = DashboardMockData.snapshot(from: state)
     }

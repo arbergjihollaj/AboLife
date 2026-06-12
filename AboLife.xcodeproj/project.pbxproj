@@ -19,6 +19,9 @@
 		100000000000000000000122 /* QuickAddPlaceholderSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000022 /* QuickAddPlaceholderSheet.swift */; };
 		100000000000000000000125 /* FloatingQuickAddBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000025 /* FloatingQuickAddBar.swift */; };
 		100000000000000000000110 /* NutritionPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000010 /* NutritionPlaceholderView.swift */; };
+		100000000000000000000126 /* NutritionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000026 /* NutritionView.swift */; };
+		100000000000000000000127 /* NutritionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000027 /* NutritionStore.swift */; };
+		100000000000000000000128 /* NutritionDoubleRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000028 /* NutritionDoubleRingView.swift */; };
 		100000000000000000000111 /* TrainingPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000011 /* TrainingPlaceholderView.swift */; };
 		100000000000000000000112 /* FinancePlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000012 /* FinancePlaceholderView.swift */; };
 		100000000000000000000113 /* HabitsPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000013 /* HabitsPlaceholderView.swift */; };
@@ -76,6 +79,9 @@
 		100000000000000000000022 /* QuickAddPlaceholderSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddPlaceholderSheet.swift; sourceTree = "<group>"; };
 		100000000000000000000025 /* FloatingQuickAddBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingQuickAddBar.swift; sourceTree = "<group>"; };
 		100000000000000000000010 /* NutritionPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionPlaceholderView.swift; sourceTree = "<group>"; };
+		100000000000000000000026 /* NutritionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionView.swift; sourceTree = "<group>"; };
+		100000000000000000000027 /* NutritionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionStore.swift; sourceTree = "<group>"; };
+		100000000000000000000028 /* NutritionDoubleRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionDoubleRingView.swift; sourceTree = "<group>"; };
 		100000000000000000000011 /* TrainingPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlaceholderView.swift; sourceTree = "<group>"; };
 		100000000000000000000012 /* FinancePlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinancePlaceholderView.swift; sourceTree = "<group>"; };
 		100000000000000000000013 /* HabitsPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitsPlaceholderView.swift; sourceTree = "<group>"; };
@@ -144,7 +150,7 @@
 		100000000000000000000505 /* Charts */ = {isa = PBXGroup; children = (100000000000000000000017 /* CoreRingView.swift */, 100000000000000000000018 /* MiniTrendChart.swift */, 100000000000000000000019 /* BudgetProgressBar.swift */); path = Charts; sourceTree = "<group>"; };
 		100000000000000000000506 /* PreviewSupport */ = {isa = PBXGroup; children = (100000000000000000000020 /* PreviewData.swift */); path = PreviewSupport; sourceTree = "<group>"; };
 		100000000000000000000510 /* Dashboard */ = {isa = PBXGroup; children = (100000000000000000000007 /* DashboardView.swift */, 100000000000000000000008 /* DashboardStore.swift */, 100000000000000000000009 /* DashboardMockData.swift */, 100000000000000000000022 /* QuickAddPlaceholderSheet.swift */, 100000000000000000000024 /* QuickAddAction.swift */, 100000000000000000000025 /* FloatingQuickAddBar.swift */); path = Dashboard; sourceTree = "<group>"; };
-		100000000000000000000511 /* Nutrition */ = {isa = PBXGroup; children = (100000000000000000000010 /* NutritionPlaceholderView.swift */); path = Nutrition; sourceTree = "<group>"; };
+		100000000000000000000511 /* Nutrition */ = {isa = PBXGroup; children = (100000000000000000000010 /* NutritionPlaceholderView.swift */, 100000000000000000000026 /* NutritionView.swift */, 100000000000000000000027 /* NutritionStore.swift */, 100000000000000000000028 /* NutritionDoubleRingView.swift */); path = Nutrition; sourceTree = "<group>"; };
 		100000000000000000000512 /* Training */ = {isa = PBXGroup; children = (100000000000000000000011 /* TrainingPlaceholderView.swift */); path = Training; sourceTree = "<group>"; };
 		100000000000000000000513 /* Finance */ = {isa = PBXGroup; children = (100000000000000000000012 /* FinancePlaceholderView.swift */); path = Finance; sourceTree = "<group>"; };
 		100000000000000000000514 /* Habits */ = {isa = PBXGroup; children = (100000000000000000000013 /* HabitsPlaceholderView.swift */); path = Habits; sourceTree = "<group>"; };
@@ -236,6 +242,9 @@
 				100000000000000000000124 /* QuickAddAction.swift in Sources */,
 				100000000000000000000125 /* FloatingQuickAddBar.swift in Sources */,
 				100000000000000000000110 /* NutritionPlaceholderView.swift in Sources */,
+				100000000000000000000126 /* NutritionView.swift in Sources */,
+				100000000000000000000127 /* NutritionStore.swift in Sources */,
+				100000000000000000000128 /* NutritionDoubleRingView.swift in Sources */,
 				100000000000000000000111 /* TrainingPlaceholderView.swift in Sources */,
 				100000000000000000000112 /* FinancePlaceholderView.swift in Sources */,
 				100000000000000000000113 /* HabitsPlaceholderView.swift in Sources */,

@@ -208,3 +208,9 @@ Phase 3B speichert keine Dashboard-Read-Models. Das Dashboard berechnet erste We
 - optional letztes Gewicht aus `body_metric_entries`
 
 Habit-Definitionen bleiben vorerst feste App-Habits im Dashboard-State; es gibt noch keine `habit_definitions`-Tabelle.
+
+## 15. Phase 4A Ernährung-Detailseite
+
+Phase 4A nutzt das bestehende `nutrition_entries`-Schema ohne Migration. Die Ernährung-Seite liest Tagesentries aus SQLite, berechnet Kalorien und Protein aus den geladenen Entries und kann einzelne `NutritionEntry`-Datensätze löschen.
+
+Nicht modelliert werden in dieser Phase Food-Datenbank, Barcode-Daten, externe Food-IDs, KI-Auswertung, Rezepte, Templates/Favorites oder Wochenanalyse.

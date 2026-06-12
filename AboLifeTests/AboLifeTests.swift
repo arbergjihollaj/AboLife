@@ -176,6 +176,67 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(summary.proteinG, 53, accuracy: 0.001)
     }
 
+    func testNutritionRepositoryFetchesEntriesForSelectedDayNewestFirst() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = NutritionRepository(database: database)
+        let calendar = Calendar(identifier: .gregorian)
+        let breakfast = DateComponents(calendar: calendar, year: 2026, month: 6, day: 12, hour: 8).date!
+        let lunch = DateComponents(calendar: calendar, year: 2026, month: 6, day: 12, hour: 13).date!
+        let yesterday = DateComponents(calendar: calendar, year: 2026, month: 6, day: 11, hour: 20).date!
+
+        try repository.insert(NutritionEntryRecord(occurredAt: breakfast, title: "Skyr", caloriesKcal: 300, proteinG: 35))
+        try repository.insert(NutritionEntryRecord(occurredAt: lunch, title: "Lunch", caloriesKcal: 650, proteinG: 42))
+        try repository.insert(NutritionEntryRecord(occurredAt: yesterday, title: "Old meal", caloriesKcal: 900, proteinG: 60))
+
+        let entries = try repository.fetchEntries(forDay: breakfast, calendar: calendar)
+
+        XCTAssertEqual(entries.map(\.title), ["Lunch", "Skyr"])
+    }
+
+    func testNutritionRepositoryDeletesSingleEntry() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = NutritionRepository(database: database)
+        let entryToDelete = NutritionEntryRecord(title: "Skyr", caloriesKcal: 300, proteinG: 35)
+        let entryToKeep = NutritionEntryRecord(title: "Lunch", caloriesKcal: 650, proteinG: 42)
+
+        try repository.insert(entryToDelete)
+        try repository.insert(entryToKeep)
+        try repository.delete(id: entryToDelete.id)
+        try repository.delete(id: "missing-id")
+
+        let entries = try repository.fetchAll()
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries.first?.id, entryToKeep.id)
+    }
+
+    func testNutritionRepositorySummaryReflectsDeleteAndEmptyDay() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = NutritionRepository(database: database)
+        let calendar = Calendar(identifier: .gregorian)
+        let selectedDay = DateComponents(calendar: calendar, year: 2026, month: 6, day: 12, hour: 12).date!
+        let emptyDay = DateComponents(calendar: calendar, year: 2026, month: 6, day: 13, hour: 12).date!
+        let entry = NutritionEntryRecord(occurredAt: selectedDay, title: "Lunch", caloriesKcal: 650, proteinG: 42)
+
+        try repository.insert(entry)
+        XCTAssertEqual(try repository.daySummary(for: selectedDay, calendar: calendar).caloriesKcal, 650)
+
+        try repository.delete(id: entry.id)
+
+        let summary = try repository.daySummary(for: selectedDay, calendar: calendar)
+        let emptySummary = try repository.daySummary(for: emptyDay, calendar: calendar)
+        XCTAssertEqual(summary.caloriesKcal, 0)
+        XCTAssertEqual(summary.proteinG, 0, accuracy: 0.001)
+        XCTAssertEqual(emptySummary.caloriesKcal, 0)
+        XCTAssertEqual(emptySummary.proteinG, 0, accuracy: 0.001)
+    }
+
+    func testNutritionProgressClampsNormalOverTargetAndZeroTarget() {
+        XCTAssertEqual(NutritionStore.progress(current: 550, target: 2200), 0.25, accuracy: 0.001)
+        XCTAssertEqual(NutritionStore.progress(current: 2600, target: 2200), 1, accuracy: 0.001)
+        XCTAssertEqual(NutritionStore.progress(current: 500, target: 0), 0, accuracy: 0.001)
+        XCTAssertEqual(NutritionStore.progress(current: -100, target: 2200), 0, accuracy: 0.001)
+    }
+
     func testFinanceRepositoryBuildsMonthSummary() throws {
         let database = try AppDatabase.makeTemporary()
         let repository = FinanceRepository(database: database)

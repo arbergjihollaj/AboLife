@@ -31,6 +31,9 @@ struct DashboardView: View {
             .padding(.bottom, 18)
         }
         .navigationTitle("")
+        .onAppear {
+            store.refreshFromPersistence()
+        }
         .sheet(item: $selectedQuickAddKind) { kind in
             QuickAddPlaceholderSheet(store: store, initialKind: kind)
         }

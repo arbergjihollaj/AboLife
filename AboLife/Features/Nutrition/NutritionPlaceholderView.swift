@@ -1,11 +1,9 @@
 import SwiftUI
 
 struct NutritionPlaceholderView: View {
+    @Environment(\.appDatabase) private var appDatabase
+
     var body: some View {
-        PlaceholderFeatureView(
-            title: "Ernährung",
-            systemImage: "fork.knife",
-            message: "Heute noch keine Mahlzeit erfasst. Die echte Erfassung kommt nach dem Phase-1-Prototyp."
-        )
+        NutritionView(database: appDatabase)
     }
 }

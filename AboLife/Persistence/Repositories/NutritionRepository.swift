@@ -31,12 +31,26 @@ struct NutritionRepository {
         }
     }
 
+    func fetchEntries(forDay date: Date = Date(), calendar: Calendar = .current) throws -> [NutritionEntryRecord] {
+        try fetchEntries(in: DateIntervals.day(containing: date, calendar: calendar))
+    }
+
+    func fetchEntries(in interval: DateInterval) throws -> [NutritionEntryRecord] {
+        try fetch(in: interval)
+    }
+
     func daySummary(for date: Date = Date(), calendar: Calendar = .current) throws -> NutritionDaySummary {
-        let entries = try fetch(in: DateIntervals.day(containing: date, calendar: calendar))
+        let entries = try fetchEntries(forDay: date, calendar: calendar)
         return NutritionDaySummary(
             caloriesKcal: entries.reduce(0) { $0 + $1.caloriesKcal },
             proteinG: entries.reduce(0) { $0 + $1.proteinG }
         )
+    }
+
+    func delete(id: String) throws {
+        try database.writer.write { db in
+            _ = try NutritionEntryRecord.deleteOne(db, key: id)
+        }
     }
 
     func deleteAll() throws {
