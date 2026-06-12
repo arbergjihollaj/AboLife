@@ -196,3 +196,66 @@ Detailseiten zeigen Historie, Listen, Bearbeitung und tiefergehende Charts.
 - Mahlzeiten werden aus lokalen `NutritionEntry`-Daten angezeigt und können gelöscht werden.
 - Empty State: „Heute noch keine Mahlzeit erfasst.“ mit Hinweis auf Quick Add.
 - Nicht Teil dieser Phase: Food-Datenbank, Barcode, KI, Rezepte, Templates/Favorites und Wochenanalyse.
+
+### Phase 4B Training
+
+- Die Training-Seite ist eine einfache Wochenansicht mit Header, zentraler Wochen-Fortschrittskarte, Mo-So-Leiste und Workout-Liste.
+- Workouts werden aus lokalen `WorkoutSession`-Daten angezeigt und können gelöscht werden.
+- Empty State: „Diese Woche noch kein Training abgeschlossen.“ mit Hinweis auf Quick Add.
+- Nicht Teil dieser Phase: Trainingspläne, Übungsdatenbank, Sätze/Wiederholungen/Gewichte, Progression, Kalenderintegration, HealthKit, KI und Monatsanalyse.
+
+### Phase 4C Finanzen
+
+- Die Finanzen-Seite ist eine einfache Monatsansicht mit Header, zentraler Budget-Fortschrittskarte, kompakten Budgetwerten und Ausgabenliste.
+- Ausgaben werden aus lokalen `FinanceEntry`-Daten angezeigt und können gelöscht werden.
+- Empty State: „Diesen Monat noch keine Ausgaben erfasst.“ mit Hinweis auf Quick Add.
+- Nicht Teil dieser Phase: Bankverbindung, Kontosynchronisierung, automatische Kategorienlogik, wiederkehrende Fixkosten, Sparplan-/Investmentlogik, Abofolio-Integration, Steuerlogik, KI und Jahresberichte.
+
+### Phase 4D Gewohnheiten
+
+- Die Gewohnheiten-Seite ist eine einfache Tagesansicht mit Header, zentraler Fortschrittskarte und Liste fester Habits.
+- Heutige Habit-Zustände werden aus lokalen `HabitEntry`-Daten angezeigt und können per Toggle gesetzt oder zurückgesetzt werden.
+- Initial State: „Noch keine Gewohnheit erledigt.“ mit Hinweis auf einen kleinen Start.
+- Nicht Teil dieser Phase: Habit-Erstellung, Streaks, Reminder, Kalenderansicht, Gamification, KI und Wochen-/Monatsanalyse.
+
+### Phase 4E Wochenreview
+
+- Die Wochenreview-Seite ist eine einfache Wochenansicht mit Header, zentraler Review-Karte, vier Summary-Cards und einem ruhigen Notizformular.
+- Summary-Cards zeigen echte Wochenwerte aus Ernährung, Training, Finanzen und Gewohnheiten.
+- Review-Notizen bestehen aus „Was lief gut?“, „Was war schwierig?“ und „Fokus für nächste Woche“ und werden lokal gespeichert.
+- Empty/Low-Data State: „Sammle ein paar Tage Daten, damit dein Review aussagekräftiger wird.“
+- Nicht Teil dieser Phase: KI-Auswertung, Coaching, komplexe Statistiken, Monatsberichte, PDF-Reports und externe Integrationen.
+
+### Phase 5 Einstellungen
+
+- Die Einstellungen-Seite ist eine ruhige Zielwerte-Seite mit separaten Glass-Cards für Ernährung, Training, Finanzen und Allgemein.
+- Bearbeitbar sind Kalorienziel, Proteinziel, Workouts pro Woche und Monatsbudget; Währung ist vorerst EUR, Wochenstart Montag.
+- Aktionen: Speichern und „Defaults“ zum Zurücksetzen auf Standardwerte.
+- Hinweis: „Alle Daten werden lokal auf diesem Mac gespeichert.“
+- Nicht Teil dieser Phase: Accounts, Cloud Sync, Export/Backup, Ziel-Historie, Profile, Reminder, KI und externe Integrationen.
+
+### Phase 7A Home-Trainingsplan
+
+- Die Training-Seite ergänzt eine ruhige Glass-Card „Home-Trainingsplan“ für Körpergewicht und einfache Klimmzugstange.
+- Die Card zeigt das heutige oder nächste geplante Workout aus einem festen 3-Tage-Plan: Montag Pull + Core, Mittwoch Push + Legs, Freitag Full Body.
+- Die Hauptvisualisierung der Card ist ein zentrierter Doppelring: außen Wochenfortschritt, innen Übungsfortschritt des aktuellen Workouts.
+- Minimum, Normal und Stark wählen die Übungsliste und abgeleitete Dauer; Minimum gilt als echtes abgeschlossenes Training.
+- Übungen werden als lokale Checkliste angezeigt; Satzdetails werden nicht persistiert.
+- „Workout abschließen“ speichert eine normale `WorkoutSession`, damit bestehende Listen, Dashboard und Wochenreview unverändert mitzählen.
+- Nicht Teil dieser Phase: Übungsdatenbank, eigene Übungen, Satz-/Gewichts-Historie, Kalenderansicht, Drag-and-Drop, Reminder, Videoanleitungen, HealthKit, KI oder externe Integrationen.
+
+### Phase 7B Wochenreview-Diagramme
+
+- Die Wochenreview-Seite ergänzt nach den Summary-Cards eine Sektion „Trends dieser Woche“.
+- Fünf kompakte Glass-Cards zeigen 7-Tage-Trends für Kalorien, Protein, Ausgaben, Training und Gewohnheiten.
+- Alle Karten nutzen Montag bis Sonntag, zeigen leere Tage als 0 und bleiben auch bei komplett leerer Woche sichtbar.
+- Die Charts sind kleine SwiftUI-Sparklines im bestehenden Premium/Glass-Stil; es gibt keine neue externe Dependency.
+- Nicht Teil dieser Phase: Langzeit-Analytics, Monats-/Jahresdiagramme, Heatmaps, Kalenderansicht, interaktive Tooltips, Zoom, KI-Auswertung, Reports oder externe Integrationen.
+
+### Phase 7C Gewohnheiten-Redesign
+
+- Die Gewohnheiten-Seite nutzt einen Apple-Fitness-inspirierten Aufbau mit Header, großem Tagesring, Habit-Grid und kompakter Wochenübersicht.
+- Die warme Orange-/Gold-Stimmung bleibt die Hauptidentität; einzelne Habits bekommen dezente Akzente für Wasser, Bewegung, Ernährung, Lernen und Schlaf.
+- Die fünf Habit-Karten zeigen messbare Tageswerte gegen Zielwerte, Progressbar, Plus/Minus bzw. Schlafroutine-Button und eine kleine Mo-So-Wochenleiste.
+- Der große Hero-Ring berechnet den Durchschnitt der fünf Habit-Fortschritte, nicht nur erledigt/offen.
+- Nicht Teil dieser Phase: Custom Habits, Habit-Bibliothek, Reminder, Notifications, Streak-Analytics, Kalenderansicht, Heatmap, KI-Coaching, HealthKit, Apple Watch oder externe Integrationen.

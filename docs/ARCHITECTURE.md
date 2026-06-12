@@ -209,6 +209,12 @@ Services sind nur für echte Infrastruktur zuständig:
 
 Services dürfen nicht zum Ort für normale Feature-Logik werden.
 
+Phase 6A nutzt `AboLife/Persistence/BackupService.swift` als lokalen Infrastruktur-Service. Er erstellt den Backup-Ordner unter Application Support, erzeugt SQLite-Backups ueber den GRDB/SQLite-Backup-Mechanismus und schreibt JSON-Exporte aus den bestehenden Tabellen. Die Settings-UI triggert nur Store-Aktionen; Datenbank- und Dateisystemdetails bleiben ausserhalb der View.
+
+Nicht Teil von Phase 6A sind Restore/Import, Cloud/iCloud Sync, Accounts, Hintergrunddienste oder externe Integrationen.
+
+Phase 7B berechnet Wochenreview-Trends im Review-Feature aus bestehenden Repository-Daten. `WeeklyReviewTrends` erzeugt feste 7-Tage-Reihen fuer Montag bis Sonntag; `WeeklyTrendCard` rendert sie mit bestehenden SwiftUI-/Glass-Komponenten ohne neue Persistenzstruktur oder externe Chart-Library.
+
 ## 10. Tests
 
 Mindesttests:

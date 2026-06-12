@@ -1,11 +1,9 @@
 import SwiftUI
 
 struct TrainingPlaceholderView: View {
+    @Environment(\.appDatabase) private var appDatabase
+
     var body: some View {
-        PlaceholderFeatureView(
-            title: "Training",
-            systemImage: "figure.strengthtraining.traditional",
-            message: "Noch kein Training für heute eingetragen. Details und echte Sessions folgen später."
-        )
+        TrainingView(database: appDatabase)
     }
 }

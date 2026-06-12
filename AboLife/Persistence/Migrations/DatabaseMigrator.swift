@@ -71,6 +71,67 @@ enum DatabaseMigrationPlan {
             }
         }
 
+        migrator.registerMigration("v2_create_weekly_reviews") { db in
+            try db.create(table: "weekly_reviews") { table in
+                table.column("id", .text).primaryKey()
+                table.column("week_start_date", .text).notNull().unique()
+                table.column("wins_text", .text).notNull()
+                table.column("challenges_text", .text).notNull()
+                table.column("next_week_focus_text", .text).notNull()
+                table.column("rating", .integer)
+                table.column("created_at", .datetime).notNull()
+                table.column("updated_at", .datetime).notNull()
+            }
+        }
+
+        migrator.registerMigration("v3_add_weekly_workout_target") { db in
+            try db.alter(table: "app_settings") { table in
+                table.add(column: "weekly_workout_target", .integer)
+                    .notNull()
+                    .defaults(to: 3)
+            }
+        }
+
+        migrator.registerMigration("v4_add_measurable_habit_fields") { db in
+            try db.alter(table: "habit_entries") { table in
+                table.add(column: "value", .double)
+                table.add(column: "target_value", .double)
+                table.add(column: "unit", .text)
+            }
+
+            try db.execute(sql: """
+                UPDATE habit_entries
+                SET
+                    target_value = CASE habit_key
+                        WHEN 'water' THEN 3.0
+                        WHEN 'movement' THEN 60.0
+                        WHEN 'nutrition' THEN 3.0
+                        WHEN 'learning' THEN 60.0
+                        WHEN 'sleep' THEN 1.0
+                        ELSE 1.0
+                    END,
+                    unit = CASE habit_key
+                        WHEN 'water' THEN 'Liter'
+                        WHEN 'movement' THEN 'Min.'
+                        WHEN 'nutrition' THEN 'Mahlzeiten'
+                        WHEN 'learning' THEN 'Min.'
+                        ELSE ''
+                    END,
+                    value = CASE
+                        WHEN is_completed THEN CASE habit_key
+                            WHEN 'water' THEN 3.0
+                            WHEN 'movement' THEN 60.0
+                            WHEN 'nutrition' THEN 3.0
+                            WHEN 'learning' THEN 60.0
+                            WHEN 'sleep' THEN 1.0
+                            ELSE 1.0
+                        END
+                        ELSE 0.0
+                    END
+                WHERE value IS NULL
+            """)
+        }
+
         return migrator
     }
 }

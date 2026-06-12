@@ -1,11 +1,9 @@
 import SwiftUI
 
 struct WeeklyReviewPlaceholderView: View {
+    @Environment(\.appDatabase) private var appDatabase
+
     var body: some View {
-        PlaceholderFeatureView(
-            title: "Wochenreview",
-            systemImage: "calendar.badge.clock",
-            message: "Noch kein Wochenreview gespeichert. Dieser Bereich bleibt in Phase 1 ein Empty State."
-        )
+        WeeklyReviewView(database: appDatabase)
     }
 }

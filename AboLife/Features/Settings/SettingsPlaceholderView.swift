@@ -1,11 +1,9 @@
 import SwiftUI
 
 struct SettingsPlaceholderView: View {
+    @Environment(\.appDatabase) private var appDatabase
+
     var body: some View {
-        PlaceholderFeatureView(
-            title: "Einstellungen",
-            systemImage: "gearshape",
-            message: "Grundwerte und Zielvorgaben werden erst in einer späteren Phase bearbeitbar."
-        )
+        SettingsView(database: appDatabase)
     }
 }

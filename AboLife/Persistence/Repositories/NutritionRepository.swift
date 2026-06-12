@@ -39,11 +39,37 @@ struct NutritionRepository {
         try fetch(in: interval)
     }
 
+    func fetchEntries(forWeekContaining date: Date = Date(), weekStartsOn: Int = 2, calendar: Calendar = .current) throws -> [NutritionEntryRecord] {
+        try fetchEntries(in: DateIntervals.week(containing: date, weekStartsOn: weekStartsOn, calendar: calendar))
+    }
+
     func daySummary(for date: Date = Date(), calendar: Calendar = .current) throws -> NutritionDaySummary {
         let entries = try fetchEntries(forDay: date, calendar: calendar)
         return NutritionDaySummary(
             caloriesKcal: entries.reduce(0) { $0 + $1.caloriesKcal },
             proteinG: entries.reduce(0) { $0 + $1.proteinG }
+        )
+    }
+
+    func weeklySummary(in interval: DateInterval, days: Int = 7) throws -> NutritionWeeklySummary {
+        let entries = try fetchEntries(in: interval)
+        let safeDays = max(days, 1)
+        let totalCalories = entries.reduce(0) { $0 + $1.caloriesKcal }
+        let totalProtein = entries.reduce(0) { $0 + $1.proteinG }
+
+        return NutritionWeeklySummary(
+            totalCaloriesKcal: totalCalories,
+            averageCaloriesPerDay: Double(totalCalories) / Double(safeDays),
+            totalProteinG: totalProtein,
+            averageProteinGPerDay: totalProtein / Double(safeDays),
+            entryCount: entries.count
+        )
+    }
+
+    func weeklySummary(forDate date: Date = Date(), weekStartsOn: Int = 2, calendar: Calendar = .current, days: Int = 7) throws -> NutritionWeeklySummary {
+        try weeklySummary(
+            in: DateIntervals.week(containing: date, weekStartsOn: weekStartsOn, calendar: calendar),
+            days: days
         )
     }
 
@@ -63,4 +89,12 @@ struct NutritionRepository {
 struct NutritionDaySummary: Equatable {
     let caloriesKcal: Int
     let proteinG: Double
+}
+
+struct NutritionWeeklySummary: Equatable {
+    let totalCaloriesKcal: Int
+    let averageCaloriesPerDay: Double
+    let totalProteinG: Double
+    let averageProteinGPerDay: Double
+    let entryCount: Int
 }

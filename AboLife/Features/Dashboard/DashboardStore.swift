@@ -209,7 +209,9 @@ final class DashboardStore: ObservableObject {
             let workoutCount = try workoutRepository.completedCount(in: weekInterval)
             let latestWorkout = try workoutRepository.latestCompleted(in: weekInterval)
             let habitEntries = try HabitRepository(database: database).fetch(for: DateIntervals.dayKey(calendar: calendar))
-            let habitCompletionByKey = Dictionary(uniqueKeysWithValues: habitEntries.map { ($0.habitKey, $0.isCompleted) })
+            let habitCompletionByKey = habitEntries.reduce(into: [String: Bool]()) { result, entry in
+                result[entry.habitKey] = entry.isCompleted
+            }
             let latestBodyMetric = try BodyMetricRepository(database: database).latest()
 
             state.caloriesTarget = settings.caloriesTarget
@@ -219,7 +221,7 @@ final class DashboardStore: ObservableObject {
             state.proteinConsumed = nutritionSummary.proteinG
             state.monthlySpent = financeSpent
             state.weeklyWorkoutCompleted = workoutCount
-            state.weeklyWorkoutTarget = 3
+            state.weeklyWorkoutTarget = settings.weeklyWorkoutTarget
             state.lastWorkoutType = latestWorkout?.workoutType
             state.lastWorkoutDurationMinutes = latestWorkout?.durationMin
             state.bodyWeight = latestBodyMetric?.weightKg
@@ -338,7 +340,7 @@ struct DashboardMockState {
         proteinConsumed: 0,
         proteinTarget: SeedData.defaultSettings.proteinTargetG,
         weeklyWorkoutCompleted: 0,
-        weeklyWorkoutTarget: 3,
+        weeklyWorkoutTarget: SeedData.defaultSettings.weeklyWorkoutTarget,
         monthlySpent: 0,
         monthlyBudget: SeedData.defaultSettings.monthlyBudget,
         habits: persistedHabits,

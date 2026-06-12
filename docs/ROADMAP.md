@@ -78,6 +78,37 @@ Stand Phase 4A:
 - Die Seite zeigt eine einfache Tagesübersicht für Kalorien und Protein, heutige Mahlzeiten und Löschen einzelner Einträge.
 - Bewusst nicht enthalten: Food-Datenbank, Barcode, API-Integrationen, KI, Rezepte, Templates/Favorites oder Wochenanalyse.
 
+Stand Phase 4B:
+
+- Die Training-Detailseite ersetzt den Placeholder und lädt gespeicherte `WorkoutSession`-Daten aus SQLite.
+- Die Seite zeigt eine einfache Wochenübersicht mit Wochenziel, abgeschlossenen Workouts, Dauer, Wochen-Tage-Leiste und löschbarer Workout-Liste.
+- Bewusst nicht enthalten: Trainingspläne, Übungsdatenbank, Sätze/Wiederholungen/Gewichte, Progression, Kalenderintegration, HealthKit oder KI.
+
+Stand Phase 4C:
+
+- Die Finanzen-Detailseite ersetzt den Placeholder und lädt gespeicherte `FinanceEntry`-Daten aus SQLite.
+- Die Seite zeigt eine einfache Monatsübersicht mit Budget, Ausgaben, Restbudget, verfügbarem Tagesbudget und löschbarer Ausgabenliste.
+- Bewusst nicht enthalten: Bankverbindung, Kontosynchronisierung, automatische Kategorienlogik, wiederkehrende Fixkosten, Sparplan-/Investmentlogik, Abofolio-Integration oder KI.
+
+Stand Phase 4D:
+
+- Die Gewohnheiten-Detailseite ersetzt den Placeholder und lädt heutige `HabitEntry`-Daten aus SQLite.
+- Die Seite zeigt eine einfache Tagesübersicht für feste Habits, Fortschritt und toggelbare Habit-Zeilen.
+- Bewusst nicht enthalten: Habit-Erstellung, Streaks, Reminder, Kalenderansicht, Gamification oder KI.
+
+Stand Phase 4E:
+
+- Die Wochenreview-Detailseite ersetzt den Placeholder und fasst echte Wochenwerte aus Nutrition, Training, Finance und Habits zusammen.
+- Review-Notizen für Wins, Schwierigkeiten und Fokus nächste Woche werden lokal in `weekly_reviews` gespeichert.
+- Bewusst nicht enthalten: KI-Auswertung, Coaching-Logik, komplexe Statistiken, Monatsberichte, PDF-Reports oder externe Integrationen.
+
+Stand Phase 5 Settings:
+
+- Die Einstellungen-Seite ersetzt den Placeholder und speichert zentrale Zielwerte lokal in `app_settings`.
+- Kalorienziel, Proteinziel, Wochen-Trainingsziel, Monatsbudget, EUR-Währung und Wochenstart werden geladen, gespeichert und auf Defaults zurückgesetzt.
+- Dashboard, Ernährung, Training, Finanzen und Wochenreview nutzen die zentralen Settings beim Laden.
+- Bewusst nicht enthalten: Account, Cloud/iCloud Sync, Export/Backup, Telegram, HealthKit, KI oder externe Integrationen.
+
 ## Phase 3: Quick Add + erste echte Einträge
 
 Ziel: tägliche Nutzung ermöglichen.
@@ -135,6 +166,35 @@ Aufgaben:
 - JSON/CSV Export
 - Restore-Konzept
 - Export UI
+
+Stand Phase 6A:
+
+- Die Einstellungen-Seite enthält eine ruhige lokale Sektion „Backup & Export“.
+- SQLite-Backups werden lokal im Application-Support-Backup-Ordner erstellt.
+- JSON-Exporte sichern die wichtigsten bestehenden Tabellen als lesbare Datei.
+- Bewusst nicht enthalten: Restore/Import, Cloud/iCloud Sync, Accounts, Hintergrunddienst oder externe Integrationen.
+
+Stand Phase 7A:
+
+- Die Training-Seite enthält einen einfachen Home-Trainingsplan für Körpergewicht und einfache Klimmzugstange.
+- Der Plan nutzt feste Trainingstage: Montag Pull + Core, Mittwoch Push + Legs, Freitag Full Body.
+- Jede Einheit bietet Minimum, Normal und Stark als alltagstaugliche Varianten.
+- Ein abgeschlossener Plan speichert eine normale `WorkoutSession` und zählt dadurch in Training, Dashboard und Wochenreview mit.
+- Bewusst nicht enthalten: Übungsdatenbank, eigene Trainingstage, Satz-/Gewichts-Historie, Progression, Kalender, Reminder, HealthKit, KI oder externe Integrationen.
+
+Stand Phase 7B:
+
+- Die Wochenreview-Seite enthält eine ruhige Sektion „Trends dieser Woche“ mit 7-Tage-Trends für Kalorien, Protein, Ausgaben, Training und Gewohnheiten.
+- Alle Trends zeigen Montag bis Sonntag; Tage ohne Daten werden als 0 dargestellt.
+- Die Diagramme nutzen bestehende SwiftUI-/Glass-Komponenten und keine externe Chart-Library.
+- Bewusst nicht enthalten: Langzeit-Analytics, Monats-/Jahresdiagramme, Heatmaps, Prognosen, KI-Auswertung, neue Exportformate oder externe Integrationen.
+
+Stand Phase 7C:
+
+- Die Gewohnheiten-Seite wurde zu einer messbaren Habit-Seite mit großem Tagesring, Habit-Grid und kompakter Wochenübersicht umgebaut.
+- Die fünf festen Habits haben Tagesziele: Wasser 3,0 Liter, Bewegung 60 Minuten, Ernährung 3 Mahlzeiten, Lernen 60 Minuten und Schlafroutine 1.
+- `habit_entries` speichert zusätzlich `value`, `target_value` und `unit`; alte Boolean-Daten bleiben kompatibel.
+- Bewusst nicht enthalten: Custom Habits, Habit-Bibliothek, Reminder, Notifications, Streak-Analytics, Kalenderansicht, Heatmaps, HealthKit, KI oder externe Integrationen.
 
 ## Phase 7: spätere Integrationen
 

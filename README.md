@@ -22,3 +22,9 @@ Enthalten:
 Wichtig:
 
 AboLife v1 soll lokal, fokussiert und dashboard-first bleiben. Telegram, iPhone, KI, Health und Web sind spätere Erweiterungen.
+
+Aktueller Stand:
+
+- Phase 6A ergänzt lokale Backups und Exporte.
+- SQLite-Backups und JSON-Exporte bleiben auf diesem Mac im lokalen Backup-Ordner.
+- Restore/Import, Cloud Sync, Accounts und externe Integrationen sind nicht Teil dieser Phase.

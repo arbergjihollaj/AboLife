@@ -31,6 +31,14 @@ struct WorkoutRepository {
         }
     }
 
+    func fetchSessions(forWeekContaining date: Date = Date(), weekStartsOn: Int = 2, calendar: Calendar = .current) throws -> [WorkoutSessionRecord] {
+        try fetchSessions(in: DateIntervals.week(containing: date, weekStartsOn: weekStartsOn, calendar: calendar))
+    }
+
+    func fetchSessions(in interval: DateInterval) throws -> [WorkoutSessionRecord] {
+        try fetch(in: interval)
+    }
+
     func completedCount(in interval: DateInterval) throws -> Int {
         try database.writer.read { db in
             try WorkoutSessionRecord
@@ -50,9 +58,32 @@ struct WorkoutRepository {
         }
     }
 
+    func weeklySummary(forDate date: Date = Date(), weekStartsOn: Int = 2, calendar: Calendar = .current) throws -> WorkoutWeeklySummary {
+        let sessions = try fetchSessions(forWeekContaining: date, weekStartsOn: weekStartsOn, calendar: calendar)
+        let completedSessions = sessions.filter { $0.status == "done" }
+
+        return WorkoutWeeklySummary(
+            completedWorkouts: completedSessions.count,
+            totalDurationMin: completedSessions.reduce(0) { $0 + $1.durationMin },
+            lastWorkout: completedSessions.max { $0.occurredAt < $1.occurredAt }
+        )
+    }
+
+    func delete(id: String) throws {
+        try database.writer.write { db in
+            _ = try WorkoutSessionRecord.deleteOne(db, key: id)
+        }
+    }
+
     func deleteAll() throws {
         try database.writer.write { db in
             _ = try WorkoutSessionRecord.deleteAll(db)
         }
     }
+}
+
+struct WorkoutWeeklySummary: Equatable {
+    let completedWorkouts: Int
+    let totalDurationMin: Int
+    let lastWorkout: WorkoutSessionRecord?
 }

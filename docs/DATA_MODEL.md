@@ -147,6 +147,7 @@ Zweck: zentrale Zielwerte und App-Konfiguration.
 | id | String | ja | single/settings |
 | kcalTarget | Int | ja | Tagesziel Kalorien |
 | proteinTargetG | Double | ja | Tagesziel Protein |
+| weeklyWorkoutTarget | Int | ja | Workouts pro Woche |
 | monthlyBudget | Decimal/Double | ja | Monatsbudget |
 | defaultCurrency | String | ja | EUR |
 | weekStartsOn | Int | ja | Montag/Sonntag |
@@ -214,3 +215,82 @@ Habit-Definitionen bleiben vorerst feste App-Habits im Dashboard-State; es gibt 
 Phase 4A nutzt das bestehende `nutrition_entries`-Schema ohne Migration. Die Ernährung-Seite liest Tagesentries aus SQLite, berechnet Kalorien und Protein aus den geladenen Entries und kann einzelne `NutritionEntry`-Datensätze löschen.
 
 Nicht modelliert werden in dieser Phase Food-Datenbank, Barcode-Daten, externe Food-IDs, KI-Auswertung, Rezepte, Templates/Favorites oder Wochenanalyse.
+
+## 16. Phase 4B Training-Detailseite
+
+Phase 4B nutzt das bestehende `workout_sessions`-Schema ohne Migration. Die Training-Seite liest Sessions der aktuellen Woche aus SQLite, berechnet abgeschlossene Workouts und Gesamtdauer aus den geladenen `done`-Sessions und kann einzelne `WorkoutSession`-Datensätze löschen.
+
+Nicht modelliert werden in dieser Phase Trainingspläne, ExerciseEntry-UI, Übungsdatenbank, Sätze/Wiederholungen/Gewichte, Progression, Kalenderintegration, HealthKit, KI oder Monatsanalyse.
+
+## 17. Phase 4C Finanzen-Detailseite
+
+Phase 4C nutzt das bestehende `finance_entries`-Schema ohne Migration. Die Finanzen-Seite liest Ausgaben des aktuellen Monats aus SQLite, berechnet Monatsausgaben und Restbudget aus den geladenen Entries und den AppSettings und kann einzelne `FinanceEntry`-Datensätze löschen.
+
+Nicht modelliert werden in dieser Phase Bankverbindung, Kontosynchronisierung, automatische Kategorienlogik, wiederkehrende Fixkosten, Sparplan-/Investmentlogik, Abofolio-Integration, Steuerlogik, KI oder Jahresberichte.
+
+## 18. Phase 4D Gewohnheiten-Detailseite
+
+Phase 4D nutzt das bestehende `habit_entries`-Schema ohne Migration. Die Gewohnheiten-Seite liest Entries des ausgewählten Tages aus SQLite und zeigt sie gegen feste App-Habits: `water`, `movement`, `nutrition`, `learning` und `sleep`.
+
+Das Umschalten einer Gewohnheit nutzt ein idempotentes Upsert: vorhandene Einträge werden aktualisiert, fehlende Einträge werden angelegt. Die Tageszusammenfassung berechnet erledigte feste Habits und Gesamtzahl aus diesen Definitionen.
+
+Nicht modelliert werden in dieser Phase Habit-Erstellung, `habit_definitions` als Tabelle, Streaks, Reminder, Kalenderansicht, Gamification, KI oder Wochen-/Monatsanalyse.
+
+## 19. Phase 4E Wochenreview-Detailseite
+
+Phase 4E ergänzt eine minimale Tabelle `weekly_reviews` für persönliche Review-Notizen. Ein Datensatz ist über `week_start_date` eindeutig einer Woche zugeordnet und speichert `wins_text`, `challenges_text`, `next_week_focus_text`, optional `rating`, sowie `created_at` und `updated_at`.
+
+Die Wochenreview-Seite persistiert keine berechneten Summen. Ernährung, Training, Finanzen und Gewohnheiten werden aus bestehenden Entry-Tabellen über einfache Wochen-Summaries gelesen.
+
+Nicht modelliert werden in dieser Phase KI-Auswertung, Coaching-Logik, komplexe Statistikmodelle, Monatsberichte, PDF-Reports, Kalenderansicht oder externe Integrationen.
+
+## 20. Phase 5 Einstellungen und Zielwerte
+
+Phase 5 nutzt `app_settings` als Single-Row-Tabelle für zentrale Zielwerte. Ergänzt wird `weekly_workout_target` per Migration, damit Training, Dashboard und Wochenreview dasselbe Wochenziel verwenden.
+
+Persistiert werden Kalorienziel, Proteinziel, Wochen-Trainingsziel, Monatsbudget, Währung `EUR` und Wochenstart Montag. Defaults werden zentral über `SeedData.defaultSettings` bereitgestellt und über `SettingsRepository` geladen, gespeichert oder zurückgesetzt.
+
+Nicht modelliert werden in dieser Phase Accounts, Cloud/iCloud Sync, Export/Backup, Ziel-Historie, Profile, Reminder, HealthKit, KI oder externe Integrationen.
+
+## 21. Phase 6A Backup und Export
+
+Phase 6A ändert das Datenbankschema nicht. Backups und Exporte lesen die bestehenden Tabellen:
+
+- `nutrition_entries`
+- `workout_sessions`
+- `finance_entries`
+- `habit_entries`
+- `body_metric_entries`
+- `weekly_reviews`
+- `app_settings`
+
+SQLite-Backups werden als konsistente Datenbankkopie erstellt. JSON-Exporte enthalten `exportVersion`, `createdAt`, `appName` und Arrays der wichtigsten App-Daten. Der Export ist eine lokale Sicherungs-/Lesedatei und kein Importvertrag.
+
+Nicht modelliert werden in dieser Phase Restore/Import, Datenbank-Ersetzung, Cloud/iCloud Sync, Accounts, Verschluesselung, Scheduler oder externe Integrationen.
+
+## 22. Phase 7A Home-Trainingsplan
+
+Phase 7A ändert das Datenbankschema nicht. Der Home-Trainingsplan besteht aus kleinen reinen Swift-Modellen (`HomeWorkoutPlan`, `HomeWorkoutDay`, `HomeWorkoutIntensity`, `HomeWorkoutExercise`) und einem statischen Provider.
+
+Ein abgeschlossener Plan wird als normale `WorkoutSession` in `workout_sessions` gespeichert:
+
+- `workout_type`: z. B. `Home Plan: Pull + Core`
+- `duration_min`: aus der Intensität abgeleitet, Minimum 15, Normal 30, Stark 45
+- `status`: `done`
+- `note`: Intensität, erledigte Übungen und Übungsliste als Text
+
+Nicht modelliert werden in dieser Phase persistierte Plan-Records, Exercise-Records, Satz-/Gewichts-Historie, automatische Progression, eigene Trainingstage, Kalenderintegration, Reminder, HealthKit, KI oder externe Integrationen.
+
+## 23. Phase 7C Messbare Gewohnheiten
+
+Phase 7C erweitert `habit_entries` additiv um messbare Tageswerte:
+
+- `value` als `DOUBLE?`
+- `target_value` als `DOUBLE?`
+- `unit` als `TEXT?`
+
+`is_completed` bleibt als Kompatibilitätsfeld bestehen. Für messbare Habits wird es beim Speichern aus `value >= target_value` abgeleitet; alte Boolean-Daten bleiben lesbar. Die Migration setzt bekannte feste Habits auf Default-Ziele und transformiert bestehende Boolean-Werte: erledigt wird zum Zielwert, offen wird `0`.
+
+Die fünf Habit-Definitionen bleiben feste Swift-Defaults: Wasser 3,0 Liter, Bewegung 60 Minuten, Ernährung getrackt 3 Mahlzeiten, Lernen 60 Minuten, Schlafroutine 1. Es gibt weiterhin keine `habit_definitions`-Tabelle und keine Custom Habits.
+
+Nicht modelliert werden in dieser Phase Ziel-Historie, Custom Habits, Reminder, Streak-Analytics, Kalender-/Heatmap-Daten, HealthKit, KI oder externe Integrationen.

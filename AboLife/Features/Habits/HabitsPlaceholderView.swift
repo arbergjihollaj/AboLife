@@ -1,11 +1,9 @@
 import SwiftUI
 
 struct HabitsPlaceholderView: View {
+    @Environment(\.appDatabase) private var appDatabase
+
     var body: some View {
-        PlaceholderFeatureView(
-            title: "Gewohnheiten",
-            systemImage: "checkmark.seal",
-            message: "Noch keine Gewohnheiten abgehakt. Die echte Habit-Erfassung wird später ergänzt."
-        )
+        HabitsView(database: appDatabase)
     }
 }
