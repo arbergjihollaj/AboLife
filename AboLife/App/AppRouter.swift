@@ -51,6 +51,7 @@ enum AppSection: String, CaseIterable, Identifiable {
 }
 
 struct AppRouter: View {
+    @Environment(\.appDatabase) private var appDatabase
     @State private var selection: AppSection? = .dashboard
 
     var body: some View {
@@ -82,7 +83,7 @@ struct AppRouter: View {
             Group {
                 switch selection ?? .dashboard {
                 case .dashboard:
-                    DashboardView(store: DashboardStore())
+                    DashboardView(store: DashboardStore(database: appDatabase))
                 case .nutrition:
                     NutritionPlaceholderView()
                 case .training:
@@ -164,7 +165,7 @@ struct AppRouter: View {
             }
 
             AboLifeGlassCapsule {
-                Label("Phase 1.5 UI Mock", systemImage: "wand.and.stars")
+                Label("Lokal mit SQLite", systemImage: "internaldrive")
                     .font(AboLifeTypography.micro)
                     .foregroundStyle(AboLifeColors.secondaryText)
             }

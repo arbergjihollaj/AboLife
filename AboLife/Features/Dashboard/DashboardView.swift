@@ -2,7 +2,6 @@ import SwiftUI
 
 struct DashboardView: View {
     @StateObject var store: DashboardStore
-    @State private var showsQuickAdd = false
     @State private var selectedQuickAddKind: QuickAddKind?
 
     private let twoColumnGrid = [
@@ -27,14 +26,13 @@ struct DashboardView: View {
 
             FloatingQuickAddBar(actions: quickAddActions) { kind in
                 selectedQuickAddKind = kind
-                showsQuickAdd = true
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 18)
         }
         .navigationTitle("")
-        .sheet(isPresented: $showsQuickAdd) {
-            QuickAddPlaceholderSheet(store: store, initialKind: selectedQuickAddKind)
+        .sheet(item: $selectedQuickAddKind) { kind in
+            QuickAddPlaceholderSheet(store: store, initialKind: kind)
         }
     }
 
@@ -56,15 +54,14 @@ struct DashboardView: View {
                     Circle()
                         .fill(AboLifeColors.nutrition)
                         .frame(width: 7, height: 7)
-                    Text("Live Mock")
+                    Text("Lokal")
                         .font(AboLifeTypography.caption)
                         .foregroundStyle(AboLifeColors.secondaryText)
                 }
             }
 
             Button {
-                selectedQuickAddKind = nil
-                showsQuickAdd = true
+                selectedQuickAddKind = .general
             } label: {
                 Label("Quick Add", systemImage: "plus.circle.fill")
                     .font(.system(size: 14, weight: .semibold))
@@ -298,7 +295,7 @@ struct DashboardView: View {
                 cardTitle("Recent Activity", systemImage: "clock.arrow.circlepath", tint: AboLifeColors.review)
 
                 if store.snapshot.recentActions.isEmpty {
-                    Text("Noch keine Mock-Aktion erfasst.")
+                    Text("Noch keine Aktion erfasst.")
                         .font(AboLifeTypography.caption)
                         .foregroundStyle(AboLifeColors.secondaryText)
                 } else {

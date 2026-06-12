@@ -50,6 +50,18 @@ Für AboLife wird in Version 1 empfohlen:
 
 > SwiftUI + SQLite + GRDB
 
+Phase 3A legt dieses Persistenzfundament lokal an:
+
+- `AboLife/Persistence/` enthält Datenbankkonfiguration, Migrationen, GRDB-Records und kleine Repositories.
+- Die SQLite-Datei liegt im Application-Support-Ordner der App als `AboLife.sqlite`.
+- Das Dashboard bleibt in Phase 3A noch auf dem In-Memory-Mock-State; echte Quick-Add-Anbindung folgt in Phase 3B.
+
+Phase 3B verbindet die wichtigsten Quick-Add-Aktionen mit SQLite:
+
+- `DashboardStore` bekommt `AppDatabase` injiziert und spricht nur mit Repositories, nicht direkt mit SQL.
+- Nutrition, Workout, Finance, Habit und BodyMetric Quick Add schreiben lokal in SQLite.
+- Dashboard-Karten nutzen erste berechnete Tages-, Wochen- und Monats-Summaries aus den Entries.
+
 ## 4. Architekturprinzipien
 
 - Views enthalten keine Business-Logik

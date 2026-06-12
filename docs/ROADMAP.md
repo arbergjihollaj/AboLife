@@ -41,7 +41,7 @@ Nicht tun:
 - keine KI
 - keine iPhone-App
 
-## Phase 2: Lokale Persistenz
+## Phase 2 / 3A: Lokale Persistenz
 
 Ziel: echte Speicherung einführen.
 
@@ -58,6 +58,19 @@ Ergebnis:
 
 - lokale Datenbank läuft
 - Mock-Daten können durch echte Daten ersetzt werden
+
+Stand Phase 3A:
+
+- GRDB + SQLite sind als lokales Persistenzfundament eingebunden.
+- Basis-Migrationen, Records und einfache Repositories existieren.
+- Dashboard und Quick Add laufen weiterhin mit In-Memory-Mock-State.
+- Phase 3B verbindet Quick Add schrittweise mit den Repositories.
+
+Stand Phase 3B:
+
+- Quick Add schreibt Mahlzeiten, Trainings, Ausgaben, Habits und Gewicht lokal in SQLite.
+- Dashboard lädt erste persistierte Summaries für Tag, Woche und Monat.
+- Detailmodule, komplexe Aggregationen und WeeklyReview-Persistenz bleiben spätere Phasen.
 
 ## Phase 3: Quick Add + erste echte Einträge
 

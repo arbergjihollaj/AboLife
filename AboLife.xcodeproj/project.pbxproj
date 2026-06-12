@@ -32,6 +32,25 @@
 		100000000000000000000121 /* AboLifeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000021 /* AboLifeTests.swift */; };
 		100000000000000000000123 /* AboLifePremiumBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000023 /* AboLifePremiumBackground.swift */; };
 		100000000000000000000124 /* QuickAddAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000024 /* QuickAddAction.swift */; };
+		AB0F00000000000000000101 /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000001 /* AppDatabase.swift */; };
+		AB0F00000000000000000102 /* DatabaseConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000002 /* DatabaseConfiguration.swift */; };
+		AB0F00000000000000000103 /* DatabaseMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000003 /* DatabaseMigrator.swift */; };
+		AB0F00000000000000000104 /* NutritionEntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000004 /* NutritionEntryRecord.swift */; };
+		AB0F00000000000000000105 /* WorkoutSessionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000005 /* WorkoutSessionRecord.swift */; };
+		AB0F00000000000000000106 /* FinanceEntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000006 /* FinanceEntryRecord.swift */; };
+		AB0F00000000000000000107 /* HabitEntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000007 /* HabitEntryRecord.swift */; };
+		AB0F00000000000000000108 /* BodyMetricEntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000008 /* BodyMetricEntryRecord.swift */; };
+		AB0F00000000000000000109 /* AppSettingsRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000009 /* AppSettingsRecord.swift */; };
+		AB0F00000000000000000110 /* NutritionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000010 /* NutritionRepository.swift */; };
+		AB0F00000000000000000111 /* WorkoutRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000011 /* WorkoutRepository.swift */; };
+		AB0F00000000000000000112 /* FinanceRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000012 /* FinanceRepository.swift */; };
+		AB0F00000000000000000113 /* HabitRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000013 /* HabitRepository.swift */; };
+		AB0F00000000000000000114 /* SettingsRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000014 /* SettingsRepository.swift */; };
+		AB0F00000000000000000115 /* SeedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000015 /* SeedData.swift */; };
+		AB0F00000000000000000116 /* DateIntervals.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000016 /* DateIntervals.swift */; };
+		AB0F00000000000000000117 /* BodyMetricRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000017 /* BodyMetricRepository.swift */; };
+		AB0F00000000000000000201 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = AB0F00000000000000000902 /* GRDB */; };
+		AB0F00000000000000000202 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = AB0F00000000000000000902 /* GRDB */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,13 +89,30 @@
 		100000000000000000000021 /* AboLifeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifeTests.swift; sourceTree = "<group>"; };
 		100000000000000000000023 /* AboLifePremiumBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifePremiumBackground.swift; sourceTree = "<group>"; };
 		100000000000000000000024 /* QuickAddAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddAction.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000001 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000002 /* DatabaseConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseConfiguration.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000003 /* DatabaseMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrator.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000004 /* NutritionEntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionEntryRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000005 /* WorkoutSessionRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000006 /* FinanceEntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceEntryRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000007 /* HabitEntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitEntryRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000008 /* BodyMetricEntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyMetricEntryRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000009 /* AppSettingsRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000010 /* NutritionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000011 /* WorkoutRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000012 /* FinanceRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000013 /* HabitRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000014 /* SettingsRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000015 /* SeedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedData.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000016 /* DateIntervals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateIntervals.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000017 /* BodyMetricRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyMetricRepository.swift; sourceTree = "<group>"; };
 		100000000000000000000201 /* AboLife.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AboLife.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		100000000000000000000202 /* AboLifeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AboLifeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		100000000000000000000401 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-		100000000000000000000402 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		100000000000000000000401 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (AB0F00000000000000000201 /* GRDB in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
+		100000000000000000000402 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (AB0F00000000000000000202 /* GRDB in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -94,6 +130,7 @@
 			children = (
 				100000000000000000000502 /* App */,
 				100000000000000000000503 /* DesignSystem */,
+				AB0F00000000000000000501 /* Persistence */,
 				100000000000000000000504 /* Features */,
 				100000000000000000000505 /* Charts */,
 				100000000000000000000506 /* PreviewSupport */,
@@ -115,6 +152,11 @@
 		100000000000000000000516 /* Settings */ = {isa = PBXGroup; children = (100000000000000000000015 /* SettingsPlaceholderView.swift */); path = Settings; sourceTree = "<group>"; };
 		100000000000000000000520 /* AboLifeTests */ = {isa = PBXGroup; children = (100000000000000000000021 /* AboLifeTests.swift */); path = AboLifeTests; sourceTree = "<group>"; };
 		100000000000000000000590 /* Products */ = {isa = PBXGroup; children = (100000000000000000000201 /* AboLife.app */, 100000000000000000000202 /* AboLifeTests.xctest */); name = Products; sourceTree = "<group>"; };
+		AB0F00000000000000000501 /* Persistence */ = {isa = PBXGroup; children = (AB0F00000000000000000001 /* AppDatabase.swift */, AB0F00000000000000000002 /* DatabaseConfiguration.swift */, AB0F00000000000000000016 /* DateIntervals.swift */, AB0F00000000000000000502 /* Migrations */, AB0F00000000000000000503 /* Models */, AB0F00000000000000000504 /* Repositories */, AB0F00000000000000000505 /* Seed */); path = Persistence; sourceTree = "<group>"; };
+		AB0F00000000000000000502 /* Migrations */ = {isa = PBXGroup; children = (AB0F00000000000000000003 /* DatabaseMigrator.swift */); path = Migrations; sourceTree = "<group>"; };
+		AB0F00000000000000000503 /* Models */ = {isa = PBXGroup; children = (AB0F00000000000000000004 /* NutritionEntryRecord.swift */, AB0F00000000000000000005 /* WorkoutSessionRecord.swift */, AB0F00000000000000000006 /* FinanceEntryRecord.swift */, AB0F00000000000000000007 /* HabitEntryRecord.swift */, AB0F00000000000000000008 /* BodyMetricEntryRecord.swift */, AB0F00000000000000000009 /* AppSettingsRecord.swift */); path = Models; sourceTree = "<group>"; };
+		AB0F00000000000000000504 /* Repositories */ = {isa = PBXGroup; children = (AB0F00000000000000000010 /* NutritionRepository.swift */, AB0F00000000000000000011 /* WorkoutRepository.swift */, AB0F00000000000000000012 /* FinanceRepository.swift */, AB0F00000000000000000013 /* HabitRepository.swift */, AB0F00000000000000000017 /* BodyMetricRepository.swift */, AB0F00000000000000000014 /* SettingsRepository.swift */); path = Repositories; sourceTree = "<group>"; };
+		AB0F00000000000000000505 /* Seed */ = {isa = PBXGroup; children = (AB0F00000000000000000015 /* SeedData.swift */); path = Seed; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -125,6 +167,7 @@
 			buildRules = ();
 			dependencies = ();
 			name = AboLife;
+			packageProductDependencies = (AB0F00000000000000000902 /* GRDB */);
 			productName = AboLife;
 			productReference = 100000000000000000000201 /* AboLife.app */;
 			productType = "com.apple.product-type.application";
@@ -136,6 +179,7 @@
 			buildRules = ();
 			dependencies = (100000000000000000000221 /* PBXTargetDependency */);
 			name = AboLifeTests;
+			packageProductDependencies = (AB0F00000000000000000902 /* GRDB */);
 			productName = AboLifeTests;
 			productReference = 100000000000000000000202 /* AboLifeTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -160,6 +204,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (en, Base);
 			mainGroup = 100000000000000000000500;
+			packageReferences = (AB0F00000000000000000901 /* XCRemoteSwiftPackageReference "GRDB.swift" */);
 			productRefGroup = 100000000000000000000590 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -201,6 +246,23 @@
 				100000000000000000000118 /* MiniTrendChart.swift in Sources */,
 				100000000000000000000119 /* BudgetProgressBar.swift in Sources */,
 				100000000000000000000120 /* PreviewData.swift in Sources */,
+				AB0F00000000000000000101 /* AppDatabase.swift in Sources */,
+				AB0F00000000000000000102 /* DatabaseConfiguration.swift in Sources */,
+				AB0F00000000000000000103 /* DatabaseMigrator.swift in Sources */,
+				AB0F00000000000000000104 /* NutritionEntryRecord.swift in Sources */,
+				AB0F00000000000000000105 /* WorkoutSessionRecord.swift in Sources */,
+				AB0F00000000000000000106 /* FinanceEntryRecord.swift in Sources */,
+				AB0F00000000000000000107 /* HabitEntryRecord.swift in Sources */,
+				AB0F00000000000000000108 /* BodyMetricEntryRecord.swift in Sources */,
+				AB0F00000000000000000109 /* AppSettingsRecord.swift in Sources */,
+				AB0F00000000000000000110 /* NutritionRepository.swift in Sources */,
+				AB0F00000000000000000111 /* WorkoutRepository.swift in Sources */,
+				AB0F00000000000000000112 /* FinanceRepository.swift in Sources */,
+				AB0F00000000000000000113 /* HabitRepository.swift in Sources */,
+				AB0F00000000000000000116 /* DateIntervals.swift in Sources */,
+				AB0F00000000000000000117 /* BodyMetricRepository.swift in Sources */,
+				AB0F00000000000000000114 /* SettingsRepository.swift in Sources */,
+				AB0F00000000000000000115 /* SeedData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -407,6 +469,25 @@
 		100000000000000000000701 /* Build configuration list for PBXNativeTarget "AboLife" */ = {isa = XCConfigurationList; buildConfigurations = (100000000000000000000803 /* Debug */, 100000000000000000000804 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		100000000000000000000702 /* Build configuration list for PBXNativeTarget "AboLifeTests" */ = {isa = XCConfigurationList; buildConfigurations = (100000000000000000000805 /* Debug */, 100000000000000000000806 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AB0F00000000000000000901 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AB0F00000000000000000902 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB0F00000000000000000901 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 100000000000000000000300 /* Project object */;
 }

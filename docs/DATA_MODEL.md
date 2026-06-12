@@ -183,3 +183,28 @@ Dashboard-Werte werden nicht als primäre Tabellen betrachtet. Sie entstehen dur
 - habitCompletionToday
 - weeklyCoreScore
 - sevenDayTrend
+
+## 13. Phase 3A Persistenzschema
+
+Phase 3A persistiert als Fundament nur die ersten Core-Tabellen:
+
+- `nutrition_entries`
+- `workout_sessions`
+- `finance_entries`
+- `habit_entries`
+- `body_metric_entries`
+- `app_settings`
+
+Noch nicht persistiert werden Dashboard-Read-Models, Weekly Reviews, komplexe Aggregationen oder Beziehungen zwischen Einträgen. Datensätze verwenden UUID-Strings als IDs; Zeitpunkte werden konsistent ueber GRDB/SQLite-Date-Felder gespeichert, Habit-Tage als `YYYY-MM-DD`-Text.
+
+## 14. Phase 3B Persistierte Dashboard-Summaries
+
+Phase 3B speichert keine Dashboard-Read-Models. Das Dashboard berechnet erste Werte direkt aus Entries:
+
+- heutige Kalorien und Protein aus `nutrition_entries`
+- abgeschlossene Workouts der aktuellen Woche aus `workout_sessions`
+- Monatsausgaben aus `finance_entries`
+- heutige Habit-Erledigungen aus `habit_entries`
+- optional letztes Gewicht aus `body_metric_entries`
+
+Habit-Definitionen bleiben vorerst feste App-Habits im Dashboard-State; es gibt noch keine `habit_definitions`-Tabelle.

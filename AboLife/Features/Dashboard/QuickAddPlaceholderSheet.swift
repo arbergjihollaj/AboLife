@@ -42,16 +42,16 @@ struct QuickAddPlaceholderSheet: View {
                 Text(selectedAction?.title ?? "Quick Add")
                     .font(AboLifeTypography.dashboardTitle)
                     .foregroundStyle(AboLifeColors.primaryText)
-                Text("Lokale Mock-Erfassung ohne Persistenz")
+                Text("Lokale Erfassung mit SQLite")
                     .font(AboLifeTypography.caption)
                     .foregroundStyle(AboLifeColors.secondaryText)
             }
 
             Spacer()
 
-            if selectedKind != nil {
+            if selectedKind != nil && selectedKind != .general {
                 Button {
-                    selectedKind = nil
+                    selectedKind = .general
                 } label: {
                     Image(systemName: "chevron.left.circle.fill")
                         .font(.system(size: 20, weight: .semibold))
@@ -74,7 +74,7 @@ struct QuickAddPlaceholderSheet: View {
     }
 
     private var selectedAction: QuickAddAction? {
-        guard let selectedKind else { return nil }
+        guard let selectedKind, selectedKind != .general else { return nil }
         return QuickAddAction.dashboardActions.first { $0.kind == selectedKind }
     }
 
@@ -86,7 +86,7 @@ struct QuickAddPlaceholderSheet: View {
                         .font(AboLifeTypography.cardTitle)
                         .foregroundStyle(AboLifeColors.primaryText)
 
-                    Text("Wähle eine Aktion. Alles aktualisiert nur den lokalen App-State für diese Laufzeit.")
+                    Text("Wähle eine Aktion. Die wichtigsten Einträge werden lokal gespeichert.")
                         .font(AboLifeTypography.body)
                         .foregroundStyle(AboLifeColors.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -104,6 +104,8 @@ struct QuickAddPlaceholderSheet: View {
     @ViewBuilder
     private func flow(for kind: QuickAddKind) -> some View {
         switch kind {
+        case .general:
+            actionGrid
         case .meal:
             QuickAddMealForm(store: store, dismiss: dismiss)
         case .workout:

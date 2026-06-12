@@ -130,7 +130,7 @@ enum DashboardMockData {
             ),
             week: WeekStatus(
                 title: "7-Tage-Wochenstatus",
-                message: "Heute reagiert live auf deine Mock-Einträge.",
+                message: "Heute reagiert live auf deine lokalen Einträge.",
                 days: weekDays(todayCompletion: coreProgress)
             ),
             bodyWeight: state.bodyWeight,

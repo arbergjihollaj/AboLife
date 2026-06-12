@@ -1,6 +1,7 @@
 import SwiftUI
 
 enum QuickAddKind: String, Identifiable, CaseIterable {
+    case general
     case meal
     case workout
     case expense
@@ -32,7 +33,6 @@ struct QuickAddAction: Identifiable {
         QuickAddAction(kind: .meal, title: "Mahlzeit", systemImage: "fork.knife", tint: AboLifeColors.nutrition),
         QuickAddAction(kind: .workout, title: "Training", systemImage: "figure.strengthtraining.traditional", tint: AboLifeColors.training),
         QuickAddAction(kind: .expense, title: "Ausgabe", systemImage: "eurosign.circle", tint: AboLifeColors.finance),
-        QuickAddAction(kind: .habit, title: "Gewohnheit", systemImage: "checkmark.seal", tint: AboLifeColors.habits),
-        QuickAddAction(kind: .note, title: "Notiz", systemImage: "note.text", tint: AboLifeColors.protein)
+        QuickAddAction(kind: .habit, title: "Gewohnheit", systemImage: "checkmark.seal", tint: AboLifeColors.habits)
     ]
 }
