@@ -3,104 +3,211 @@ import SwiftUI
 struct DashboardView: View {
     @StateObject var store: DashboardStore
     @State private var showsQuickAdd = false
+    @State private var selectedQuickAddKind: QuickAddKind?
 
-    private let columns = [
-        GridItem(.flexible(minimum: 260), spacing: 16),
-        GridItem(.flexible(minimum: 260), spacing: 16)
+    private let twoColumnGrid = [
+        GridItem(.flexible(minimum: 220), spacing: 12),
+        GridItem(.flexible(minimum: 220), spacing: 12)
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
-                heroCard
+        ZStack(alignment: .bottom) {
+            AboLifePremiumBackground()
 
-                LazyVGrid(columns: columns, alignment: .leading, spacing: 16) {
-                    metricCard(store.snapshot.calories, tint: AboLifeColors.nutrition)
-                    metricCard(store.snapshot.protein, tint: AboLifeColors.protein)
-                    trainingCard
-                    financeCard
-                    habitsCard
-                    weekCard
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    header
+                    heroCard
+
+                    dashboardGrid
                 }
+                .padding(22)
+                .padding(.bottom, 86)
             }
-            .padding(28)
-        }
-        .background(AboLifeColors.pageBackground)
-        .navigationTitle("Dashboard")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showsQuickAdd = true
-                } label: {
-                    Label("Quick Add", systemImage: "plus.circle.fill")
-                }
+
+            FloatingQuickAddBar(actions: quickAddActions) { kind in
+                selectedQuickAddKind = kind
+                showsQuickAdd = true
             }
+            .padding(.horizontal, 22)
+            .padding(.bottom, 18)
         }
+        .navigationTitle("")
         .sheet(isPresented: $showsQuickAdd) {
-            QuickAddPlaceholderSheet()
+            QuickAddPlaceholderSheet(store: store, initialKind: selectedQuickAddKind)
         }
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .center, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(store.snapshot.greeting)
                     .font(AboLifeTypography.dashboardTitle)
+                    .foregroundStyle(AboLifeColors.primaryText)
                 Text(store.snapshot.dateLine)
                     .font(AboLifeTypography.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AboLifeColors.secondaryText)
             }
 
             Spacer()
 
+            AboLifeGlassCapsule {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(AboLifeColors.nutrition)
+                        .frame(width: 7, height: 7)
+                    Text("Live Mock")
+                        .font(AboLifeTypography.caption)
+                        .foregroundStyle(AboLifeColors.secondaryText)
+                }
+            }
+
             Button {
+                selectedQuickAddKind = nil
                 showsQuickAdd = true
             } label: {
-                Label("Quick Add", systemImage: "plus")
+                Label("Quick Add", systemImage: "plus.circle.fill")
                     .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(AboLifeColors.primaryText)
             }
             .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .controlSize(.regular)
+            .tint(AboLifeColors.review)
         }
     }
 
     private var heroCard: some View {
-        AboLifeCard {
-            HStack(spacing: 28) {
-                CoreRingView(
-                    progress: store.snapshot.coreProgress,
-                    lineWidth: 16,
-                    tint: AboLifeColors.review
-                )
-                .frame(width: 190, height: 190)
-
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("Daily Core")
-                        .font(AboLifeTypography.sectionTitle)
-                    Text(store.snapshot.coreMessage)
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text("Nächster sinnvoller Schritt: Training einplanen oder proteinreiche Mahlzeit erfassen.")
-                        .font(AboLifeTypography.body)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Spacer(minLength: 0)
+        AboLifeCard(isProminent: true) {
+            ViewThatFits(in: .horizontal) {
+                heroContent(isCompact: false)
+                heroContent(isCompact: true)
             }
         }
     }
 
-    private func metricCard(_ metric: ProgressMetric, tint: Color) -> some View {
-        AboLifeCard {
-            VStack(alignment: .leading, spacing: 14) {
-                cardTitle(metric.title, systemImage: metric.title == "Kalorien" ? "flame" : "bolt.heart", tint: tint)
+    private func heroContent(isCompact: Bool) -> some View {
+        Group {
+            if isCompact {
+                VStack(alignment: .leading, spacing: 16) {
+                    heroRing(size: 138, lineWidth: 12)
+                    heroCopy
+                }
+            } else {
+                HStack(alignment: .center, spacing: 24) {
+                    heroRing(size: 166, lineWidth: 14)
+                    heroCopy
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+    }
 
-                Text(metric.valueText)
-                    .font(AboLifeTypography.metric)
-                    .monospacedDigit()
+    private func heroRing(size: CGFloat, lineWidth: CGFloat) -> some View {
+        CoreRingView(
+            progress: store.snapshot.coreProgress,
+            lineWidth: lineWidth,
+            tint: AboLifeColors.review
+        )
+        .frame(width: size, height: size)
+    }
+
+    private var heroCopy: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(spacing: 10) {
+                cardTitle("Daily Core", systemImage: "circle.hexagongrid.fill", tint: AboLifeColors.review)
+
+                AboLifeGlassCapsule {
+                    Text("\(Int(store.snapshot.coreProgress * 100))% stabil")
+                        .font(AboLifeTypography.micro)
+                        .foregroundStyle(AboLifeColors.review)
+                        .monospacedDigit()
+                }
+            }
+
+            Text(store.snapshot.coreMessage)
+                .font(AboLifeTypography.heroMessage)
+                .foregroundStyle(AboLifeColors.primaryText)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 620, alignment: .leading)
+
+            Text(store.snapshot.nextStep)
+                .font(AboLifeTypography.body)
+                .foregroundStyle(AboLifeColors.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 620, alignment: .leading)
+
+            PremiumProgressBar(progress: store.snapshot.coreProgress, tint: AboLifeColors.review, height: 7)
+                .frame(maxWidth: 420)
+        }
+    }
+
+    private var quickAddActions: [QuickAddAction] {
+        QuickAddAction.bottomDockActions
+    }
+
+    private var dashboardGrid: some View {
+        ViewThatFits(in: .horizontal) {
+            wideDashboardGrid
+            mediumDashboardGrid
+            compactDashboardGrid
+        }
+    }
+
+    private var wideDashboardGrid: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                metricCard(store.snapshot.calories, systemImage: "flame", tint: AboLifeColors.nutrition)
+                    .frame(minWidth: 190, maxWidth: .infinity)
+                metricCard(store.snapshot.protein, systemImage: "bolt.heart", tint: AboLifeColors.protein)
+                    .frame(minWidth: 190, maxWidth: .infinity)
+                trainingCard
+                    .frame(minWidth: 190, maxWidth: .infinity)
+                financeCard
+                    .frame(minWidth: 190, maxWidth: .infinity)
+            }
+
+            HStack(alignment: .top, spacing: 12) {
+                habitsCard
+                    .frame(minWidth: 230, maxWidth: .infinity)
+                activityCard
+                    .frame(minWidth: 230, maxWidth: .infinity)
+                weekCard
+                    .frame(minWidth: 300, maxWidth: .infinity)
+            }
+        }
+    }
+
+    private var mediumDashboardGrid: some View {
+        LazyVGrid(columns: twoColumnGrid, alignment: .leading, spacing: 12) {
+            metricCard(store.snapshot.calories, systemImage: "flame", tint: AboLifeColors.nutrition)
+            metricCard(store.snapshot.protein, systemImage: "bolt.heart", tint: AboLifeColors.protein)
+            trainingCard
+            financeCard
+            habitsCard
+            activityCard
+            weekCard
+        }
+        .frame(minWidth: 452)
+    }
+
+    private var compactDashboardGrid: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            metricCard(store.snapshot.calories, systemImage: "flame", tint: AboLifeColors.nutrition)
+            metricCard(store.snapshot.protein, systemImage: "bolt.heart", tint: AboLifeColors.protein)
+            trainingCard
+            financeCard
+            habitsCard
+            activityCard
+            weekCard
+        }
+    }
+
+    private func metricCard(_ metric: ProgressMetric, systemImage: String, tint: Color) -> some View {
+        AboLifeCard(minHeight: 154) {
+            VStack(alignment: .leading, spacing: 8) {
+                cardTitle(metric.title, systemImage: systemImage, tint: tint)
+
+                metricValue(current: metric.current, target: metric.target, unit: metric.unit)
 
                 MetricProgressView(progress: metric.progress, tint: tint)
 
@@ -108,36 +215,37 @@ struct DashboardView: View {
 
                 Text(metric.message)
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AboLifeColors.secondaryText)
             }
         }
     }
 
     private var trainingCard: some View {
-        AboLifeCard {
-            VStack(alignment: .leading, spacing: 14) {
+        AboLifeCard(minHeight: 154) {
+            VStack(alignment: .leading, spacing: 8) {
                 cardTitle(store.snapshot.training.title, systemImage: "figure.strengthtraining.traditional", tint: AboLifeColors.training)
 
                 Text(store.snapshot.training.status)
                     .font(AboLifeTypography.metric)
+                    .foregroundStyle(AboLifeColors.primaryText)
 
                 Label(store.snapshot.training.weeklyProgress, systemImage: "calendar")
                     .font(AboLifeTypography.body)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AboLifeColors.secondaryText)
 
-                MetricProgressView(progress: 2.0 / 3.0, tint: AboLifeColors.training)
+                MetricProgressView(progress: store.snapshot.training.progress, tint: AboLifeColors.training)
+
+                Spacer(minLength: 0)
             }
         }
     }
 
     private var financeCard: some View {
-        AboLifeCard {
-            VStack(alignment: .leading, spacing: 14) {
+        AboLifeCard(minHeight: 154) {
+            VStack(alignment: .leading, spacing: 8) {
                 cardTitle(store.snapshot.finance.title, systemImage: "eurosign.circle", tint: AboLifeColors.finance)
 
-                Text("\(Int(store.snapshot.finance.remainingToday)) EUR Tagesbudget")
-                    .font(AboLifeTypography.metric)
-                    .monospacedDigit()
+                kpiValue("\(Int(store.snapshot.finance.remainingToday))", suffix: "EUR Tagesbudget")
 
                 BudgetProgressBar(
                     spent: store.snapshot.finance.spentThisMonth,
@@ -146,97 +254,113 @@ struct DashboardView: View {
 
                 Text(store.snapshot.finance.message)
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AboLifeColors.secondaryText)
             }
         }
     }
 
     private var habitsCard: some View {
-        AboLifeCard {
-            VStack(alignment: .leading, spacing: 14) {
+        AboLifeCard(minHeight: 154) {
+            VStack(alignment: .leading, spacing: 8) {
                 cardTitle(store.snapshot.habits.title, systemImage: "checkmark.seal", tint: AboLifeColors.habits)
 
-                Text(store.snapshot.habits.valueText)
-                    .font(AboLifeTypography.metric)
-                    .monospacedDigit()
+                kpiValue("\(store.snapshot.habits.completed)", suffix: "/ \(store.snapshot.habits.total) erledigt")
 
                 MetricProgressView(progress: store.snapshot.habits.progress, tint: AboLifeColors.habits)
 
                 Text(store.snapshot.habits.message)
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AboLifeColors.secondaryText)
             }
         }
     }
 
     private var weekCard: some View {
-        AboLifeCard {
-            VStack(alignment: .leading, spacing: 16) {
-                cardTitle(store.snapshot.week.title, systemImage: "calendar.badge.clock", tint: AboLifeColors.review)
+        AboLifeCard(minHeight: 154) {
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 5) {
+                    cardTitle(store.snapshot.week.title, systemImage: "calendar.badge.clock", tint: AboLifeColors.review)
+                    Text(store.snapshot.week.message)
+                        .font(AboLifeTypography.caption)
+                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
 
-                WeeklyStatusStrip(days: store.snapshot.week.days)
-
-                Text(store.snapshot.week.message)
-                    .font(AboLifeTypography.caption)
-                    .foregroundStyle(.secondary)
+                WeeklyStatusStrip(days: store.snapshot.week.days.map(\.weeklyStatusItem))
             }
         }
+    }
+
+    private var activityCard: some View {
+        AboLifeCard(minHeight: 154) {
+            VStack(alignment: .leading, spacing: 9) {
+                cardTitle("Recent Activity", systemImage: "clock.arrow.circlepath", tint: AboLifeColors.review)
+
+                if store.snapshot.recentActions.isEmpty {
+                    Text("Noch keine Mock-Aktion erfasst.")
+                        .font(AboLifeTypography.caption)
+                        .foregroundStyle(AboLifeColors.secondaryText)
+                } else {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(store.snapshot.recentActions.prefix(3)) { action in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(action.title)
+                                    .font(AboLifeTypography.caption.weight(.semibold))
+                                    .foregroundStyle(AboLifeColors.primaryText)
+                                    .lineLimit(1)
+
+                                Text(action.detail)
+                                    .font(AboLifeTypography.micro)
+                                    .foregroundStyle(AboLifeColors.secondaryText)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private func metricValue(current: Double, target: Double, unit: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text("\(Int(current))")
+                .font(AboLifeTypography.metric)
+                .monospacedDigit()
+            Text("/ \(Int(target)) \(unit)")
+                .font(AboLifeTypography.metricUnit)
+                .foregroundStyle(AboLifeColors.secondaryText)
+                .monospacedDigit()
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.85)
+    }
+
+    private func kpiValue(_ value: String, suffix: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(value)
+                .font(AboLifeTypography.metric)
+                .monospacedDigit()
+            Text(suffix)
+                .font(AboLifeTypography.metricUnit)
+                .foregroundStyle(AboLifeColors.secondaryText)
+                .monospacedDigit()
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.82)
     }
 
     private func cardTitle(_ title: String, systemImage: String, tint: Color) -> some View {
         Label {
             Text(title)
                 .font(AboLifeTypography.cardTitle)
-                .foregroundStyle(.primary)
+                .foregroundStyle(AboLifeColors.primaryText)
         } icon: {
             Image(systemName: systemImage)
                 .foregroundStyle(tint)
         }
-    }
-}
-
-private struct QuickAddPlaceholderSheet: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack {
-                Text("Quick Add")
-                    .font(AboLifeTypography.dashboardTitle)
-                Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Label("Schließen", systemImage: "xmark.circle.fill")
-                        .labelStyle(.iconOnly)
-                }
-                .buttonStyle(.plain)
-            }
-
-            Text("Phase 1 zeigt hier nur die spätere Erfassung für Mahlzeit, Training, Ausgabe, Gewicht, Habit und Notiz.")
-                .font(AboLifeTypography.body)
-                .foregroundStyle(.secondary)
-
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                quickAddTile("Mahlzeit", systemImage: "fork.knife")
-                quickAddTile("Training", systemImage: "figure.strengthtraining.traditional")
-                quickAddTile("Ausgabe", systemImage: "eurosign.circle")
-                quickAddTile("Gewicht", systemImage: "scalemass")
-                quickAddTile("Habit", systemImage: "checkmark.seal")
-                quickAddTile("Notiz", systemImage: "note.text")
-            }
-        }
-        .padding(24)
-        .frame(width: 460)
-        .background(AboLifeColors.pageBackground)
-    }
-
-    private func quickAddTile(_ title: String, systemImage: String) -> some View {
-        Button {} label: {
-            Label(title, systemImage: systemImage)
-                .frame(maxWidth: .infinity, minHeight: 52)
-        }
-        .buttonStyle(.bordered)
     }
 }
 

@@ -9,18 +9,29 @@ struct BudgetProgressBar: View {
         return min(max(spent / budget, 0), 1)
     }
 
+    private var isOverBudget: Bool {
+        budget > 0 && spent > budget
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            MetricProgressView(progress: progress, tint: AboLifeColors.finance)
+        VStack(alignment: .leading, spacing: 9) {
+            PremiumProgressBar(
+                progress: progress,
+                tint: isOverBudget ? AboLifeColors.habits : AboLifeColors.finance,
+                height: 8
+            )
 
             HStack {
                 Text("Ausgegeben")
+                    .foregroundStyle(AboLifeColors.secondaryText)
                 Spacer()
                 Text("\(Int(spent)) EUR / \(Int(budget)) EUR")
                     .monospacedDigit()
+                    .foregroundStyle(isOverBudget ? AboLifeColors.habits.opacity(0.76) : AboLifeColors.secondaryText)
             }
             .font(AboLifeTypography.caption)
-            .foregroundStyle(.secondary)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Budget \(Int(progress * 100)) Prozent ausgeschöpft")
     }
 }
