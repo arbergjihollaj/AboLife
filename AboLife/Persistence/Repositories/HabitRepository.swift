@@ -169,7 +169,7 @@ struct HabitRepository {
     }
 
     func completedCount(for date: String) throws -> Int {
-        try fetchEntries(forDay: date).filter { isEffectivelyCompleted($0) }.count
+        try completedKeys(in: fetchEntries(forDay: date), allowedKeys: activeHabitKeys).count
     }
 
     func dailySummary(forDay date: String, totalHabits: Int) throws -> HabitDailySummary {
@@ -181,26 +181,26 @@ struct HabitRepository {
 
     func dailySummary(forDay date: String, habitKeys: [String]) throws -> HabitDailySummary {
         let entries = try fetchEntries(forDay: date)
-        let allowedKeys = Set(habitKeys)
-        let completed = entries.filter { allowedKeys.contains($0.habitKey) && isEffectivelyCompleted($0) }.count
+        let activeKeys = activeHabitKeys(from: habitKeys)
+        let completed = completedKeys(in: entries, allowedKeys: activeKeys).count
 
         return HabitDailySummary(
             completed: completed,
-            total: habitKeys.count
+            total: activeKeys.count
         )
     }
 
     func weeklySummary(in interval: DateInterval, habitKeys: [String], days: Int, calendar: Calendar = .current) throws -> HabitWeeklySummary {
         let entries = try fetchEntries(in: interval, calendar: calendar)
-        let allowedKeys = Set(habitKeys)
+        let activeKeys = activeHabitKeys(from: habitKeys)
         let completedKeys = Set(entries.compactMap { entry -> String? in
-            guard allowedKeys.contains(entry.habitKey), isEffectivelyCompleted(entry) else { return nil }
+            guard activeKeys.contains(entry.habitKey), isEffectivelyCompleted(entry) else { return nil }
             return "\(entry.date)-\(entry.habitKey)"
         })
 
         return HabitWeeklySummary(
             completed: completedKeys.count,
-            total: max(days, 0) * habitKeys.count
+            total: max(days, 0) * activeKeys.count
         )
     }
 
@@ -234,6 +234,23 @@ struct HabitRepository {
         }
         return entry.isCompleted
     }
+
+    private var activeHabitKeys: Set<String> {
+        activeHabitKeys(from: FixedHabit.defaults.map(\.key))
+    }
+
+    private func activeHabitKeys(from habitKeys: [String]) -> Set<String> {
+        Set(habitKeys.filter { key in
+            FixedHabit.defaultDefinition(for: key)?.isDerived != true
+        })
+    }
+
+    private func completedKeys(in entries: [HabitEntryRecord], allowedKeys: Set<String>) -> Set<String> {
+        Set(entries.compactMap { entry in
+            guard allowedKeys.contains(entry.habitKey), isEffectivelyCompleted(entry) else { return nil }
+            return entry.habitKey
+        })
+    }
 }
 
 struct HabitDailySummary: Equatable {
@@ -249,8 +266,18 @@ struct HabitDailySummary: Equatable {
 struct HabitWeeklySummary: Equatable {
     let completed: Int
     let total: Int
+    let progressValue: Double?
+
+    init(completed: Int, total: Int, progressValue: Double? = nil) {
+        self.completed = completed
+        self.total = total
+        self.progressValue = progressValue
+    }
 
     var progress: Double {
+        if let progressValue {
+            return min(max(progressValue, 0), 1)
+        }
         guard total > 0 else { return 0 }
         return min(max(Double(completed) / Double(total), 0), 1)
     }

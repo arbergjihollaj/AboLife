@@ -36,3 +36,34 @@ struct QuickAddAction: Identifiable {
         QuickAddAction(kind: .habit, title: "Gewohnheit", systemImage: "checkmark.seal", tint: AboLifeColors.habits)
     ]
 }
+
+enum QuickAddPanel: Equatable {
+    case generalMenu
+    case meal
+    case training
+    case expense
+    case habit
+    case weight
+    case note
+}
+
+enum QuickAddRouting {
+    static func panel(for kind: QuickAddKind) -> QuickAddPanel {
+        switch kind {
+        case .general:
+            return .generalMenu
+        case .meal:
+            return .meal
+        case .workout:
+            return .training
+        case .expense:
+            return .expense
+        case .habit:
+            return .habit
+        case .weight:
+            return .weight
+        case .note:
+            return .note
+        }
+    }
+}

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @StateObject private var store: SettingsStore
+    @EnvironmentObject private var telegramControl: TelegramAppCoordinator
 
     init(database: AppDatabase?) {
         _store = StateObject(wrappedValue: SettingsStore(database: database))
@@ -15,9 +16,11 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     nutritionCard
+                    weightCard
                     trainingCard
                     financeCard
                     generalCard
+                    telegramCard
                     backupExportCard
                     actions
                 }
@@ -74,6 +77,31 @@ struct SettingsView: View {
         }
     }
 
+    private var weightCard: some View {
+        settingsCard(title: "Gewichtsziel", systemImage: "scalemass", tint: AboLifeColors.review) {
+            weightStepperRow(
+                title: "Zielgewicht",
+                value: $store.targetWeightKg,
+                unit: "kg"
+            )
+            weightStepperRow(
+                title: "Korridor unten",
+                value: $store.targetWeightLowerKg,
+                unit: "kg"
+            )
+            weightStepperRow(
+                title: "Korridor oben",
+                value: $store.targetWeightUpperKg,
+                unit: "kg"
+            )
+
+            Text("0 kg bedeutet: noch nicht gesetzt. Der Zielkorridor bleibt optional.")
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(AboLifeColors.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var financeCard: some View {
         settingsCard(title: "Finanzziele", systemImage: "eurosign.circle", tint: AboLifeColors.finance) {
             Stepper(value: $store.monthlyBudget, in: 0...100_000, step: 50) {
@@ -125,7 +153,7 @@ struct SettingsView: View {
                     .font(AboLifeTypography.caption)
                     .foregroundStyle(AboLifeColors.secondaryText)
 
-                Label("Du kannst ein Backup der SQLite-Datenbank oder einen JSON-Export erstellen.", systemImage: "doc.text")
+                Label("Du kannst ein SQLite-Backup, einen JSON-Export oder ein CSV-Backup mit Offline-Report erstellen.", systemImage: "doc.text")
                     .font(AboLifeTypography.caption)
                     .foregroundStyle(AboLifeColors.secondaryText)
             }
@@ -152,6 +180,24 @@ struct SettingsView: View {
                 .disabled(store.isBackingUp || store.isExporting)
 
                 Button {
+                    store.createCSVExport()
+                } label: {
+                    Label("CSV-Backup exportieren", systemImage: "tablecells")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.bordered)
+                .disabled(store.isBackingUp || store.isExporting)
+
+                Button {
+                    store.createMarkdownSummaryExport()
+                } label: {
+                    Label("Markdown-Zusammenfassung erstellen", systemImage: "doc.plaintext")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.bordered)
+                .disabled(store.isBackingUp || store.isExporting)
+
+                Button {
                     store.openBackupFolder()
                 } label: {
                     Label("Backup-Ordner öffnen", systemImage: "folder")
@@ -161,6 +207,91 @@ struct SettingsView: View {
             }
 
             backupStatus
+        }
+    }
+
+    private var telegramCard: some View {
+        settingsCard(title: "Telegram", systemImage: "paperplane", tint: AboLifeColors.review) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Label(telegramControl.state.label, systemImage: telegramIcon)
+                            .font(AboLifeTypography.body.weight(.semibold))
+                            .foregroundStyle(telegramTint)
+
+                        Text(telegramControl.detailMessage)
+                            .font(AboLifeTypography.caption)
+                            .foregroundStyle(AboLifeColors.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Text("Telegram läuft im Hintergrund, solange AboLife geöffnet ist.")
+                            .font(AboLifeTypography.micro)
+                            .foregroundStyle(AboLifeColors.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Spacer(minLength: 16)
+
+                    Button {
+                        telegramControl.isRunning ? telegramControl.stop() : telegramControl.start()
+                    } label: {
+                        Label(
+                            telegramControl.isRunning ? "Telegram stoppen" : "Telegram starten",
+                            systemImage: telegramControl.isRunning ? "stop.circle" : "play.circle"
+                        )
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!telegramControl.canStart && !telegramControl.isRunning)
+                }
+
+                Divider().opacity(0.18)
+
+                Toggle(isOn: $telegramControl.autoStartEnabled) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Telegram beim App-Start automatisch aktivieren")
+                            .font(AboLifeTypography.body)
+                            .foregroundStyle(AboLifeColors.primaryText)
+
+                        Text("Startet Telegram nur, wenn Token und erlaubte Chat-ID vorhanden sind.")
+                            .font(AboLifeTypography.micro)
+                            .foregroundStyle(AboLifeColors.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .toggleStyle(.switch)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Label(telegramControl.hasToken ? "Telegram verfügbar" : "Telegram nicht verfügbar", systemImage: telegramControl.hasToken ? "checkmark.seal" : "exclamationmark.triangle")
+                    Label(telegramControl.autoStartEnabled ? "Auto-Start an" : "Auto-Start aus", systemImage: telegramControl.autoStartEnabled ? "bolt.circle" : "pause.circle")
+                    Label(telegramControl.isRunning ? "Live-Polling läuft" : "Live-Polling pausiert", systemImage: telegramControl.isRunning ? "dot.radiowaves.left.and.right" : "moon")
+                    if telegramControl.isRunning && BarcodeScannerService.isAvailable {
+                        Label("Barcode-Scan: aktiv", systemImage: "barcode.viewfinder")
+                    }
+                }
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(AboLifeColors.secondaryText)
+
+                if let lastUpdateId = telegramControl.lastUpdateId {
+                    Text("Letztes Update: \(lastUpdateId)")
+                        .font(AboLifeTypography.micro)
+                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .monospacedDigit()
+                }
+
+                if let lastErrorMessage = telegramControl.lastErrorMessage {
+                    Text(lastErrorMessage)
+                        .font(AboLifeTypography.micro)
+                        .foregroundStyle(AboLifeColors.habits)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if !telegramControl.hasAllowedChat {
+                    Text("Setze zusätzlich ABOLIFE_TELEGRAM_ALLOWED_CHAT_ID lokal, bevor du den Bot produktiv nutzt.")
+                        .font(AboLifeTypography.micro)
+                        .foregroundStyle(AboLifeColors.habits)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
     }
 
@@ -263,6 +394,12 @@ struct SettingsView: View {
         }
     }
 
+    private func weightStepperRow(title: String, value: Binding<Double>, unit: String) -> some View {
+        Stepper(value: value, in: 0...300, step: 0.5) {
+            valueRow(title: title, value: value.wrappedValue > 0 ? "\(String(format: "%.1f", value.wrappedValue)) \(unit)" : "nicht gesetzt")
+        }
+    }
+
     private func valueRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
@@ -277,11 +414,36 @@ struct SettingsView: View {
                 .monospacedDigit()
         }
     }
+
+    private var telegramIcon: String {
+        switch telegramControl.state {
+        case .running:
+            return "checkmark.circle"
+        case .error:
+            return "exclamationmark.circle"
+        case .notConfigured:
+            return "slash.circle"
+        case .ready, .stopped:
+            return "circle"
+        }
+    }
+
+    private var telegramTint: Color {
+        switch telegramControl.state {
+        case .running:
+            return AboLifeColors.review
+        case .error, .notConfigured:
+            return AboLifeColors.habits
+        case .ready, .stopped:
+            return AboLifeColors.secondaryText
+        }
+    }
 }
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView(database: nil)
+            .environmentObject(TelegramAppCoordinator())
             .frame(width: 980, height: 760)
     }
 }

@@ -230,7 +230,7 @@ Nicht modelliert werden in dieser Phase Bankverbindung, Kontosynchronisierung, a
 
 ## 18. Phase 4D Gewohnheiten-Detailseite
 
-Phase 4D nutzt das bestehende `habit_entries`-Schema ohne Migration. Die Gewohnheiten-Seite liest Entries des ausgewählten Tages aus SQLite und zeigt sie gegen feste App-Habits: `water`, `movement`, `nutrition`, `learning` und `sleep`.
+Phase 4D nutzt das bestehende `habit_entries`-Schema ohne Migration. Die Gewohnheiten-Seite liest Entries des ausgewählten Tages aus SQLite und zeigt sie gegen feste App-Habits: `water`, `training`, `nutrition`, `learning` und `sleep`.
 
 Das Umschalten einer Gewohnheit nutzt ein idempotentes Upsert: vorhandene Einträge werden aktualisiert, fehlende Einträge werden angelegt. Die Tageszusammenfassung berechnet erledigte feste Habits und Gesamtzahl aus diesen Definitionen.
 
@@ -264,7 +264,7 @@ Phase 6A ändert das Datenbankschema nicht. Backups und Exporte lesen die besteh
 - `weekly_reviews`
 - `app_settings`
 
-SQLite-Backups werden als konsistente Datenbankkopie erstellt. JSON-Exporte enthalten `exportVersion`, `createdAt`, `appName` und Arrays der wichtigsten App-Daten. Der Export ist eine lokale Sicherungs-/Lesedatei und kein Importvertrag.
+SQLite-Backups werden als konsistente Datenbankkopie erstellt. JSON-Exporte enthalten `exportVersion`, `createdAt`, `appName` und Arrays der wichtigsten App-Daten. CSV-Exporte schreiben je bestehender Tabelle eine Numbers-freundliche `.csv`-Datei in einen lokalen Exportordner. Der Export ist eine lokale Sicherungs-/Lesedatei und kein Importvertrag.
 
 Nicht modelliert werden in dieser Phase Restore/Import, Datenbank-Ersetzung, Cloud/iCloud Sync, Accounts, Verschluesselung, Scheduler oder externe Integrationen.
 
@@ -291,6 +291,38 @@ Phase 7C erweitert `habit_entries` additiv um messbare Tageswerte:
 
 `is_completed` bleibt als Kompatibilitätsfeld bestehen. Für messbare Habits wird es beim Speichern aus `value >= target_value` abgeleitet; alte Boolean-Daten bleiben lesbar. Die Migration setzt bekannte feste Habits auf Default-Ziele und transformiert bestehende Boolean-Werte: erledigt wird zum Zielwert, offen wird `0`.
 
-Die fünf Habit-Definitionen bleiben feste Swift-Defaults: Wasser 3,0 Liter, Bewegung 60 Minuten, Ernährung getrackt 3 Mahlzeiten, Lernen 60 Minuten, Schlafroutine 1. Es gibt weiterhin keine `habit_definitions`-Tabelle und keine Custom Habits.
+Die fünf Habit-Definitionen bleiben feste Swift-Defaults: Wasser 3,0 Liter, Trainieren 1 Training, Ernährung getrackt 3 Mahlzeiten, Lernen 60 Minuten, Schlafroutine 1. Es gibt weiterhin keine `habit_definitions`-Tabelle und keine Custom Habits.
 
 Nicht modelliert werden in dieser Phase Ziel-Historie, Custom Habits, Reminder, Streak-Analytics, Kalender-/Heatmap-Daten, HealthKit, KI oder externe Integrationen.
+
+## 24. Phase 7D Quick Panels
+
+Phase 7D ändert das Datenbankschema nicht. Die überarbeiteten Quick Panels schreiben weiter in bestehende Tabellen:
+
+- Mahlzeiten als `NutritionEntry`
+- Trainings und Home-Workouts als normale `WorkoutSession`
+- Ausgaben als `FinanceEntry`
+- Habit Quick Actions als `HabitEntry` mit den Phase-7C-Feldern `value`, `target_value` und `unit`
+
+Die messbaren Habit-Schritte aktualisieren vorhandene Tagesrecords per Repository-Upsert. Es gibt keine zweite Habit-Struktur, keine `habit_definitions`-Tabelle und keine neue Migration.
+
+## 25. Phase 7E Trainieren als abgeleiteter Habit
+
+Phase 7E ändert das Datenbankschema nicht. Der aktive Habit `training` wird nicht in `habit_entries` geschrieben, sondern aus `workout_sessions` abgeleitet:
+
+- Wert `1`, wenn am ausgewählten Tag mindestens eine `WorkoutSession` mit `status = done` existiert
+- Wert `0`, wenn keine abgeschlossene Session für diesen Tag existiert
+- Zielwert `1`, Einheit leer
+
+Dashboard, Habits-Seite und Wochenreview verwenden diese abgeleitete Quelle. Dadurch wird Trainieren automatisch erfüllt, wenn ein Home-Workout oder manuelles Training gespeichert wird, und automatisch wieder offen, wenn das letzte Workout des Tages gelöscht wird.
+
+Bestehende alte `movement`-Einträge werden nicht gelöscht und nicht migriert. Sie bleiben nur als historische/Export-Daten in `habit_entries` erhalten und werden von den aktiven Habit-Summaries ignoriert.
+
+## 26. Phase 7F MVP-Stabilisierung
+
+Phase 7F ändert das Datenbankschema nicht. Stabilisiert wurden nur Berechnung und Ausgabe:
+
+- Habit-Summaries zählen pro Tag eindeutige, nicht-abgeleitete Habit-Keys und ignorieren `training`-Rows in `habit_entries`.
+- Trainieren bleibt aus `workout_sessions` abgeleitet; alte `movement`-Daten bleiben historisch erhalten.
+- JSON- und CSV-Export enthalten `habit_entries` inklusive `value`, `target_value` und `unit`; abgeleitetes Trainieren ist über exportierte `workout_sessions` nachvollziehbar.
+- Settings-Zielwerte bleiben die Quelle für Kalorien, Protein, Wochen-Workouts, Budget und Wochenstart.

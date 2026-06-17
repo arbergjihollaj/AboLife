@@ -138,7 +138,34 @@ struct DashboardView: View {
 
             PremiumProgressBar(progress: store.snapshot.coreProgress, tint: AboLifeColors.review, height: 7)
                 .frame(maxWidth: 420)
+
+            weightStatusLine
         }
+    }
+
+    private var weightStatusLine: some View {
+        HStack(spacing: 9) {
+            Image(systemName: "scalemass")
+                .foregroundStyle(AboLifeColors.review)
+
+            Text(store.snapshot.weight.valueText)
+                .font(AboLifeTypography.caption.weight(.semibold))
+                .foregroundStyle(AboLifeColors.primaryText)
+                .monospacedDigit()
+
+            Text(store.snapshot.weight.dateText)
+                .font(AboLifeTypography.caption)
+                .foregroundStyle(AboLifeColors.secondaryText)
+
+            if let change = store.snapshot.weight.changeText {
+                Text(change)
+                    .font(AboLifeTypography.caption.weight(.semibold))
+                    .foregroundStyle(change.hasPrefix("-") ? AboLifeColors.finance : AboLifeColors.habits)
+                    .monospacedDigit()
+            }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.82)
     }
 
     private var quickAddActions: [QuickAddAction] {
@@ -264,9 +291,31 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 8) {
                 cardTitle(store.snapshot.habits.title, systemImage: "checkmark.seal", tint: AboLifeColors.habits)
 
-                kpiValue("\(store.snapshot.habits.completed)", suffix: "/ \(store.snapshot.habits.total) erledigt")
+                kpiValue("\(Int((store.snapshot.habits.progress * 100).rounded()))", suffix: "% heute")
 
                 MetricProgressView(progress: store.snapshot.habits.progress, tint: AboLifeColors.habits)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    ForEach(store.snapshot.habits.items.prefix(5)) { habit in
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(habit.progress >= 1 ? AboLifeColors.habits : AboLifeColors.glassStrokeMuted)
+                                .frame(width: 6, height: 6)
+
+                            Text(habit.title)
+                                .font(AboLifeTypography.micro.weight(.medium))
+                                .foregroundStyle(AboLifeColors.primaryText)
+                                .lineLimit(1)
+
+                            Spacer(minLength: 4)
+
+                            Text(habit.displayText)
+                                .font(AboLifeTypography.micro)
+                                .foregroundStyle(AboLifeColors.secondaryText)
+                                .lineLimit(1)
+                        }
+                    }
+                }
 
                 Text(store.snapshot.habits.message)
                     .font(AboLifeTypography.caption)

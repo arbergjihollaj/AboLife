@@ -13,7 +13,7 @@ struct DashboardSnapshot {
     let finance: FinanceStatus
     let habits: HabitStatus
     let week: WeekStatus
-    let bodyWeight: Double?
+    let weight: WeightDashboardStatus
     let dailyNote: String?
     let recentActions: [DashboardActivityItem]
 }
@@ -53,10 +53,11 @@ struct HabitStatus {
     let completed: Int
     let total: Int
     let message: String
+    let progressValue: Double
+    let items: [DashboardHabit]
 
     var progress: Double {
-        guard total > 0 else { return 0 }
-        return Double(completed) / Double(total)
+        progressValue
     }
 }
 
@@ -64,6 +65,45 @@ struct WeekStatus {
     let title: String
     let message: String
     let days: [DashboardDayStatus]
+}
+
+struct WeightDashboardStatus {
+    let valueKg: Double?
+    let date: String?
+    let changeKg: Double?
+
+    var hasValue: Bool {
+        valueKg != nil
+    }
+
+    var valueText: String {
+        guard let valueKg else { return "Noch kein Gewicht" }
+        return String(format: "%.1f kg", valueKg)
+    }
+
+    var dateText: String {
+        guard let date else { return "Nicht erfasst" }
+        if date == DateIntervals.dayKey() {
+            return "Heute"
+        }
+        return "Letzter Wert: \(Self.formattedDay(date))"
+    }
+
+    var changeText: String? {
+        guard let changeKg else { return nil }
+        if abs(changeKg) < 0.05 {
+            return "+/-0.0 kg"
+        }
+        return String(format: "%+.1f kg", changeKg)
+    }
+
+    private static func formattedDay(_ dayKey: String) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateFormat = "yyyy-MM-dd"
+        guard let date = formatter.date(from: dayKey) else { return dayKey }
+        return date.formatted(.dateTime.day().month(.abbreviated))
+    }
 }
 
 struct DashboardDayStatus: Identifiable {
@@ -126,14 +166,20 @@ enum DashboardMockData {
                 title: "Gewohnheiten",
                 completed: state.completedHabits,
                 total: state.totalHabits,
-                message: habitMessage(completed: completedHabitTitles, open: openHabitTitles)
+                message: habitMessage(completed: completedHabitTitles, open: openHabitTitles),
+                progressValue: state.habitProgress,
+                items: state.habits
             ),
             week: WeekStatus(
                 title: "7-Tage-Wochenstatus",
                 message: "Heute reagiert live auf deine lokalen Einträge.",
                 days: weekDays(todayCompletion: coreProgress)
             ),
-            bodyWeight: state.bodyWeight,
+            weight: WeightDashboardStatus(
+                valueKg: state.bodyWeight,
+                date: state.bodyWeightDate,
+                changeKg: state.bodyWeightChange
+            ),
             dailyNote: state.dailyNote,
             recentActions: state.recentActions
         )
@@ -227,14 +273,19 @@ enum DashboardMockData {
     }
 
     private static func weekDays(todayCompletion: Double) -> [DashboardDayStatus] {
-        [
-            DashboardDayStatus(shortName: "Mo", completion: 0.82, tint: AboLifeColors.review),
-            DashboardDayStatus(shortName: "Di", completion: 0.70, tint: AboLifeColors.review),
-            DashboardDayStatus(shortName: "Mi", completion: 0.88, tint: AboLifeColors.review),
-            DashboardDayStatus(shortName: "Do", completion: todayCompletion, tint: AboLifeColors.review),
-            DashboardDayStatus(shortName: "Fr", completion: 0.35, tint: AboLifeColors.review),
-            DashboardDayStatus(shortName: "Sa", completion: 0.18, tint: AboLifeColors.review),
-            DashboardDayStatus(shortName: "So", completion: 0.10, tint: AboLifeColors.review)
-        ]
+        let calendar = Calendar.current
+        let interval = DateIntervals.week(weekStartsOn: SeedData.defaultSettings.weekStartsOn, calendar: calendar)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateFormat = "E"
+
+        return (0..<7).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: interval.start) else { return nil }
+            return DashboardDayStatus(
+                shortName: formatter.string(from: date),
+                completion: calendar.isDateInToday(date) ? todayCompletion : 0,
+                tint: AboLifeColors.review
+            )
+        }
     }
 }

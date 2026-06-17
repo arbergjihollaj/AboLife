@@ -12,6 +12,9 @@ struct AppSettingsRecord: Codable, FetchableRecord, PersistableRecord, Identifia
     var monthlyBudget: Double
     var defaultCurrency: String
     var weekStartsOn: Int
+    var targetWeightKg: Double?
+    var targetWeightLowerKg: Double?
+    var targetWeightUpperKg: Double?
     var createdAt: Date
     var updatedAt: Date
 
@@ -23,6 +26,9 @@ struct AppSettingsRecord: Codable, FetchableRecord, PersistableRecord, Identifia
         monthlyBudget: Double,
         defaultCurrency: String = "EUR",
         weekStartsOn: Int = 2,
+        targetWeightKg: Double? = nil,
+        targetWeightLowerKg: Double? = nil,
+        targetWeightUpperKg: Double? = nil,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -33,6 +39,9 @@ struct AppSettingsRecord: Codable, FetchableRecord, PersistableRecord, Identifia
         self.monthlyBudget = monthlyBudget
         self.defaultCurrency = defaultCurrency
         self.weekStartsOn = weekStartsOn
+        self.targetWeightKg = targetWeightKg
+        self.targetWeightLowerKg = targetWeightLowerKg
+        self.targetWeightUpperKg = targetWeightUpperKg
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -45,6 +54,9 @@ struct AppSettingsRecord: Codable, FetchableRecord, PersistableRecord, Identifia
         case monthlyBudget = "monthly_budget"
         case defaultCurrency = "default_currency"
         case weekStartsOn = "week_starts_on"
+        case targetWeightKg = "target_weight_kg"
+        case targetWeightLowerKg = "target_weight_lower_kg"
+        case targetWeightUpperKg = "target_weight_upper_kg"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -66,15 +78,36 @@ enum AppSettingsValidation {
             caloriesTarget: clamp(settings.caloriesTarget, min: 800, max: 6000),
             proteinTargetG: Double(clamp(Int(settings.proteinTargetG.rounded()), min: 20, max: 400)),
             weeklyWorkoutTarget: clamp(settings.weeklyWorkoutTarget, min: 0, max: 14),
-            monthlyBudget: min(max(settings.monthlyBudget, 0), 100_000),
+            monthlyBudget: settings.monthlyBudget.isFinite ? min(max(settings.monthlyBudget, 0), 100_000) : 0,
             defaultCurrency: AppSettingsDefaults.defaultCurrency,
             weekStartsOn: AppSettingsDefaults.weekStartsOn,
+            targetWeightKg: normalizedWeight(settings.targetWeightKg),
+            targetWeightLowerKg: normalizedWeight(settings.targetWeightLowerKg),
+            targetWeightUpperKg: normalizedWeight(settings.targetWeightUpperKg),
             createdAt: settings.createdAt,
             updatedAt: settings.updatedAt
-        )
+        ).normalizedWeightCorridor()
     }
 
     private static func clamp(_ value: Int, min minimum: Int, max maximum: Int) -> Int {
         Swift.min(Swift.max(value, minimum), maximum)
+    }
+
+    private static func normalizedWeight(_ value: Double?) -> Double? {
+        guard let value, value.isFinite, value >= 20, value <= 300 else { return nil }
+        return (value * 10).rounded() / 10
+    }
+}
+
+private extension AppSettingsRecord {
+    func normalizedWeightCorridor() -> AppSettingsRecord {
+        var copy = self
+        if let lower = copy.targetWeightLowerKg,
+           let upper = copy.targetWeightUpperKg,
+           lower > upper {
+            copy.targetWeightLowerKg = upper
+            copy.targetWeightUpperKg = lower
+        }
+        return copy
     }
 }

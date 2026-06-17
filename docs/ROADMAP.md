@@ -192,9 +192,34 @@ Stand Phase 7B:
 Stand Phase 7C:
 
 - Die Gewohnheiten-Seite wurde zu einer messbaren Habit-Seite mit großem Tagesring, Habit-Grid und kompakter Wochenübersicht umgebaut.
-- Die fünf festen Habits haben Tagesziele: Wasser 3,0 Liter, Bewegung 60 Minuten, Ernährung 3 Mahlzeiten, Lernen 60 Minuten und Schlafroutine 1.
+- Die fünf festen Habits haben Tagesziele: Wasser 3,0 Liter, Trainieren 1 Training, Ernährung 3 Mahlzeiten, Lernen 60 Minuten und Schlafroutine 1.
 - `habit_entries` speichert zusätzlich `value`, `target_value` und `unit`; alte Boolean-Daten bleiben kompatibel.
 - Bewusst nicht enthalten: Custom Habits, Habit-Bibliothek, Reminder, Notifications, Streak-Analytics, Kalenderansicht, Heatmaps, HealthKit, KI oder externe Integrationen.
+
+Stand Phase 7D:
+
+- Die Floating Bottom Quick Bar bleibt bei Mahlzeit, Training, Plus, Ausgabe und Gewohnheit.
+- Die Dock-Buttons routen direkt auf Meal-, Training-, Expense- und messbares Habit-Quick-Panel; Plus öffnet ein kompaktes allgemeines Quick Action Menü.
+- Das Plus-Menü enthält die Gruppen „Eintragen“ und „Schnelle Gewohnheiten“ mit direkten Actions für Wasser +0,25 L, Ernährung +1 Mahlzeit, Lernen +15 Min. und Schlafroutine erledigt.
+- Die Quick Panels speichern über bestehende Repositories in SQLite und nutzen für Habits die Phase-7C-Felder `value`, `target_value` und `unit`.
+- Bewusst nicht enthalten: neue Bottom-Bar-Buttons, Telegram, iPhone, HealthKit, KI, Reminder, Custom Habits, Übungsdatenbank, Satz-/Gewichts-Historie, neue Exportformate oder externe Dependencies.
+
+Stand Phase 7E:
+
+- Die aktive Habit-Liste ersetzt Bewegung durch Trainieren: Wasser, Trainieren, Ernährung getrackt, Lernen und Schlafroutine.
+- Trainieren wird nicht separat in `habit_entries` gepflegt, sondern aus abgeschlossenen `WorkoutSession`-Datensätzen des Tages abgeleitet.
+- Dashboard und Wochenreview nutzen den Durchschnitt der messbaren Habit-Fortschritte; Trainieren zählt je Tag mit 0 % oder 100 %.
+- Habit-Quick-Panel und Plus-Menü enthalten keine Bewegung-Aktion mehr; Training erfüllt Trainieren über Training-Panel oder Training-Seite.
+- Bewusst nicht enthalten: Custom Habits, Habit-Einstellungen, Reminder, Notifications, HealthKit, Apple Watch, iPhone, Telegram, KI, Streak-Analytics, Heatmap, Cloud, Netzwerkaufrufe oder externe Dependencies.
+
+Stand Phase 7F:
+
+- Der MVP wurde stabilisiert: Berechnungen, Quick Actions, Empty/Error States, Settings-Zielwerte und Export/Backup wurden konsistenter gemacht.
+- Habit-Summaries ignorieren abgeleitete Habits in `habit_entries`, deduplizieren Mehrfachzeilen und nutzen Trainieren weiter aus `WorkoutSession`-Daten.
+- Dashboard und Finanzen verwenden dieselbe Tagesbudget-Logik; Dashboard zeigt keine technischen Lade- oder Mock-Aktivitäten mehr.
+- QuickAdd-Zahlen werden gegen nicht-finite Werte abgesichert, das QuickAdd-Sheet scrollt bei kleinen Höhen, und die Routing-Tabelle ist konsistent.
+- Backup & Export umfasst SQLite-Backup, JSON-Export und CSV-Dateien für Numbers aus den bestehenden Tabellen.
+- Bewusst nicht enthalten: neue Hauptnavigation, neue Analytics-Seiten, Custom Habits, Notifications, Reminder, Cloud, Accounts, Telegram, iPhone, Apple Watch, HealthKit, KI, Netzwerkaufrufe oder neue externe Dependencies.
 
 ## Phase 7: spätere Integrationen
 

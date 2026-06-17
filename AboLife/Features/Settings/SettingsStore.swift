@@ -9,6 +9,9 @@ final class SettingsStore: ObservableObject {
     @Published var monthlyBudget: Double = AppSettingsDefaults.monthlyBudget
     @Published var currencyCode: String = AppSettingsDefaults.defaultCurrency
     @Published var weekStartsOn: Int = AppSettingsDefaults.weekStartsOn
+    @Published var targetWeightKg: Double = 0
+    @Published var targetWeightLowerKg: Double = 0
+    @Published var targetWeightUpperKg: Double = 0
     @Published private(set) var statusMessage: String?
     @Published private(set) var errorMessage: String?
     @Published private(set) var backupStatusMessage: String?
@@ -44,7 +47,7 @@ final class SettingsStore: ObservableObject {
             statusMessage = nil
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Einstellungen konnten nicht geladen werden."
         }
     }
 
@@ -61,7 +64,7 @@ final class SettingsStore: ObservableObject {
             statusMessage = "Gespeichert"
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Einstellungen konnten nicht gespeichert werden."
         }
     }
 
@@ -79,7 +82,7 @@ final class SettingsStore: ObservableObject {
             statusMessage = "Standardwerte gesetzt"
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Standardwerte konnten nicht gesetzt werden."
         }
     }
 
@@ -133,6 +136,56 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    func createCSVExport() {
+        guard let service = makeBackupService() else { return }
+
+        isExporting = true
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result = Result { try service.createCSVExport() }
+
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isExporting = false
+
+                switch result {
+                case .success(let url):
+                    self.lastExportPath = url.path
+                    self.backupStatusMessage = "CSV-Backup erstellt: \(url.lastPathComponent)"
+                    self.backupErrorMessage = nil
+                case .failure:
+                    self.backupStatusMessage = nil
+                    self.backupErrorMessage = "CSV-Backup konnte nicht erstellt werden."
+                }
+            }
+        }
+    }
+
+    func createMarkdownSummaryExport() {
+        guard let service = makeBackupService() else { return }
+
+        isExporting = true
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result = Result { try service.createMarkdownSummaryExport() }
+
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isExporting = false
+
+                switch result {
+                case .success(let url):
+                    self.lastExportPath = url.path
+                    self.backupStatusMessage = "Markdown-Zusammenfassung erstellt: \(url.lastPathComponent)"
+                    self.backupErrorMessage = nil
+                case .failure:
+                    self.backupStatusMessage = nil
+                    self.backupErrorMessage = "Markdown-Zusammenfassung konnte nicht erstellt werden."
+                }
+            }
+        }
+    }
+
     func openBackupFolder() {
         guard let service = makeBackupService() else { return }
 
@@ -155,6 +208,30 @@ final class SettingsStore: ObservableObject {
         currencyCode: String,
         weekStartsOn: Int
     ) -> AppSettingsRecord {
+        normalized(
+            caloriesTarget: caloriesTarget,
+            proteinTargetG: proteinTargetG,
+            weeklyWorkoutTarget: weeklyWorkoutTarget,
+            monthlyBudget: monthlyBudget,
+            currencyCode: currencyCode,
+            weekStartsOn: weekStartsOn,
+            targetWeightKg: nil,
+            targetWeightLowerKg: nil,
+            targetWeightUpperKg: nil
+        )
+    }
+
+    static func normalized(
+        caloriesTarget: Int,
+        proteinTargetG: Int,
+        weeklyWorkoutTarget: Int,
+        monthlyBudget: Double,
+        currencyCode: String,
+        weekStartsOn: Int,
+        targetWeightKg: Double?,
+        targetWeightLowerKg: Double?,
+        targetWeightUpperKg: Double?
+    ) -> AppSettingsRecord {
         AppSettingsValidation.normalized(
             AppSettingsRecord(
                 caloriesTarget: caloriesTarget,
@@ -162,7 +239,10 @@ final class SettingsStore: ObservableObject {
                 weeklyWorkoutTarget: weeklyWorkoutTarget,
                 monthlyBudget: monthlyBudget,
                 defaultCurrency: currencyCode,
-                weekStartsOn: weekStartsOn
+                weekStartsOn: weekStartsOn,
+                targetWeightKg: targetWeightKg,
+                targetWeightLowerKg: targetWeightLowerKg,
+                targetWeightUpperKg: targetWeightUpperKg
             )
         )
     }
@@ -174,7 +254,10 @@ final class SettingsStore: ObservableObject {
             weeklyWorkoutTarget: weeklyWorkoutTarget,
             monthlyBudget: monthlyBudget,
             currencyCode: currencyCode,
-            weekStartsOn: weekStartsOn
+            weekStartsOn: weekStartsOn,
+            targetWeightKg: positiveWeightOrNil(targetWeightKg),
+            targetWeightLowerKg: positiveWeightOrNil(targetWeightLowerKg),
+            targetWeightUpperKg: positiveWeightOrNil(targetWeightUpperKg)
         )
     }
 
@@ -186,6 +269,9 @@ final class SettingsStore: ObservableObject {
         monthlyBudget = normalized.monthlyBudget
         currencyCode = normalized.defaultCurrency
         weekStartsOn = normalized.weekStartsOn
+        targetWeightKg = normalized.targetWeightKg ?? 0
+        targetWeightLowerKg = normalized.targetWeightLowerKg ?? 0
+        targetWeightUpperKg = normalized.targetWeightUpperKg ?? 0
     }
 
     private func makeBackupService() -> BackupService? {
@@ -196,5 +282,9 @@ final class SettingsStore: ObservableObject {
         }
 
         return backupServiceFactory(database)
+    }
+
+    private func positiveWeightOrNil(_ value: Double) -> Double? {
+        value > 0 ? value : nil
     }
 }

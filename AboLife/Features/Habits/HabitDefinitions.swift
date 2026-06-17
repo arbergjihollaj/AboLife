@@ -4,6 +4,7 @@ enum HabitKind: String, Codable, Equatable {
     case numeric
     case count
     case boolean
+    case derived
 }
 
 struct FixedHabit: Identifiable {
@@ -22,6 +23,10 @@ struct FixedHabit: Identifiable {
         kind == .boolean
     }
 
+    var isDerived: Bool {
+        kind == .derived
+    }
+
     func progress(for value: Double) -> Double {
         Self.progress(value: value, target: targetValue)
     }
@@ -30,7 +35,9 @@ struct FixedHabit: Identifiable {
         switch key {
         case "water":
             return "\(Self.decimalFormatter.string(from: NSNumber(value: value)) ?? "0") / \(Self.decimalFormatter.string(from: NSNumber(value: targetValue)) ?? "0") \(unit)"
-        case "movement", "learning":
+        case "training":
+            return "\(Int(value.rounded())) / \(Int(targetValue.rounded()))"
+        case "learning":
             return "\(Int(value.rounded())) / \(Int(targetValue.rounded())) \(unit)"
         case "nutrition":
             return "\(Int(value.rounded())) / \(Int(targetValue.rounded())) \(unit)"
@@ -64,14 +71,14 @@ struct FixedHabit: Identifiable {
             accent: Color(red: 0.36, green: 0.70, blue: 0.95)
         ),
         FixedHabit(
-            key: "movement",
-            title: "Bewegung",
-            systemImage: "figure.walk",
-            kind: .numeric,
-            targetValue: 60,
-            unit: "Min.",
-            stepValue: 10,
-            accent: AboLifeColors.habits
+            key: "training",
+            title: "Trainieren",
+            systemImage: "figure.strengthtraining.traditional",
+            kind: .derived,
+            targetValue: 1,
+            unit: "",
+            stepValue: 0,
+            accent: AboLifeColors.training
         ),
         FixedHabit(
             key: "nutrition",

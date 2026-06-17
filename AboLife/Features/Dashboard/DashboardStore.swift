@@ -16,7 +16,7 @@ final class DashboardStore: ObservableObject {
     }
 
     init(database: AppDatabase?, calendar: Calendar = .current) {
-        let initialState: DashboardMockState = database == nil ? .default : .persistedDefault
+        let initialState: DashboardMockState = .persistedDefault
         self.state = initialState
         self.snapshot = DashboardMockData.snapshot(from: initialState)
         self.database = database
@@ -29,10 +29,11 @@ final class DashboardStore: ObservableObject {
         self.snapshot = snapshot
     }
 
-    func addMeal(name: String, calories: Int, protein: Double) {
+    func addMeal(name: String, calories: Int, protein: Double, note: String? = nil) {
         let mealName = trimmedOrDefault(name, defaultValue: "Mahlzeit")
         let normalizedCalories = max(calories, 0)
-        let normalizedProtein = max(protein, 0)
+        let normalizedProtein = Self.nonNegativeFinite(protein)
+        let trimmedNote = optionalTrimmed(note)
 
         guard let database else {
             state.caloriesConsumed += normalizedCalories
@@ -47,20 +48,22 @@ final class DashboardStore: ObservableObject {
                 NutritionEntryRecord(
                     title: mealName,
                     caloriesKcal: normalizedCalories,
-                    proteinG: normalizedProtein
+                    proteinG: normalizedProtein,
+                    note: trimmedNote
                 )
             )
             addActivity(title: "Mahlzeit gespeichert", detail: "\(mealName) · \(normalizedCalories) kcal · \(Int(normalizedProtein)) g Protein")
             loadDashboardData()
         } catch {
-            addActivity(title: "Mahlzeit nicht gespeichert", detail: error.localizedDescription)
+            addActivity(title: "Mahlzeit nicht gespeichert", detail: "Bitte Eingabe prüfen und erneut versuchen.")
             refreshSnapshot()
         }
     }
 
-    func completeWorkout(type: String, durationMinutes: Int) {
+    func completeWorkout(type: String, durationMinutes: Int, note: String? = nil) {
         let workoutType = trimmedOrDefault(type, defaultValue: "Training")
         let normalizedDuration = max(durationMinutes, 0)
+        let trimmedNote = optionalTrimmed(note)
 
         guard let database else {
             if state.weeklyWorkoutCompleted < state.weeklyWorkoutTarget {
@@ -78,21 +81,23 @@ final class DashboardStore: ObservableObject {
                 WorkoutSessionRecord(
                     workoutType: workoutType,
                     durationMin: normalizedDuration,
-                    status: "done"
+                    status: "done",
+                    note: trimmedNote
                 )
             )
             addActivity(title: "Training gespeichert", detail: "\(workoutType) · \(normalizedDuration) Min")
             loadDashboardData()
         } catch {
-            addActivity(title: "Training nicht gespeichert", detail: error.localizedDescription)
+            addActivity(title: "Training nicht gespeichert", detail: "Bitte erneut versuchen.")
             refreshSnapshot()
         }
     }
 
-    func addExpense(title: String, amount: Double, category: String?) {
+    func addExpense(title: String, amount: Double, category: String?, note: String? = nil) {
         let expenseTitle = trimmedOrDefault(title, defaultValue: "Ausgabe")
-        let normalizedAmount = max(amount, 0)
-        let categoryText = trimmedOrDefault(category ?? "", defaultValue: "Sonstiges")
+        let normalizedAmount = Self.nonNegativeFinite(amount)
+        let categoryText = FinanceCategoryCatalog.normalized(category ?? "", kind: .expense)
+        let trimmedNote = optionalTrimmed(note)
 
         guard let database else {
             state.monthlySpent += normalizedAmount
@@ -108,23 +113,27 @@ final class DashboardStore: ObservableObject {
                     title: expenseTitle,
                     amount: normalizedAmount,
                     currency: currency,
-                    category: categoryText
+                    category: categoryText,
+                    note: trimmedNote
                 )
             )
             addActivity(title: "Ausgabe gespeichert", detail: "\(expenseTitle) · \(Int(normalizedAmount)) \(currency) · \(categoryText)")
             loadDashboardData()
         } catch {
-            addActivity(title: "Ausgabe nicht gespeichert", detail: error.localizedDescription)
+            addActivity(title: "Ausgabe nicht gespeichert", detail: "Bitte Betrag und Kategorie prüfen.")
             refreshSnapshot()
         }
     }
 
     func toggleHabit(_ habitID: DashboardHabit.ID) {
         guard let index = state.habits.firstIndex(where: { $0.id == habitID }) else { return }
-        state.habits[index].isCompleted.toggle()
-
         let habit = state.habits[index]
-        let status = habit.isCompleted ? "abgehakt" : "wieder geöffnet"
+        guard let definition = FixedHabit.defaultDefinition(for: habit.key), !definition.isDerived else { return }
+
+        let nextValue = habit.isCompleted ? 0 : definition.targetValue
+        state.habits[index].value = nextValue
+        state.habits[index].displayText = Self.dashboardDisplayText(for: definition, value: nextValue)
+        let status = state.habits[index].isCompleted ? "abgehakt" : "wieder geöffnet"
 
         guard let database else {
             addActivity(title: "Gewohnheit aktualisiert", detail: "\(habit.title) \(status)")
@@ -136,36 +145,124 @@ final class DashboardStore: ObservableObject {
             try HabitRepository(database: database).upsertCompletion(
                 habitKey: habit.key,
                 date: DateIntervals.dayKey(calendar: calendar),
-                isCompleted: habit.isCompleted
+                isCompleted: state.habits[index].isCompleted
             )
             addActivity(title: "Gewohnheit gespeichert", detail: "\(habit.title) \(status)")
             loadDashboardData()
         } catch {
-            state.habits[index].isCompleted.toggle()
-            addActivity(title: "Gewohnheit nicht gespeichert", detail: error.localizedDescription)
+            state.habits[index].value = habit.value
+            state.habits[index].displayText = habit.displayText
+            addActivity(title: "Gewohnheit nicht gespeichert", detail: "Bitte erneut versuchen.")
             refreshSnapshot()
         }
     }
 
-    func updateWeight(_ weight: Double) {
-        let normalizedWeight = max(weight, 0)
+    func completeHomeWorkout(intensity: HomeWorkoutIntensity, completedExerciseCount: Int? = nil) {
+        let plan = HomeWorkoutPlanProvider.plan
+        let scheduledWorkout = plan.workout(for: Date(), calendar: calendar)
+        let exerciseCount = completedExerciseCount ?? scheduledWorkout.day.exercises(for: intensity).count
+        let session = plan.makeWorkoutSession(
+            for: scheduledWorkout,
+            intensity: intensity,
+            completedExerciseCount: exerciseCount
+        )
 
         guard let database else {
-            state.bodyWeight = normalizedWeight
-            addActivity(title: "Gewicht erfasst", detail: "\(String(format: "%.1f", normalizedWeight)) kg")
+            if state.weeklyWorkoutCompleted < state.weeklyWorkoutTarget {
+                state.weeklyWorkoutCompleted += 1
+            }
+            state.lastWorkoutType = session.workoutType
+            state.lastWorkoutDurationMinutes = session.durationMin
+            addActivity(title: "Training abgeschlossen", detail: "\(session.workoutType) · \(session.durationMin) Min")
             refreshSnapshot()
             return
         }
 
         do {
-            try BodyMetricRepository(database: database).insert(
-                BodyMetricEntryRecord(weightKg: normalizedWeight)
-            )
-            addActivity(title: "Gewicht gespeichert", detail: "\(String(format: "%.1f", normalizedWeight)) kg")
+            try WorkoutRepository(database: database).insert(session)
+            addActivity(title: "Training gespeichert", detail: "\(session.workoutType) · \(session.durationMin) Min")
             loadDashboardData()
         } catch {
-            addActivity(title: "Gewicht nicht gespeichert", detail: error.localizedDescription)
+            addActivity(title: "Training nicht gespeichert", detail: "Bitte erneut versuchen.")
             refreshSnapshot()
+        }
+    }
+
+    func quickHabitValues() -> [String: Double] {
+        guard let database else {
+            return Dictionary(uniqueKeysWithValues: FixedHabit.defaults.map { habit in
+                let completed = state.habits.first { $0.key == habit.key }?.isCompleted ?? false
+                return (habit.key, completed ? habit.targetValue : 0)
+            })
+        }
+
+        do {
+            let entries = try HabitRepository(database: database).fetch(for: DateIntervals.dayKey(calendar: calendar))
+            let workoutCompletedToday = try WorkoutRepository(database: database).completedCount(forDay: Date(), calendar: calendar) > 0
+            return Dictionary(uniqueKeysWithValues: FixedHabit.defaults.map { habit in
+                if habit.key == "training" {
+                    return (habit.key, workoutCompletedToday ? 1 : 0)
+                }
+                let entry = entries.first { $0.habitKey == habit.key }
+                let value = entry?.value ?? (entry?.isCompleted == true ? habit.targetValue : 0)
+                return (habit.key, max(value, 0))
+            })
+        } catch {
+            addActivity(title: "Gewohnheiten nicht geladen", detail: "Bitte später erneut versuchen.")
+            refreshSnapshot()
+            return [:]
+        }
+    }
+
+    @discardableResult
+    func applyHabitDelta(habitKey: String, delta: Double) -> Double {
+        guard let habit = FixedHabit.defaultDefinition(for: habitKey) else { return 0 }
+        guard !habit.isDerived else { return quickHabitValues()[habitKey] ?? 0 }
+        let current = quickHabitValues()[habitKey] ?? 0
+        let nextValue = max(current + delta, 0)
+        setHabitValue(habit, value: nextValue)
+        return nextValue
+    }
+
+    func setSleepRoutine(isCompleted: Bool) {
+        guard let sleep = FixedHabit.defaultDefinition(for: "sleep") else { return }
+        setHabitValue(sleep, value: isCompleted ? 1 : 0)
+    }
+
+    @discardableResult
+    func updateWeight(_ weight: Double) -> Bool {
+        guard Self.isPlausibleWeight(weight) else {
+            addActivity(title: "Gewicht nicht gespeichert", detail: "Bitte gib einen Wert zwischen 20 und 300 kg ein.")
+            refreshSnapshot()
+            return false
+        }
+
+        let normalizedWeight = WeightRepository.normalizedWeight(weight)
+        let todayKey = DateIntervals.dayKey(calendar: calendar)
+
+        guard let database else {
+            state.bodyWeight = normalizedWeight
+            state.bodyWeightDate = todayKey
+            state.bodyWeightChange = nil
+            addActivity(title: "Gewicht erfasst", detail: "\(String(format: "%.1f", normalizedWeight)) kg")
+            refreshSnapshot()
+            return true
+        }
+
+        do {
+            let repository = WeightRepository(database: database)
+            let entry = try repository.upsert(dayKey: todayKey, weightKg: normalizedWeight)
+            let change = try repository.changeFromPrevious(for: entry)
+            addActivity(title: "Gewicht gespeichert", detail: "\(String(format: "%.1f", normalizedWeight)) kg")
+            state.bodyWeight = entry.weightKg
+            state.bodyWeightDate = entry.date
+            state.bodyWeightChange = change
+            loadDashboardData()
+            return true
+        } catch {
+            addActivity(title: "Gewicht nicht gespeichert", detail: "Bitte Eingabe prüfen und erneut versuchen.")
+            refreshSnapshot()
+            return false
         }
     }
 
@@ -180,7 +277,7 @@ final class DashboardStore: ObservableObject {
         let calories = progress(current: Double(state.caloriesConsumed), target: Double(state.caloriesTarget))
         let protein = progress(current: state.proteinConsumed, target: state.proteinTarget)
         let training = progress(current: Double(state.weeklyWorkoutCompleted), target: Double(state.weeklyWorkoutTarget))
-        let habits = progress(current: Double(state.completedHabits), target: Double(state.totalHabits))
+        let habits = state.habitProgress
         let budget = budgetScore(spent: state.monthlySpent, budget: state.monthlyBudget)
 
         return clamp((calories + protein + training + habits + budget) / 5)
@@ -209,10 +306,12 @@ final class DashboardStore: ObservableObject {
             let workoutCount = try workoutRepository.completedCount(in: weekInterval)
             let latestWorkout = try workoutRepository.latestCompleted(in: weekInterval)
             let habitEntries = try HabitRepository(database: database).fetch(for: DateIntervals.dayKey(calendar: calendar))
-            let habitCompletionByKey = habitEntries.reduce(into: [String: Bool]()) { result, entry in
-                result[entry.habitKey] = entry.isCompleted
+            let workoutCompletedToday = try workoutRepository.completedCount(forDay: Date(), calendar: calendar) > 0
+            let habitEntriesByKey = habitEntries.reduce(into: [String: HabitEntryRecord]()) { result, entry in
+                result[entry.habitKey] = entry
             }
-            let latestBodyMetric = try BodyMetricRepository(database: database).latest()
+            let weightRepository = WeightRepository(database: database)
+            let latestWeight = try weightRepository.latest()
 
             state.caloriesTarget = settings.caloriesTarget
             state.proteinTarget = settings.proteinTargetG
@@ -224,23 +323,20 @@ final class DashboardStore: ObservableObject {
             state.weeklyWorkoutTarget = settings.weeklyWorkoutTarget
             state.lastWorkoutType = latestWorkout?.workoutType
             state.lastWorkoutDurationMinutes = latestWorkout?.durationMin
-            state.bodyWeight = latestBodyMetric?.weightKg
-            state.habits = DashboardMockState.persistedHabits.map { habit in
-                DashboardHabit(
-                    id: habit.id,
-                    key: habit.key,
-                    title: habit.title,
-                    isCompleted: habitCompletionByKey[habit.key] ?? false
-                )
-            }
-
-            if state.recentActions.isEmpty {
-                addActivity(title: "Lokale Daten geladen", detail: "SQLite-Summaries sind aktiv.")
-            }
+            state.bodyWeight = latestWeight?.weightKg
+            state.bodyWeightDate = latestWeight?.date
+            state.bodyWeightChange = try latestWeight.flatMap { try weightRepository.changeFromPrevious(for: $0) }
+            state.bodyWeightTarget = settings.targetWeightKg
+            state.bodyWeightLowerBound = settings.targetWeightLowerKg
+            state.bodyWeightUpperBound = settings.targetWeightUpperKg
+            state.habits = Self.makeDashboardHabits(
+                entriesByKey: habitEntriesByKey,
+                workoutCompletedToday: workoutCompletedToday
+            )
 
             refreshSnapshot()
         } catch {
-            addActivity(title: "Lokale Daten nicht geladen", detail: error.localizedDescription)
+            addActivity(title: "Lokale Daten nicht geladen", detail: "Bitte später erneut versuchen.")
             refreshSnapshot()
         }
     }
@@ -258,6 +354,41 @@ final class DashboardStore: ObservableObject {
         return trimmed.isEmpty ? defaultValue : trimmed
     }
 
+    private func optionalTrimmed(_ value: String?) -> String? {
+        let trimmed = (value ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func setHabitValue(_ habit: FixedHabit, value: Double) {
+        guard !habit.isDerived else { return }
+        let normalizedValue = Self.nonNegativeFinite(value)
+
+        guard let database else {
+            if let index = state.habits.firstIndex(where: { $0.key == habit.key }) {
+                state.habits[index].value = normalizedValue
+                state.habits[index].displayText = Self.dashboardDisplayText(for: habit, value: normalizedValue)
+            }
+            addActivity(title: "Gewohnheit aktualisiert", detail: "\(habit.title) \(habit.displayValue(normalizedValue))")
+            refreshSnapshot()
+            return
+        }
+
+        do {
+            try HabitRepository(database: database).setValue(
+                habitKey: habit.key,
+                date: DateIntervals.dayKey(calendar: calendar),
+                value: normalizedValue,
+                target: habit.targetValue,
+                unit: habit.unit
+            )
+            addActivity(title: "Gewohnheit gespeichert", detail: "\(habit.title) \(habit.displayValue(normalizedValue))")
+            loadDashboardData()
+        } catch {
+            addActivity(title: "Gewohnheit nicht gespeichert", detail: "Bitte erneut versuchen.")
+            refreshSnapshot()
+        }
+    }
+
     private static func progress(current: Double, target: Double) -> Double {
         guard target > 0 else { return 0 }
         return clamp(current / target)
@@ -270,6 +401,50 @@ final class DashboardStore: ObservableObject {
 
     private static func clamp(_ value: Double) -> Double {
         min(max(value, 0), 1)
+    }
+
+    private static func nonNegativeFinite(_ value: Double) -> Double {
+        value.isFinite ? max(value, 0) : 0
+    }
+
+    private static func isPlausibleWeight(_ value: Double) -> Bool {
+        value.isFinite && value >= 20 && value <= 300
+    }
+}
+
+private extension DashboardStore {
+    static func makeDashboardHabits(entriesByKey: [String: HabitEntryRecord], workoutCompletedToday: Bool) -> [DashboardHabit] {
+        FixedHabit.defaults.map { habit in
+            let value: Double
+            if habit.key == "training" {
+                value = workoutCompletedToday ? 1 : 0
+            } else if let entry = entriesByKey[habit.key] {
+                value = entry.value ?? (entry.isCompleted ? habit.targetValue : 0)
+            } else {
+                value = 0
+            }
+
+            return DashboardHabit(
+                key: habit.key,
+                title: habit.title,
+                value: max(value, 0),
+                targetValue: habit.targetValue,
+                displayText: Self.dashboardDisplayText(for: habit, value: value)
+            )
+        }
+    }
+
+    static func dashboardDisplayText(for habit: FixedHabit, value: Double) -> String {
+        if habit.key == "training" {
+            return value >= 1 ? "erledigt" : "offen"
+        }
+        if habit.isBoolean {
+            return value >= 1 ? "erledigt" : "offen"
+        }
+        if habit.key == "water" {
+            return habit.displayValue(value).replacingOccurrences(of: "Liter", with: "L")
+        }
+        return habit.displayValue(value)
     }
 }
 
@@ -284,13 +459,18 @@ struct DashboardMockState {
     var monthlyBudget: Double
     var habits: [DashboardHabit]
     var bodyWeight: Double?
+    var bodyWeightDate: String?
+    var bodyWeightChange: Double?
+    var bodyWeightTarget: Double?
+    var bodyWeightLowerBound: Double?
+    var bodyWeightUpperBound: Double?
     var dailyNote: String?
     var recentActions: [DashboardActivityItem]
     var lastWorkoutType: String?
     var lastWorkoutDurationMinutes: Int?
 
     var completedHabits: Int {
-        habits.filter(\.isCompleted).count
+        habits.filter { $0.progress >= 1 }.count
     }
 
     var totalHabits: Int {
@@ -298,71 +478,110 @@ struct DashboardMockState {
     }
 
     var dailyBudgetRemaining: Double {
-        max((monthlyBudget - monthlySpent) / 18, 0)
+        FinanceStore.dailyBudgetRemaining(
+            spent: monthlySpent,
+            budget: monthlyBudget,
+            date: Date()
+        )
     }
 
-    static let `default` = DashboardMockState(
-        caloriesConsumed: 1450,
-        caloriesTarget: 2200,
-        proteinConsumed: 95,
-        proteinTarget: 160,
-        weeklyWorkoutCompleted: 2,
-        weeklyWorkoutTarget: 3,
-        monthlySpent: 684,
-        monthlyBudget: 1200,
-        habits: [
-            DashboardHabit(key: "morning_water", title: "Wasser", isCompleted: false),
-            DashboardHabit(key: "walk", title: "10 Minuten gehen", isCompleted: true),
-            DashboardHabit(key: "protein", title: "Protein priorisieren", isCompleted: true),
-            DashboardHabit(key: "reading", title: "Lesen", isCompleted: false),
-            DashboardHabit(key: "budget_check", title: "Budget checken", isCompleted: true)
-        ],
-        bodyWeight: nil,
-        dailyNote: nil,
-        recentActions: [
-            DashboardActivityItem(title: "Mock-Tag geladen", detail: "Alle Werte sind nur In-Memory.", createdAt: Date())
-        ],
-        lastWorkoutType: nil,
-        lastWorkoutDurationMinutes: nil
-    )
+    var habitProgress: Double {
+        guard !habits.isEmpty else { return 0 }
+        let clamped = habits.map { min(max($0.progress, 0), 1) }
+        return clamped.reduce(0, +) / Double(clamped.count)
+    }
 
-    static let persistedHabits: [DashboardHabit] = [
-        DashboardHabit(key: "water", title: "Wasser", isCompleted: false),
-        DashboardHabit(key: "movement", title: "Bewegung", isCompleted: false),
-        DashboardHabit(key: "nutrition", title: "Ernährung", isCompleted: false),
-        DashboardHabit(key: "learning", title: "Lernen", isCompleted: false),
-        DashboardHabit(key: "sleep", title: "Schlaf", isCompleted: false)
-    ]
+    static var `default`: DashboardMockState {
+        DashboardMockState(
+            caloriesConsumed: 1450,
+            caloriesTarget: 2200,
+            proteinConsumed: 95,
+            proteinTarget: 160,
+            weeklyWorkoutCompleted: 2,
+            weeklyWorkoutTarget: 3,
+            monthlySpent: 684,
+            monthlyBudget: 1200,
+            habits: [
+                DashboardHabit(key: "water", title: "Wasser", value: 1.5, targetValue: 3, displayText: "1,5 / 3,0 L"),
+                DashboardHabit(key: "training", title: "Trainieren", value: 1, targetValue: 1, displayText: "erledigt"),
+                DashboardHabit(key: "nutrition", title: "Ernährung", value: 2, targetValue: 3, displayText: "2 / 3 Mahlzeiten"),
+                DashboardHabit(key: "learning", title: "Lernen", value: 15, targetValue: 60, displayText: "15 / 60 Min."),
+                DashboardHabit(key: "sleep", title: "Schlaf", value: 0, targetValue: 1, displayText: "offen")
+            ],
+            bodyWeight: nil,
+            bodyWeightDate: nil,
+            bodyWeightChange: nil,
+            bodyWeightTarget: nil,
+            bodyWeightLowerBound: nil,
+            bodyWeightUpperBound: nil,
+            dailyNote: nil,
+            recentActions: [
+                DashboardActivityItem(title: "Beispieldaten geladen", detail: "Vorschauwerte für das Dashboard.", createdAt: Date())
+            ],
+            lastWorkoutType: nil,
+            lastWorkoutDurationMinutes: nil
+        )
+    }
 
-    static let persistedDefault = DashboardMockState(
-        caloriesConsumed: 0,
-        caloriesTarget: SeedData.defaultSettings.caloriesTarget,
-        proteinConsumed: 0,
-        proteinTarget: SeedData.defaultSettings.proteinTargetG,
-        weeklyWorkoutCompleted: 0,
-        weeklyWorkoutTarget: SeedData.defaultSettings.weeklyWorkoutTarget,
-        monthlySpent: 0,
-        monthlyBudget: SeedData.defaultSettings.monthlyBudget,
-        habits: persistedHabits,
-        bodyWeight: nil,
-        dailyNote: nil,
-        recentActions: [],
-        lastWorkoutType: nil,
-        lastWorkoutDurationMinutes: nil
-    )
+    static var persistedHabits: [DashboardHabit] {
+        [
+            DashboardHabit(key: "water", title: "Wasser", value: 0, targetValue: 3, displayText: "0 / 3,0 L"),
+            DashboardHabit(key: "training", title: "Trainieren", value: 0, targetValue: 1, displayText: "offen"),
+            DashboardHabit(key: "nutrition", title: "Ernährung", value: 0, targetValue: 3, displayText: "0 / 3 Mahlzeiten"),
+            DashboardHabit(key: "learning", title: "Lernen", value: 0, targetValue: 60, displayText: "0 / 60 Min."),
+            DashboardHabit(key: "sleep", title: "Schlaf", value: 0, targetValue: 1, displayText: "offen")
+        ]
+    }
+
+    static var persistedDefault: DashboardMockState {
+        DashboardMockState(
+            caloriesConsumed: 0,
+            caloriesTarget: SeedData.defaultSettings.caloriesTarget,
+            proteinConsumed: 0,
+            proteinTarget: SeedData.defaultSettings.proteinTargetG,
+            weeklyWorkoutCompleted: 0,
+            weeklyWorkoutTarget: SeedData.defaultSettings.weeklyWorkoutTarget,
+            monthlySpent: 0,
+            monthlyBudget: SeedData.defaultSettings.monthlyBudget,
+            habits: persistedHabits,
+            bodyWeight: nil,
+            bodyWeightDate: nil,
+            bodyWeightChange: nil,
+            bodyWeightTarget: nil,
+            bodyWeightLowerBound: nil,
+            bodyWeightUpperBound: nil,
+            dailyNote: nil,
+            recentActions: [],
+            lastWorkoutType: nil,
+            lastWorkoutDurationMinutes: nil
+        )
+    }
 }
 
 struct DashboardHabit: Identifiable, Equatable {
     let id: UUID
     let key: String
     let title: String
-    var isCompleted: Bool
+    var value: Double
+    var targetValue: Double
+    var displayText: String
 
-    init(id: UUID = UUID(), key: String, title: String, isCompleted: Bool) {
+    var progress: Double {
+        guard targetValue > 0 else { return 0 }
+        return min(max(value / targetValue, 0), 1)
+    }
+
+    var isCompleted: Bool {
+        progress >= 1
+    }
+
+    init(id: UUID = UUID(), key: String, title: String, value: Double, targetValue: Double, displayText: String) {
         self.id = id
         self.key = key
         self.title = title
-        self.isCompleted = isCompleted
+        self.value = value
+        self.targetValue = targetValue
+        self.displayText = displayText
     }
 }
 

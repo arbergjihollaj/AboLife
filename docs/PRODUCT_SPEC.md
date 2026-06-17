@@ -16,7 +16,7 @@ AboLife soll dieses Problem lösen, indem es täglich wenige zentrale Fragen bea
 
 - Wie läuft mein Tag?
 - Bin ich bei Kalorien und Protein auf Kurs?
-- Habe ich Training oder Bewegung erledigt?
+- Habe ich mein Training erledigt?
 - Bin ich finanziell im Rahmen?
 - Welche Gewohnheiten fehlen noch?
 - Was lerne ich aus dieser Woche?

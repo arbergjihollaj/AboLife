@@ -3,13 +3,14 @@ import Foundation
 final class WeeklyReviewStore: ObservableObject {
     @Published var selectedDate: Date {
         didSet {
-            guard !calendar.isDate(selectedDate, equalTo: oldValue, toGranularity: .weekOfYear) else { return }
+            guard !Self.isSameWeek(selectedDate, oldValue, weekStartsOn: weekStartsOn, calendar: calendar) else { return }
             reload()
         }
     }
     @Published private(set) var nutritionSummary = NutritionWeeklySummary.empty
     @Published private(set) var trainingSummary = WorkoutWeeklySummary.empty
     @Published private(set) var financeSummary = FinanceWeeklySummary.empty
+    @Published private(set) var financeMonthPlan: FinanceMonthPlan?
     @Published private(set) var habitSummary = HabitWeeklySummary.empty
     @Published private(set) var trends = WeeklyReviewTrends.empty(
         for: DateIntervals.week(weekStartsOn: SeedData.defaultSettings.weekStartsOn)
@@ -60,7 +61,7 @@ final class WeeklyReviewStore: ObservableObject {
     }
 
     var isCurrentWeek: Bool {
-        calendar.isDate(selectedDate, equalTo: Date(), toGranularity: .weekOfYear)
+        Self.isSameWeek(selectedDate, Date(), weekStartsOn: weekStartsOn, calendar: calendar)
     }
 
     var reviewedDaysCount: Int {
@@ -90,6 +91,7 @@ final class WeeklyReviewStore: ObservableObject {
             nutritionSummary = .empty
             trainingSummary = .empty
             financeSummary = .empty
+            financeMonthPlan = nil
             habitSummary = .empty
             trends = WeeklyReviewTrends.empty(for: weekInterval, calendar: calendar)
             weeklyWorkoutTarget = SeedData.defaultSettings.weeklyWorkoutTarget
@@ -132,13 +134,13 @@ final class WeeklyReviewStore: ObservableObject {
                 calendar: calendar
             )
             financeSummary = try financeRepository.weeklySummary(in: interval)
-            habitSummary = try habitRepository.weeklySummary(
-                in: interval,
-                habitKeys: habitKeys,
-                days: days,
+            financeMonthPlan = try financeRepository.monthPlan(
+                for: selectedDate,
+                monthlyBudget: settings.monthlyBudget,
+                currency: settings.defaultCurrency,
                 calendar: calendar
             )
-            trends = WeeklyReviewTrends.make(
+            let weeklyTrends = WeeklyReviewTrends.make(
                 interval: interval,
                 nutritionEntries: nutritionEntries,
                 financeEntries: financeEntries,
@@ -147,6 +149,17 @@ final class WeeklyReviewStore: ObservableObject {
                 habitKeys: habitKeys,
                 calendar: calendar
             )
+            let reviewedHabitProgress = Array(weeklyTrends.habitCompletionByDay.prefix(days)).map { $0.value / 100 }
+            let completedScore = reviewedHabitProgress.reduce(0) { result, progress in
+                result + Int((progress * Double(habitKeys.count)).rounded(.down))
+            }
+
+            habitSummary = HabitWeeklySummary(
+                completed: completedScore,
+                total: max(days, 0) * habitKeys.count,
+                progressValue: HabitsStore.averageProgress(reviewedHabitProgress)
+            )
+            trends = weeklyTrends
 
             if let review = try WeeklyReviewRepository(database: database).fetch(weekStartDate: weekStartKey) {
                 winsText = review.winsText
@@ -161,7 +174,7 @@ final class WeeklyReviewStore: ObservableObject {
             saveMessage = nil
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Wochenreview konnte nicht geladen werden."
         }
     }
 
@@ -178,7 +191,7 @@ final class WeeklyReviewStore: ObservableObject {
             saveMessage = "Gespeichert"
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Wochenreview konnte nicht gespeichert werden."
         }
     }
 
@@ -201,6 +214,18 @@ final class WeeklyReviewStore: ObservableObject {
     var financeProgress: Double {
         guard monthlyBudget > 0 else { return 0 }
         return min(max(financeSummary.spent / (monthlyBudget / 4.0), 0), 1)
+    }
+
+    var financeAnalysis: String {
+        guard let financeMonthPlan else {
+            return "\(financeSummary.entryCount) Ausgaben erfasst."
+        }
+        let forecast = formatAmount(financeMonthPlan.forecastSpend)
+        let topCategory = financeSummary.topCategory ?? financeMonthPlan.categorySummaries.first?.category ?? "keine Top-Kategorie"
+        if financeMonthPlan.isForecastOverBudget {
+            return "Forecast \(forecast), Top: \(topCategory), über Budget."
+        }
+        return "Forecast \(forecast), Top: \(topCategory), im Rahmen."
     }
 
     func formatAmount(_ amount: Double, currency: String? = nil) -> String {
@@ -228,6 +253,11 @@ final class WeeklyReviewStore: ObservableObject {
         let elapsed = (calendar.dateComponents([.day], from: start, to: referenceDay).day ?? 0) + 1
         return min(max(elapsed, 1), weekLength)
     }
+
+    private static func isSameWeek(_ lhs: Date, _ rhs: Date, weekStartsOn: Int, calendar: Calendar) -> Bool {
+        DateIntervals.week(containing: lhs, weekStartsOn: weekStartsOn, calendar: calendar).start ==
+            DateIntervals.week(containing: rhs, weekStartsOn: weekStartsOn, calendar: calendar).start
+    }
 }
 
 extension NutritionWeeklySummary {
@@ -245,7 +275,7 @@ extension WorkoutWeeklySummary {
 }
 
 extension FinanceWeeklySummary {
-    static let empty = FinanceWeeklySummary(spent: 0, entryCount: 0)
+    static let empty = FinanceWeeklySummary(spent: 0, income: 0, entryCount: 0, topCategory: nil)
 }
 
 extension HabitWeeklySummary {

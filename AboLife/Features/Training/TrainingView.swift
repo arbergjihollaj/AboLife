@@ -16,6 +16,11 @@ struct TrainingView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     homeWorkoutPlanSection
+                    progressionSection
+                    bodyProgressSection
+                    statisticsSection
+                    nutritionSection
+                    goalsSection
                     weeklyOverview
                     weekStrip
                     sessionsSection
@@ -261,6 +266,141 @@ struct TrainingView: View {
         }
     }
 
+    private var progressionSection: some View {
+        AboLifeCard(isProminent: true) {
+            VStack(alignment: .leading, spacing: 14) {
+                sectionHeader(title: "Progression", systemImage: "chart.line.uptrend.xyaxis", value: "\(store.exerciseProgressions.count) Übungen")
+
+                VStack(spacing: 10) {
+                    ForEach(store.recommendations, id: \.id) { recommendation in
+                        HStack(alignment: .center, spacing: 12) {
+                            Image(systemName: icon(for: recommendation.outcomeRawValue))
+                                .foregroundStyle(color(for: recommendation.outcomeRawValue))
+                                .frame(width: 22)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(recommendation.exerciseName)
+                                    .font(AboLifeTypography.body.weight(.semibold))
+                                    .foregroundStyle(AboLifeColors.primaryText)
+
+                                Text(recommendation.message)
+                                    .font(AboLifeTypography.caption)
+                                    .foregroundStyle(AboLifeColors.secondaryText)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+
+                            Spacer()
+
+                            VStack(alignment: .trailing, spacing: 3) {
+                                Text("Level \(recommendation.nextLevel)")
+                                    .font(AboLifeTypography.caption.weight(.semibold))
+                                    .foregroundStyle(AboLifeColors.primaryText)
+
+                                Text("\(recommendation.nextTargetSets) x \(recommendation.nextTargetMinReps)-\(recommendation.nextTargetMaxReps)")
+                                    .font(AboLifeTypography.micro)
+                                    .foregroundStyle(AboLifeColors.tertiaryText)
+                                    .monospacedDigit()
+                            }
+                        }
+                        .padding(.horizontal, 13)
+                        .padding(.vertical, 11)
+                        .background(rowBackground)
+                    }
+                }
+            }
+        }
+    }
+
+    private var bodyProgressSection: some View {
+        AboLifeCard {
+            VStack(alignment: .leading, spacing: 13) {
+                sectionHeader(title: "Körperentwicklung", systemImage: "figure.arms.open", value: store.bodyTrend.summary)
+
+                HStack(spacing: 10) {
+                    trendPill(title: "Bauch", value: centimeters(store.bodyTrend.waistChangeCm), tint: AboLifeColors.habits)
+                    trendPill(title: "Brust", value: centimeters(store.bodyTrend.chestChangeCm), tint: AboLifeColors.training)
+                    trendPill(title: "Arm", value: centimeters(store.bodyTrend.armChangeCm), tint: AboLifeColors.protein)
+                    trendPill(title: "Max Pull", value: signedInt(store.bodyTrend.pullupChange), tint: AboLifeColors.review)
+                }
+            }
+        }
+    }
+
+    private var statisticsSection: some View {
+        AboLifeCard {
+            VStack(alignment: .leading, spacing: 13) {
+                sectionHeader(title: "Statistiken", systemImage: "gauge.with.dots.needle.bottom.50percent", value: "\(Int(store.trainingStatistics.trainingRate * 100))% Quote")
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 132), spacing: 10)], spacing: 10) {
+                    statTile("Diese Woche", "\(store.trainingStatistics.trainingsThisWeek)", "Workouts")
+                    statTile("Streak", "\(store.trainingStatistics.currentStreak)", "Tage")
+                    statTile("Gesamtvolumen", "\(store.trainingStatistics.totalVolume)", "Punkte")
+                    statTile("Push", "\(store.trainingStatistics.pushVolume)", "Vol.")
+                    statTile("Pull", "\(store.trainingStatistics.pullVolume)", "Vol.")
+                    statTile("Beine", "\(store.trainingStatistics.legVolume)", "Vol.")
+                    statTile("Stärkste Woche", "\(store.trainingStatistics.strongestWeek)", "Einheiten")
+                }
+            }
+        }
+    }
+
+    private var nutritionSection: some View {
+        AboLifeCard {
+            VStack(alignment: .leading, spacing: 13) {
+                sectionHeader(title: "Ernährung", systemImage: "fork.knife.circle", value: "Protein + Kalorien")
+
+                HStack(spacing: 10) {
+                    summaryPill(
+                        title: "Protein",
+                        value: "\(Int(store.nutritionStatus.currentProteinG.rounded())) / \(Int(store.nutritionStatus.proteinTargetG)) g",
+                        systemImage: "bolt.heart",
+                        tint: AboLifeColors.protein
+                    )
+
+                    summaryPill(
+                        title: "Kalorien",
+                        value: "\(store.nutritionStatus.currentCalories) kcal",
+                        systemImage: "flame",
+                        tint: AboLifeColors.nutrition
+                    )
+                }
+
+                Text(store.nutritionStatus.message)
+                    .font(AboLifeTypography.body)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+            }
+        }
+    }
+
+    private var goalsSection: some View {
+        AboLifeCard {
+            VStack(alignment: .leading, spacing: 13) {
+                sectionHeader(title: "Ziele", systemImage: "target", value: "Muskelaufbau")
+
+                HStack(spacing: 10) {
+                    ForEach(store.motivationCards) { card in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Image(systemName: card.systemImage)
+                                .foregroundStyle(AboLifeColors.training)
+
+                            Text(card.title)
+                                .font(AboLifeTypography.caption.weight(.semibold))
+                                .foregroundStyle(AboLifeColors.primaryText)
+
+                            Text(card.detail)
+                                .font(AboLifeTypography.micro)
+                                .foregroundStyle(AboLifeColors.secondaryText)
+                                .lineLimit(2)
+                        }
+                        .padding(12)
+                        .frame(maxWidth: .infinity, minHeight: 98, alignment: .leading)
+                        .background(rowBackground)
+                    }
+                }
+            }
+        }
+    }
+
     private func progressRing(size: CGFloat, lineWidth: CGFloat) -> some View {
         CoreRingView(
             progress: store.progress,
@@ -438,6 +578,108 @@ struct TrainingView: View {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 0.6)
                 }
+        }
+    }
+
+    private func sectionHeader(title: String, systemImage: String, value: String) -> some View {
+        HStack(spacing: 10) {
+            Label(title, systemImage: systemImage)
+                .font(AboLifeTypography.cardTitle)
+                .foregroundStyle(AboLifeColors.primaryText)
+
+            Spacer()
+
+            AboLifeGlassCapsule {
+                Text(value)
+                    .font(AboLifeTypography.micro)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+        }
+    }
+
+    private func trendPill(title: String, value: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(AboLifeColors.secondaryText)
+
+            Text(value)
+                .font(AboLifeTypography.caption.weight(.semibold))
+                .foregroundStyle(tint)
+                .monospacedDigit()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(rowBackground)
+    }
+
+    private func statTile(_ title: String, _ value: String, _ unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(AboLifeColors.secondaryText)
+
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(value)
+                    .font(AboLifeTypography.metric)
+                    .foregroundStyle(AboLifeColors.primaryText)
+                    .monospacedDigit()
+
+                Text(unit)
+                    .font(AboLifeTypography.micro)
+                    .foregroundStyle(AboLifeColors.tertiaryText)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(rowBackground)
+    }
+
+    private var rowBackground: some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(AboLifeColors.quietFill)
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 0.6)
+            }
+    }
+
+    private func centimeters(_ value: Double?) -> String {
+        guard let value else { return "neu" }
+        return String(format: "%+.1f cm", value)
+    }
+
+    private func signedInt(_ value: Int?) -> String {
+        guard let value else { return "neu" }
+        return String(format: "%+d", value)
+    }
+
+    private func icon(for outcome: String) -> String {
+        switch outcome {
+        case ExerciseProgressionOutcome.increase.rawValue:
+            return "arrow.up.circle.fill"
+        case ExerciseProgressionOutcome.reduceTarget.rawValue:
+            return "arrow.down.circle.fill"
+        case ExerciseProgressionOutcome.recover.rawValue:
+            return "cross.case.fill"
+        default:
+            return "repeat.circle.fill"
+        }
+    }
+
+    private func color(for outcome: String) -> Color {
+        switch outcome {
+        case ExerciseProgressionOutcome.increase.rawValue:
+            return AboLifeColors.training
+        case ExerciseProgressionOutcome.reduceTarget.rawValue:
+            return AboLifeColors.habits
+        case ExerciseProgressionOutcome.recover.rawValue:
+            return AboLifeColors.review
+        default:
+            return AboLifeColors.protein
         }
     }
 }

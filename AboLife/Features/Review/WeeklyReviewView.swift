@@ -116,13 +116,27 @@ struct WeeklyReviewView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             if let errorMessage = store.errorMessage {
-                Text(errorMessage)
-                    .font(AboLifeTypography.caption)
-                    .foregroundStyle(AboLifeColors.habits)
-                    .fixedSize(horizontal: false, vertical: true)
+                inlineError(errorMessage)
             }
         }
         .frame(maxWidth: 620, alignment: .leading)
+    }
+
+    private func inlineError(_ message: String) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            Label(message, systemImage: "exclamationmark.circle")
+                .font(AboLifeTypography.caption)
+                .foregroundStyle(AboLifeColors.habits)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                store.reload()
+            } label: {
+                Label("Erneut versuchen", systemImage: "arrow.clockwise")
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+        }
     }
 
     private var summaryGrid: some View {
@@ -150,7 +164,7 @@ struct WeeklyReviewView: View {
                 systemImage: "eurosign.circle",
                 tint: AboLifeColors.finance,
                 primary: "\(store.formatAmount(store.financeSummary.spent)) diese Woche",
-                secondary: "\(store.financeSummary.entryCount) Ausgaben erfasst",
+                secondary: store.financeAnalysis,
                 progress: store.financeProgress
             )
 
@@ -158,8 +172,8 @@ struct WeeklyReviewView: View {
                 title: "Gewohnheiten",
                 systemImage: "checkmark.seal",
                 tint: AboLifeColors.habits,
-                primary: "\(store.habitSummary.completed) / \(store.habitSummary.total) erledigt",
-                secondary: "\(Int(store.habitSummary.progress * 100))% Completion",
+                primary: "\(Int((store.habitSummary.progress * 100).rounded()))% Habit-Fortschritt",
+                secondary: "inkl. Trainieren aus Workouts",
                 progress: store.habitSummary.progress
             )
         }

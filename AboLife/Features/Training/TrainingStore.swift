@@ -1,9 +1,9 @@
 import Foundation
 
-final class TrainingStore: ObservableObject {
+final class TrainingViewModel: ObservableObject {
     @Published var selectedDate: Date {
         didSet {
-            guard !calendar.isDate(selectedDate, equalTo: oldValue, toGranularity: .weekOfYear) else { return }
+            guard !Self.isSameWeek(selectedDate, oldValue, weekStartsOn: weekStartsOn, calendar: calendar) else { return }
             reload()
         }
     }
@@ -12,19 +12,27 @@ final class TrainingStore: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var completionMessage: String?
     @Published private(set) var isSavingPlanWorkout = false
+    @Published private(set) var exerciseProgressions: [ExerciseProgression]
+    @Published private(set) var recommendations: [WorkoutRecommendation]
+    @Published private(set) var bodyTrend: BodyProgressTrend
+    @Published private(set) var nutritionStatus: NutritionTrainingStatus
+    @Published private(set) var trainingStatistics: TrainingStatistics
+    @Published private(set) var motivationCards: [MotivationCard]
 
     private let database: AppDatabase?
     private let calendar: Calendar
     private var weekStartsOn: Int
     private let homeWorkoutPlan: HomeWorkoutPlan
     private let now: () -> Date
+    private let progressionService: TrainingProgressionService
+    private let bodyProgressService: BodyProgressService
 
     init(
         database: AppDatabase?,
         selectedDate: Date = Date(),
         calendar: Calendar = .current,
         weeklyWorkoutTarget: Int = SeedData.defaultSettings.weeklyWorkoutTarget,
-        homeWorkoutPlan: HomeWorkoutPlan = HomeWorkoutPlanProvider.plan,
+        homeWorkoutPlan: HomeWorkoutPlan = TrainingPlanSeeder.weeklyPlan,
         now: @escaping () -> Date = Date.init
     ) {
         self.database = database
@@ -34,6 +42,28 @@ final class TrainingStore: ObservableObject {
         self.weeklyWorkoutTarget = weeklyWorkoutTarget
         self.homeWorkoutPlan = homeWorkoutPlan
         self.now = now
+        self.progressionService = TrainingProgressionService()
+        self.bodyProgressService = BodyProgressService()
+        self.exerciseProgressions = TrainingPlanSeeder.defaultProgressions
+        self.recommendations = []
+        self.bodyTrend = bodyProgressService.trend(from: TrainingPlanSeeder.sampleMeasurements)
+        self.nutritionStatus = NutritionTrainingStatus(
+            proteinTargetG: 170,
+            caloriesTargetRange: 2500...2700,
+            currentProteinG: 0,
+            currentCalories: 0
+        )
+        self.trainingStatistics = TrainingStatistics(
+            trainingsThisWeek: 0,
+            currentStreak: 0,
+            totalVolume: 0,
+            pushVolume: 0,
+            pullVolume: 0,
+            legVolume: 0,
+            strongestWeek: 0,
+            trainingRate: 0
+        )
+        self.motivationCards = []
         reload()
     }
 
@@ -54,7 +84,7 @@ final class TrainingStore: ObservableObject {
     }
 
     var isCurrentWeek: Bool {
-        calendar.isDate(selectedDate, equalTo: now(), toGranularity: .weekOfYear)
+        Self.isSameWeek(selectedDate, now(), weekStartsOn: weekStartsOn, calendar: calendar)
     }
 
     var weekSubtitle: String {
@@ -112,6 +142,7 @@ final class TrainingStore: ObservableObject {
             sessions = []
             weeklyWorkoutTarget = SeedData.defaultSettings.weeklyWorkoutTarget
             errorMessage = nil
+            refreshIntelligence(nutritionEntries: [])
             return
         }
 
@@ -121,9 +152,18 @@ final class TrainingStore: ObservableObject {
             weekStartsOn = settings.weekStartsOn
             weeklyWorkoutTarget = settings.weeklyWorkoutTarget
             sessions = try repository.fetchSessions(forWeekContaining: selectedDate, weekStartsOn: settings.weekStartsOn, calendar: calendar)
+            let nutritionEntries = try NutritionRepository(database: database).fetchEntries(forDay: now(), calendar: calendar)
+            nutritionStatus = NutritionTrainingStatus(
+                proteinTargetG: max(settings.proteinTargetG, 170),
+                caloriesTargetRange: 2500...2700,
+                currentProteinG: nutritionEntries.reduce(0) { $0 + $1.proteinG },
+                currentCalories: nutritionEntries.reduce(0) { $0 + $1.caloriesKcal }
+            )
+            refreshIntelligence(nutritionEntries: nutritionEntries)
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Trainingsdaten konnten nicht geladen werden."
+            refreshIntelligence(nutritionEntries: [])
         }
     }
 
@@ -152,7 +192,7 @@ final class TrainingStore: ObservableObject {
             errorMessage = nil
             reload()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Workout konnte nicht gespeichert werden."
         }
 
         isSavingPlanWorkout = false
@@ -169,7 +209,7 @@ final class TrainingStore: ObservableObject {
             try WorkoutRepository(database: database).delete(id: id)
             reload()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Workout konnte nicht gelöscht werden."
         }
     }
 
@@ -182,6 +222,96 @@ final class TrainingStore: ObservableObject {
         sessions.filter { $0.status == "done" }
     }
 
+    private func refreshIntelligence(nutritionEntries: [NutritionEntryRecord]) {
+        if nutritionEntries.isEmpty && database == nil {
+            nutritionStatus = NutritionTrainingStatus(
+                proteinTargetG: 170,
+                caloriesTargetRange: 2500...2700,
+                currentProteinG: 128,
+                currentCalories: 2140
+            )
+        }
+
+        recommendations = exerciseProgressions.map { progression in
+            progressionService.recommendation(
+                for: progression,
+                results: sampleResults(for: progression)
+            )
+        }
+
+        bodyTrend = bodyProgressService.trend(from: TrainingPlanSeeder.sampleMeasurements)
+        trainingStatistics = makeTrainingStatistics()
+        motivationCards = makeMotivationCards()
+    }
+
+    private func sampleResults(for progression: ExerciseProgression) -> [ExerciseSetResult] {
+        switch progression.exerciseName.lowercased() {
+        case let name where name.contains("klimm"):
+            return [4, 4, 3, 3].enumerated().map {
+                ExerciseSetResult(exerciseName: progression.exerciseName, reps: $0.element, setIndex: $0.offset)
+            }
+        case let name where name.contains("pike"):
+            return [10, 9, 8, 7].enumerated().map {
+                ExerciseSetResult(exerciseName: progression.exerciseName, reps: $0.element, setIndex: $0.offset)
+            }
+        default:
+            return [12, 12, 12, 12].enumerated().map {
+                ExerciseSetResult(exerciseName: progression.exerciseName, reps: $0.element, setIndex: $0.offset)
+            }
+        }
+    }
+
+    private func makeTrainingStatistics() -> TrainingStatistics {
+        let completed = completedSessions
+        let pushVolume = volume(for: completed, matching: ["push", "liegest", "pike", "diamond", "brust"])
+        let pullVolume = volume(for: completed, matching: ["pull", "klimm", "negative", "ruecken"])
+        let legVolume = volume(for: completed, matching: ["leg", "squat", "kniebeuge", "ausfallschritt", "split"])
+        let totalVolume = max(pushVolume + pullVolume + legVolume, completed.reduce(0) { $0 + $1.durationMin })
+
+        return TrainingStatistics(
+            trainingsThisWeek: completed.count,
+            currentStreak: currentStreak(from: completed),
+            totalVolume: totalVolume,
+            pushVolume: pushVolume,
+            pullVolume: pullVolume,
+            legVolume: legVolume,
+            strongestWeek: max(completed.count, weeklyWorkoutTarget),
+            trainingRate: Self.progress(current: Double(completed.count), target: Double(weeklyWorkoutTarget))
+        )
+    }
+
+    private func volume(for sessions: [WorkoutSessionRecord], matching keywords: [String]) -> Int {
+        sessions.reduce(0) { total, session in
+            let haystack = "\(session.workoutType) \(session.note ?? "")".lowercased()
+            return keywords.contains { haystack.contains($0) } ? total + max(session.durationMin, 1) : total
+        }
+    }
+
+    private func currentStreak(from sessions: [WorkoutSessionRecord]) -> Int {
+        let dayKeys = Set(sessions.map { DateIntervals.dayKey(for: $0.occurredAt, calendar: calendar) })
+        var streak = 0
+        var date = calendar.startOfDay(for: now())
+
+        while dayKeys.contains(DateIntervals.dayKey(for: date, calendar: calendar)) {
+            streak += 1
+            guard let previous = calendar.date(byAdding: .day, value: -1, to: date) else { break }
+            date = previous
+        }
+
+        return streak
+    }
+
+    private func makeMotivationCards() -> [MotivationCard] {
+        let pullupRecord = exerciseProgressions.first { $0.exerciseName.lowercased().contains("klimm") }?.personalRecord ?? 5
+        let pushupRecord = exerciseProgressions.first { $0.exerciseName.lowercased().contains("liegest") }?.personalRecord ?? 24
+
+        return [
+            MotivationCard(id: "pushup-pr", title: "Neuer Rekord", detail: "\(pushupRecord) Liegestuetze", systemImage: "trophy.fill"),
+            MotivationCard(id: "pullup-goal", title: "Erstes Ziel erreicht", detail: "\(pullupRecord) Klimmzuege", systemImage: "flag.checkered"),
+            MotivationCard(id: "weekly-streak", title: "Wochenziel", detail: statusMessage, systemImage: "flame.fill")
+        ]
+    }
+
     private var weekInterval: DateInterval {
         DateIntervals.week(containing: selectedDate, weekStartsOn: weekStartsOn, calendar: calendar)
     }
@@ -192,7 +322,14 @@ final class TrainingStore: ObservableObject {
         formatter.dateFormat = "E"
         return formatter
     }()
+
+    private static func isSameWeek(_ lhs: Date, _ rhs: Date, weekStartsOn: Int, calendar: Calendar) -> Bool {
+        DateIntervals.week(containing: lhs, weekStartsOn: weekStartsOn, calendar: calendar).start ==
+            DateIntervals.week(containing: rhs, weekStartsOn: weekStartsOn, calendar: calendar).start
+    }
 }
+
+typealias TrainingStore = TrainingViewModel
 
 struct TrainingWeekDayState: Identifiable, Equatable {
     let id: String

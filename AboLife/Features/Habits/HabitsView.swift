@@ -238,6 +238,9 @@ struct HabitsView: View {
     }
 
     private func goalText(for habit: FixedHabit) -> String {
+        if habit.isDerived {
+            return "\(habit.title): Aus Workouts"
+        }
         if habit.isBoolean {
             return "\(habit.title): Jeden Abend"
         }
@@ -286,7 +289,7 @@ private struct HabitMetricCard: View {
                     Spacer()
                 }
 
-                Text(habit.isBoolean ? (progress >= 1 ? "1 / 1" : "0 / 1") : habit.displayValue(value))
+                Text(habit.isBoolean || habit.isDerived ? (progress >= 1 ? "1 / 1" : "0 / 1") : habit.displayValue(value))
                     .font(AboLifeTypography.metric)
                     .foregroundStyle(AboLifeColors.primaryText)
                     .monospacedDigit()
@@ -297,7 +300,14 @@ private struct HabitMetricCard: View {
 
                 HabitWeekDots(days: weekHistory, tint: habit.accent)
 
-                if habit.isBoolean {
+                if habit.isDerived {
+                    AboLifeGlassCapsule {
+                        Label(progress >= 1 ? "Training erledigt" : "Aus Workouts", systemImage: progress >= 1 ? "checkmark.circle" : "arrow.triangle.2.circlepath")
+                            .font(AboLifeTypography.micro)
+                            .foregroundStyle(habit.accent)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else if habit.isBoolean {
                     Button {
                         toggle()
                     } label: {

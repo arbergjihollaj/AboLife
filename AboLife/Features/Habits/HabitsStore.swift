@@ -11,11 +11,13 @@ final class HabitsStore: ObservableObject {
     @Published private(set) var weekHistoryByKey: [String: [HabitDayProgress]] = [:]
     @Published private(set) var weeklyDayProgress: [HabitDayProgress] = []
     @Published private(set) var errorMessage: String?
+    @Published private(set) var trainingDayKeys: Set<String> = []
 
     let habits: [FixedHabit]
 
     private let database: AppDatabase?
     private let calendar: Calendar
+    private var weekStartsOn: Int
 
     init(
         database: AppDatabase?,
@@ -27,6 +29,7 @@ final class HabitsStore: ObservableObject {
         self.selectedDate = selectedDate
         self.calendar = calendar
         self.habits = habits
+        self.weekStartsOn = SeedData.defaultSettings.weekStartsOn
         reload()
     }
 
@@ -105,6 +108,7 @@ final class HabitsStore: ObservableObject {
     func reload() {
         guard let database else {
             entriesByKey = [:]
+            trainingDayKeys = []
             weekHistoryByKey = emptyWeekHistory()
             weeklyDayProgress = makeWeeklyDayProgress(entries: [])
             errorMessage = nil
@@ -113,17 +117,25 @@ final class HabitsStore: ObservableObject {
 
         do {
             let repository = HabitRepository(database: database)
+            let settings = try SettingsRepository(database: database).fetchDefault() ?? SeedData.defaultSettings
+            weekStartsOn = settings.weekStartsOn
             let dayEntries = try repository.fetchEntries(forDay: selectedDayKey)
             let weekEntries = try repository.fetchEntries(in: weekInterval, calendar: calendar)
+            let workoutSessions = try WorkoutRepository(database: database).fetchSessions(in: weekInterval)
+            let trainingKeys = Set(workoutSessions.compactMap { session -> String? in
+                guard session.status == "done" else { return nil }
+                return DateIntervals.dayKey(for: session.occurredAt, calendar: calendar)
+            })
 
             entriesByKey = dayEntries.reduce(into: [String: HabitEntryRecord]()) { result, entry in
                 result[entry.habitKey] = entry
             }
+            trainingDayKeys = trainingKeys
             weekHistoryByKey = makeWeekHistory(entries: weekEntries)
             weeklyDayProgress = makeWeeklyDayProgress(entries: weekEntries)
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Gewohnheiten konnten nicht geladen werden."
         }
     }
 
@@ -136,24 +148,26 @@ final class HabitsStore: ObservableObject {
     }
 
     func setValue(for habit: FixedHabit, value: Double) {
+        guard !habit.isDerived else { return }
         guard habits.contains(where: { $0.key == habit.key }), let database else { return }
 
         do {
             try HabitRepository(database: database).setValue(
                 habitKey: habit.key,
                 date: selectedDayKey,
-                value: max(value, 0),
+                value: value.isFinite ? max(value, 0) : 0,
                 target: habit.targetValue,
                 unit: habit.unit
             )
             reload()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Gewohnheit konnte nicht gespeichert werden."
         }
     }
 
     func toggleHabit(key: String) {
         guard let habit = habits.first(where: { $0.key == key }) else { return }
+        guard !habit.isDerived else { return }
 
         if habit.isBoolean {
             toggleBooleanHabit(habit)
@@ -165,6 +179,7 @@ final class HabitsStore: ObservableObject {
     }
 
     func toggleBooleanHabit(_ habit: FixedHabit) {
+        guard !habit.isDerived else { return }
         guard habit.isBoolean, let database else { return }
 
         do {
@@ -174,7 +189,7 @@ final class HabitsStore: ObservableObject {
             )
             reload()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Schlafroutine konnte nicht gespeichert werden."
         }
     }
 
@@ -186,6 +201,10 @@ final class HabitsStore: ObservableObject {
     }
 
     func value(for habit: FixedHabit) -> Double {
+        if habit.key == "training" {
+            return trainingDayKeys.contains(selectedDayKey) ? 1 : 0
+        }
+
         guard let entry = entriesByKey[habit.key] else { return 0 }
         if let value = entry.value {
             return max(value, 0)
@@ -217,7 +236,7 @@ final class HabitsStore: ObservableObject {
     }
 
     private var weekInterval: DateInterval {
-        DateIntervals.week(containing: selectedDate, weekStartsOn: 2, calendar: calendar)
+        DateIntervals.week(containing: selectedDate, weekStartsOn: weekStartsOn, calendar: calendar)
     }
 
     private func emptyWeekHistory() -> [String: [HabitDayProgress]] {
@@ -237,6 +256,15 @@ final class HabitsStore: ObservableObject {
     private func makeWeekHistory(for habit: FixedHabit, entriesByDate: [String: HabitEntryRecord]) -> [HabitDayProgress] {
         weekDays().map { day in
             let key = DateIntervals.dayKey(for: day, calendar: calendar)
+            if habit.key == "training" {
+                return HabitDayProgress(
+                    date: day,
+                    label: Self.weekdayFormatter.string(from: day),
+                    progress: trainingDayKeys.contains(key) ? 1 : 0,
+                    isToday: calendar.isDate(day, inSameDayAs: selectedDate)
+                )
+            }
+
             let entry = entriesByDate[key]
             let value = entry?.value ?? (entry?.isCompleted == true ? habit.targetValue : 0)
             return HabitDayProgress(
@@ -257,6 +285,9 @@ final class HabitsStore: ObservableObject {
             let key = DateIntervals.dayKey(for: day, calendar: calendar)
             let entriesByHabit = entriesByDateAndHabit[key] ?? [:]
             let progressValues = habits.map { habit -> Double in
+                if habit.key == "training" {
+                    return trainingDayKeys.contains(key) ? 1 : 0
+                }
                 guard let entry = entriesByHabit[habit.key] else { return 0 }
                 let value = entry.value ?? (entry.isCompleted ? habit.targetValue : 0)
                 return habit.progress(for: value)

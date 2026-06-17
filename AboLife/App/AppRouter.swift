@@ -4,8 +4,10 @@ enum AppSection: String, CaseIterable, Identifiable {
     case dashboard
     case nutrition
     case training
+    case weight
     case finance
     case habits
+    case statistics
     case weeklyReview
     case settings
 
@@ -19,10 +21,14 @@ enum AppSection: String, CaseIterable, Identifiable {
             return "Ernährung"
         case .training:
             return "Training"
+        case .weight:
+            return "Gewicht"
         case .finance:
             return "Finanzen"
         case .habits:
             return "Gewohnheiten"
+        case .statistics:
+            return "Statistiken"
         case .weeklyReview:
             return "Wochenreview"
         case .settings:
@@ -38,10 +44,14 @@ enum AppSection: String, CaseIterable, Identifiable {
             return "fork.knife"
         case .training:
             return "figure.strengthtraining.traditional"
+        case .weight:
+            return "scalemass"
         case .finance:
             return "eurosign.circle"
         case .habits:
             return "checkmark.seal"
+        case .statistics:
+            return "chart.bar.xaxis"
         case .weeklyReview:
             return "calendar.badge.clock"
         case .settings:
@@ -52,7 +62,7 @@ enum AppSection: String, CaseIterable, Identifiable {
 
 struct AppRouter: View {
     @Environment(\.appDatabase) private var appDatabase
-    @State private var selection: AppSection? = .dashboard
+    @EnvironmentObject private var navigation: AppNavigationCoordinator
 
     var body: some View {
         NavigationSplitView {
@@ -62,7 +72,7 @@ struct AppRouter: View {
                 VStack(alignment: .leading, spacing: 18) {
                     sidebarHeader
 
-                    List(AppSection.allCases, selection: $selection) { section in
+                    List(AppSection.allCases, selection: $navigation.selectedSection) { section in
                         sidebarRow(section)
                             .tag(section)
                             .listRowInsets(EdgeInsets(top: 3, leading: 0, bottom: 3, trailing: 0))
@@ -81,21 +91,25 @@ struct AppRouter: View {
             .navigationSplitViewColumnWidth(min: 210, ideal: 230)
         } detail: {
             Group {
-                switch selection ?? .dashboard {
+                switch navigation.selectedSection ?? .dashboard {
                 case .dashboard:
                     DashboardView(store: DashboardStore(database: appDatabase))
                 case .nutrition:
-                    NutritionPlaceholderView()
+                    NutritionView(database: appDatabase)
                 case .training:
-                    TrainingPlaceholderView()
+                    TrainingView(database: appDatabase)
+                case .weight:
+                    WeightView(database: appDatabase)
                 case .finance:
-                    FinancePlaceholderView()
+                    FinanceView(database: appDatabase)
                 case .habits:
-                    HabitsPlaceholderView()
+                    HabitsView(database: appDatabase)
+                case .statistics:
+                    StatisticsView(database: appDatabase)
                 case .weeklyReview:
-                    WeeklyReviewPlaceholderView()
+                    WeeklyReviewView(database: appDatabase)
                 case .settings:
-                    SettingsPlaceholderView()
+                    SettingsView(database: appDatabase)
                 }
             }
             .frame(minWidth: 860, minHeight: 640)
@@ -103,7 +117,7 @@ struct AppRouter: View {
     }
 
     private func sidebarRow(_ section: AppSection) -> some View {
-        let isSelected = (selection ?? .dashboard) == section
+        let isSelected = (navigation.selectedSection ?? .dashboard) == section
 
         return HStack(spacing: 12) {
             Image(systemName: section.systemImage)
@@ -204,5 +218,6 @@ struct AppRouter: View {
 struct AppRouter_Previews: PreviewProvider {
     static var previews: some View {
         AppRouter()
+            .environmentObject(AppNavigationCoordinator())
     }
 }

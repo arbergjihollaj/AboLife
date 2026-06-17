@@ -101,7 +101,9 @@ struct HomeWorkoutChecklistState: Equatable {
 }
 
 enum HomeWorkoutPlanProvider {
-    static let plan = HomeWorkoutPlan(days: [
+    static let plan = TrainingPlanSeeder.weeklyPlan
+
+    static let legacyPlan = HomeWorkoutPlan(days: [
         HomeWorkoutDay(
             id: "pull-core",
             weekday: 2,

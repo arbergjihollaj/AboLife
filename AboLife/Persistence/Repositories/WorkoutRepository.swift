@@ -48,6 +48,10 @@ struct WorkoutRepository {
         }
     }
 
+    func completedCount(forDay date: Date = Date(), calendar: Calendar = .current) throws -> Int {
+        try completedCount(in: DateIntervals.day(containing: date, calendar: calendar))
+    }
+
     func latestCompleted(in interval: DateInterval) throws -> WorkoutSessionRecord? {
         try database.writer.read { db in
             try WorkoutSessionRecord

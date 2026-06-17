@@ -255,7 +255,32 @@ Detailseiten zeigen Historie, Listen, Bearbeitung und tiefergehende Charts.
 ### Phase 7C Gewohnheiten-Redesign
 
 - Die Gewohnheiten-Seite nutzt einen Apple-Fitness-inspirierten Aufbau mit Header, großem Tagesring, Habit-Grid und kompakter Wochenübersicht.
-- Die warme Orange-/Gold-Stimmung bleibt die Hauptidentität; einzelne Habits bekommen dezente Akzente für Wasser, Bewegung, Ernährung, Lernen und Schlaf.
+- Die warme Orange-/Gold-Stimmung bleibt die Hauptidentität; einzelne Habits bekommen dezente Akzente für Wasser, Trainieren, Ernährung, Lernen und Schlaf.
 - Die fünf Habit-Karten zeigen messbare Tageswerte gegen Zielwerte, Progressbar, Plus/Minus bzw. Schlafroutine-Button und eine kleine Mo-So-Wochenleiste.
 - Der große Hero-Ring berechnet den Durchschnitt der fünf Habit-Fortschritte, nicht nur erledigt/offen.
 - Nicht Teil dieser Phase: Custom Habits, Habit-Bibliothek, Reminder, Notifications, Streak-Analytics, Kalenderansicht, Heatmap, KI-Coaching, HealthKit, Apple Watch oder externe Integrationen.
+
+### Phase 7D Quick Panels
+
+- Die Floating Bottom Quick Bar bleibt kompakt: Mahlzeit, Training, Plus, Ausgabe und Gewohnheit.
+- Mahlzeit, Training, Ausgabe und Gewohnheit öffnen direkt ihr jeweiliges Quick Panel; der Plus-Button öffnet ein allgemeines Quick Action Menü.
+- Das Plus-Menü ist in „Eintragen“ und „Schnelle Gewohnheiten“ gegliedert und nutzt kleine Glass-Chips statt großer Formulare.
+- Das Gewohnheit-Quick-Panel nutzt die messbaren Phase-7C-Habits mit Wasser, Trainieren, Ernährung getrackt, Lernen und Schlafroutine. Es ersetzt die alte reine Toggle-Liste.
+- Quick Panels zeigen ruhige Inline-Erfolgsmeldungen und bleiben im bestehenden Premium-/Glass-Stil.
+- Nicht Teil dieser Phase: Notiz-Button in der Bottom Bar, neue Navigation, Telegram, iPhone, HealthKit, KI, Reminder, Custom Habits, Übungsdatenbank oder externe Dependencies.
+
+### Phase 7E Dashboard/Habits/Training-Sync
+
+- Die aktive Habit-Liste lautet Wasser, Trainieren, Ernährung getrackt, Lernen und Schlafroutine.
+- Trainieren ist eine abgeleitete Karte: Sie zeigt 0 / 1 bzw. erledigt/offen, hat keine Plus-/Minus-Steuerung und verweist auf Training als Quelle.
+- Dashboard-Habits zeigen Tagesfortschritt als Prozentwert und kompakte Chips mit den aktuellen Habit-Werten; Trainieren wird aus abgeschlossenen Workouts erkannt.
+- Habit-Quick-Panel und Plus-Menü bieten schnelle Aktionen für Wasser, Ernährung, Lernen und Schlafroutine; Training läuft über das Training-Quick-Panel.
+- Das Wochenreview nutzt dieselben fünf Habit-Fortschritte; Trainieren zählt pro Tag mit 100 %, wenn mindestens ein Workout abgeschlossen wurde.
+
+### Phase 7F MVP-Stabilisierung
+
+- Detailseiten zeigen ruhige Empty- und Fehlerzustände ohne technische Fehlermeldungen.
+- Quick Panels bleiben bei Mahlzeit, Training, Plus, Ausgabe und Gewohnheit; das Sheet kann bei kleineren Höhen scrollen.
+- Numeric Quick-Add-Eingaben werden stabil normalisiert, sodass keine NaN-/Inf-Werte in Ringe, Charts oder Persistenz gelangen.
+- Dashboard verwendet keine sichtbaren Mock-/Debug-Aktivitäten im Laufzeitpfad und nutzt dieselbe Tagesbudget-Logik wie Finanzen.
+- Settings zeigt Backup & Export mit SQLite, JSON und CSV für Numbers im bestehenden Glass-Stil.

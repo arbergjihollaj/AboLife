@@ -54,7 +54,8 @@ struct WeeklyReviewTrends: Equatable {
         var proteinByKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, 0.0) })
         var spendingByKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, 0.0) })
         var trainingMinutesByKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, 0.0) })
-        var completedHabitIDsByKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, Set<String>()) })
+        var habitProgressByDayAndKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, [String: Double]()) })
+        var trainingDoneByKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, false) })
 
         for entry in nutritionEntries {
             let key = DateIntervals.dayKey(for: entry.occurredAt, calendar: calendar)
@@ -70,10 +71,11 @@ struct WeeklyReviewTrends: Equatable {
         for session in workoutSessions where session.status == "done" {
             let key = DateIntervals.dayKey(for: session.occurredAt, calendar: calendar)
             trainingMinutesByKey[key, default: 0] += Double(session.durationMin)
+            trainingDoneByKey[key] = true
         }
 
-        for entry in habitEntries where allowedHabitKeys.contains(entry.habitKey) && isHabitComplete(entry) {
-            completedHabitIDsByKey[entry.date, default: []].insert(entry.habitKey)
+        for entry in habitEntries where allowedHabitKeys.contains(entry.habitKey) && entry.habitKey != "training" {
+            habitProgressByDayAndKey[entry.date, default: [:]][entry.habitKey] = habitProgress(entry)
         }
 
         return WeeklyReviewTrends(
@@ -83,8 +85,13 @@ struct WeeklyReviewTrends: Equatable {
             trainingMinutesByDay: points(days: days, valuesByKey: trainingMinutesByKey, calendar: calendar),
             habitCompletionByDay: days.map { day in
                 let key = DateIntervals.dayKey(for: day, calendar: calendar)
-                let completed = completedHabitIDsByKey[key]?.count ?? 0
-                let percent = habitKeys.isEmpty ? 0 : (Double(completed) / Double(habitKeys.count)) * 100
+                let progressValues = habitKeys.map { habitKey -> Double in
+                    if habitKey == "training" {
+                        return trainingDoneByKey[key] == true ? 1 : 0
+                    }
+                    return habitProgressByDayAndKey[key]?[habitKey] ?? 0
+                }
+                let percent = habitKeys.isEmpty ? 0 : (progressValues.reduce(0, +) / Double(habitKeys.count)) * 100
                 return WeeklyTrendPoint(
                     date: day,
                     weekdayLabel: weekdayLabel(for: day),
@@ -114,11 +121,11 @@ struct WeeklyReviewTrends: Equatable {
         weekdayFormatter.string(from: date)
     }
 
-    private static func isHabitComplete(_ entry: HabitEntryRecord) -> Bool {
+    private static func habitProgress(_ entry: HabitEntryRecord) -> Double {
         if let value = entry.value, let targetValue = entry.targetValue, targetValue > 0 {
-            return value >= targetValue
+            return min(max(value / targetValue, 0), 1)
         }
-        return entry.isCompleted
+        return entry.isCompleted ? 1 : 0
     }
 
     private static let weekdayFormatter: DateFormatter = {
