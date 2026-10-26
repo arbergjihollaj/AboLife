@@ -7,7 +7,6 @@ enum QuickAddKind: String, Identifiable, CaseIterable {
     case expense
     case habit
     case weight
-    case note
 
     var id: String { rawValue }
 }
@@ -25,8 +24,7 @@ struct QuickAddAction: Identifiable {
         QuickAddAction(kind: .workout, title: "Training", systemImage: "figure.strengthtraining.traditional", tint: AboLifeColors.training),
         QuickAddAction(kind: .expense, title: "Ausgabe", systemImage: "eurosign.circle", tint: AboLifeColors.finance),
         QuickAddAction(kind: .weight, title: "Gewicht", systemImage: "scalemass", tint: AboLifeColors.review),
-        QuickAddAction(kind: .habit, title: "Gewohnheit", systemImage: "checkmark.seal", tint: AboLifeColors.habits),
-        QuickAddAction(kind: .note, title: "Notiz", systemImage: "note.text", tint: AboLifeColors.protein)
+        QuickAddAction(kind: .habit, title: "Gewohnheit", systemImage: "checkmark.seal", tint: AboLifeColors.habits)
     ]
 
     static let bottomDockActions: [QuickAddAction] = [
@@ -44,7 +42,6 @@ enum QuickAddPanel: Equatable {
     case expense
     case habit
     case weight
-    case note
 }
 
 enum QuickAddRouting {
@@ -62,8 +59,6 @@ enum QuickAddRouting {
             return .habit
         case .weight:
             return .weight
-        case .note:
-            return .note
         }
     }
 }

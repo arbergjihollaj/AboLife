@@ -8,11 +8,16 @@ final class FinanceStore: ObservableObject {
         }
     }
     @Published private(set) var entries: [FinanceEntryRecord] = []
+    @Published private(set) var categories: [FinanceCategoryRecord] = []
+    @Published private(set) var activeCategoryNames: [String] = FinanceCategoryCatalog.expenseCategories
+    @Published private(set) var visibleCategoryNames: [String] = FinanceCategoryCatalog.expenseCategories
     @Published private(set) var categoryBudgets: [FinanceCategoryBudgetRecord] = []
     @Published private(set) var fixedCosts: [FinanceFixedCostRecord] = []
     @Published private(set) var savingsGoals: [FinanceSavingsGoalRecord] = []
     @Published private(set) var categorySummaries: [FinanceCategorySummary] = []
+    @Published private(set) var categoryTrends: [FinanceCategoryTrend] = []
     @Published private(set) var monthPlan: FinanceMonthPlan?
+    @Published private(set) var monthlyAnalysis = FinanceMonthlyAnalysis.empty
     @Published private(set) var monthlyTrend = FinanceMonthlyTrend.empty
     @Published private(set) var weeklySummary = FinanceWeeklySummary.empty
     @Published private(set) var monthlyBudget: Double
@@ -128,8 +133,13 @@ final class FinanceStore: ObservableObject {
     func reload() {
         guard let database else {
             entries = []
+            categories = []
+            activeCategoryNames = FinanceCategoryCatalog.expenseCategories
+            visibleCategoryNames = FinanceCategoryCatalog.expenseCategories
             monthlyBudget = SeedData.defaultSettings.monthlyBudget
             currency = SeedData.defaultSettings.defaultCurrency
+            categoryTrends = []
+            monthlyAnalysis = .empty
             errorMessage = nil
             return
         }
@@ -140,12 +150,22 @@ final class FinanceStore: ObservableObject {
             let monthKey = FinanceRepository.monthKey(for: selectedDate, calendar: calendar)
             monthlyBudget = settings.monthlyBudget
             currency = settings.defaultCurrency
+            categories = try repository.fetchCategories(includeInactive: true)
+            activeCategoryNames = try repository.fetchActiveCategoryNames()
+            visibleCategoryNames = try repository.fetchCategoryNamesIncludingLegacy()
             entries = try repository.fetchEntries(forMonthContaining: selectedDate, calendar: calendar)
             categoryBudgets = try repository.fetchCategoryBudgets(monthKey: monthKey)
             fixedCosts = try repository.fetchFixedCosts()
             savingsGoals = try repository.fetchSavingsGoals()
             categorySummaries = try repository.categorySummaries(forMonthContaining: selectedDate, calendar: calendar)
+            categoryTrends = try repository.categoryTrends(forDate: selectedDate, calendar: calendar)
             monthlyTrend = try repository.monthlyTrend(forDate: selectedDate, calendar: calendar)
+            monthlyAnalysis = try repository.monthlyAnalysis(
+                forDate: selectedDate,
+                monthlyBudget: monthlyBudget,
+                currency: currency,
+                calendar: calendar
+            )
             monthPlan = try repository.monthPlan(
                 for: selectedDate,
                 monthlyBudget: monthlyBudget,
@@ -157,6 +177,69 @@ final class FinanceStore: ObservableObject {
         } catch {
             errorMessage = "Finanzdaten konnten nicht geladen werden."
         }
+    }
+
+    @discardableResult
+    func createCategory(name: String) -> FinanceCategoryRecord? {
+        guard let database else { return nil }
+
+        do {
+            let category = try FinanceRepository(database: database).createCategory(name: name)
+            reload()
+            return category
+        } catch FinanceCategoryMutationError.duplicateName {
+            errorMessage = "Diese Kategorie gibt es bereits."
+            return nil
+        } catch {
+            errorMessage = "Kategorie konnte nicht erstellt werden."
+            return nil
+        }
+    }
+
+    @discardableResult
+    func renameCategory(id: String, to newName: String) -> FinanceCategoryRecord? {
+        guard let database else { return nil }
+
+        do {
+            let category = try FinanceRepository(database: database).renameCategory(id: id, to: newName)
+            reload()
+            return category
+        } catch FinanceCategoryMutationError.duplicateName {
+            errorMessage = "Diese Kategorie gibt es bereits."
+            return nil
+        } catch {
+            errorMessage = "Kategorie konnte nicht umbenannt werden."
+            return nil
+        }
+    }
+
+    func deactivateCategory(id: String) {
+        guard let database else { return }
+
+        do {
+            try FinanceRepository(database: database).deactivateCategory(id: id)
+            reload()
+        } catch {
+            errorMessage = "Kategorie konnte nicht deaktiviert werden."
+        }
+    }
+
+    @discardableResult
+    func deleteCategorySafely(id: String) -> FinanceCategoryDeletionResult? {
+        guard let database else { return nil }
+
+        do {
+            let result = try FinanceRepository(database: database).deleteCategorySafely(id: id)
+            reload()
+            return result
+        } catch {
+            errorMessage = "Kategorie konnte nicht gelöscht werden."
+            return nil
+        }
+    }
+
+    func suggestedCategory(for text: String) -> FinanceCategorySuggestion {
+        FinanceCategoryCatalog.suggestedCategory(for: text, fallback: entries.first?.category)
     }
 
     func deleteEntry(id: FinanceEntryRecord.ID) {

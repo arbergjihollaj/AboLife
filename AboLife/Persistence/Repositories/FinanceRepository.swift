@@ -9,8 +9,14 @@ struct FinanceRepository {
     }
 
     func insert(_ entry: FinanceEntryRecord) throws {
+        var normalized = entry
+        normalized.title = Self.trimmedOrDefault(normalized.title, defaultValue: "Ausgabe")
+        normalized.amount = normalized.amount.isFinite ? normalized.amount : 0
+        normalized.category = FinanceCategoryCatalog.normalized(normalized.category, kind: normalized.amount < 0 ? .income : .expense)
+        normalized.updatedAt = Date()
+
         try database.writer.write { db in
-            try entry.insert(db)
+            try normalized.insert(db)
         }
     }
 
@@ -73,6 +79,51 @@ struct FinanceRepository {
         )
     }
 
+    func monthlyAnalysis(forDate date: Date = Date(), monthlyBudget: Double, currency: String, calendar: Calendar = .current) throws -> FinanceMonthlyAnalysis {
+        let currentInterval = DateIntervals.month(containing: date, calendar: calendar)
+        let previousMonthDate = calendar.date(byAdding: .month, value: -1, to: currentInterval.start) ?? date
+        let previousInterval = DateIntervals.month(containing: previousMonthDate, calendar: calendar)
+        let previous2Date = calendar.date(byAdding: .month, value: -2, to: currentInterval.start) ?? date
+        let previous3Date = calendar.date(byAdding: .month, value: -3, to: currentInterval.start) ?? date
+        let currentEntries = try fetchEntries(in: currentInterval)
+        let previousEntries = try fetchEntries(in: previousInterval)
+        let previous2Entries = try fetchEntries(in: DateIntervals.month(containing: previous2Date, calendar: calendar))
+        let previous3Entries = try fetchEntries(in: DateIntervals.month(containing: previous3Date, calendar: calendar))
+        let fixedCosts = try fetchFixedCosts(activeOnly: true)
+        let budgets = try fetchCategoryBudgets(monthKey: Self.monthKey(for: date, calendar: calendar))
+
+        return Self.monthlyAnalysis(
+            currentEntries: currentEntries,
+            previousEntries: previousEntries,
+            trailingMonthEntries: [previousEntries, previous2Entries, previous3Entries],
+            fixedCosts: fixedCosts,
+            budgets: budgets,
+            monthlyBudget: monthlyBudget,
+            currency: currency,
+            monthInterval: currentInterval,
+            referenceDate: date,
+            calendar: calendar
+        )
+    }
+
+    func categoryTrends(forDate date: Date = Date(), monthlyBudget _: Double = 0, calendar: Calendar = .current) throws -> [FinanceCategoryTrend] {
+        let currentInterval = DateIntervals.month(containing: date, calendar: calendar)
+        let previousMonthDate = calendar.date(byAdding: .month, value: -1, to: currentInterval.start) ?? date
+        let previous2Date = calendar.date(byAdding: .month, value: -2, to: currentInterval.start) ?? date
+        let previous3Date = calendar.date(byAdding: .month, value: -3, to: currentInterval.start) ?? date
+        let currentEntries = try fetchEntries(in: currentInterval)
+        let previousEntries = try fetchEntries(in: DateIntervals.month(containing: previousMonthDate, calendar: calendar))
+        let previous2Entries = try fetchEntries(in: DateIntervals.month(containing: previous2Date, calendar: calendar))
+        let previous3Entries = try fetchEntries(in: DateIntervals.month(containing: previous3Date, calendar: calendar))
+        let budgets = try fetchCategoryBudgets(monthKey: Self.monthKey(for: date, calendar: calendar))
+        return Self.categoryTrends(
+            currentEntries: currentEntries,
+            previousEntries: previousEntries,
+            trailingMonthEntries: [previousEntries, previous2Entries, previous3Entries],
+            budgets: budgets
+        )
+    }
+
     func weeklySummary(in interval: DateInterval) throws -> FinanceWeeklySummary {
         let entries = try fetchEntries(in: interval)
 
@@ -97,6 +148,135 @@ struct FinanceRepository {
     func deleteAll() throws {
         try database.writer.write { db in
             _ = try FinanceEntryRecord.deleteAll(db)
+        }
+    }
+
+    func fetchCategories(includeInactive: Bool = true, kind: FinanceCategoryKind = .expense) throws -> [FinanceCategoryRecord] {
+        try database.writer.read { db in
+            var request = FinanceCategoryRecord
+                .filter(Column("kind") == kind.rawValue)
+                .order(Column("is_active").desc, Column("sort_order"), Column("name"))
+            if !includeInactive {
+                request = request.filter(Column("is_active") == true)
+            }
+            return try request.fetchAll(db)
+        }
+    }
+
+    func fetchActiveCategoryNames(kind: FinanceCategoryKind = .expense) throws -> [String] {
+        let stored = try fetchCategories(includeInactive: false, kind: kind).map(\.name)
+        return FinanceCategoryCatalog.mergedCategoryNames(primary: stored, fallback: FinanceCategoryCatalog.defaults(for: kind))
+    }
+
+    func fetchCategoryNamesIncludingLegacy(kind: FinanceCategoryKind = .expense) throws -> [String] {
+        try database.writer.read { db in
+            let stored = try FinanceCategoryRecord
+                .filter(Column("kind") == kind.rawValue)
+                .order(Column("is_active").desc, Column("sort_order"), Column("name"))
+                .fetchAll(db)
+                .map(\.name)
+            let entryCategories = try String.fetchAll(db, sql: "SELECT DISTINCT category FROM finance_entries WHERE category IS NOT NULL AND TRIM(category) <> ''")
+            let budgetCategories = try String.fetchAll(db, sql: "SELECT DISTINCT category FROM finance_category_budgets WHERE category IS NOT NULL AND TRIM(category) <> ''")
+            let fixedCostCategories = try String.fetchAll(db, sql: "SELECT DISTINCT category FROM finance_fixed_costs WHERE category IS NOT NULL AND TRIM(category) <> ''")
+            return FinanceCategoryCatalog.mergedCategoryNames(
+                primary: stored + entryCategories + budgetCategories + fixedCostCategories,
+                fallback: FinanceCategoryCatalog.defaults(for: kind)
+            )
+        }
+    }
+
+    @discardableResult
+    func createCategory(name: String, kind: FinanceCategoryKind = .expense) throws -> FinanceCategoryRecord {
+        let cleanName = FinanceCategoryCatalog.displayName(name)
+        let key = FinanceCategoryCatalog.key(for: cleanName)
+        let now = Date()
+
+        return try database.writer.write { db in
+            if var existing = try FinanceCategoryRecord
+                .filter(Column("kind") == kind.rawValue && Column("normalized_key") == key)
+                .fetchOne(db) {
+                existing.name = cleanName
+                existing.isActive = true
+                existing.updatedAt = now
+                try existing.update(db)
+                return existing
+            }
+
+            let nextSortOrder = (try Int.fetchOne(db, sql: "SELECT COALESCE(MAX(sort_order), -1) + 1 FROM finance_categories WHERE kind = ?", arguments: [kind.rawValue]) ?? 0)
+            let record = FinanceCategoryRecord(
+                name: cleanName,
+                normalizedKey: key,
+                kind: kind.rawValue,
+                isDefault: FinanceCategoryCatalog.isDefault(cleanName, kind: kind),
+                isActive: true,
+                sortOrder: nextSortOrder,
+                createdAt: now,
+                updatedAt: now
+            )
+            try record.insert(db)
+            return record
+        }
+    }
+
+    @discardableResult
+    func renameCategory(id: String, to newName: String) throws -> FinanceCategoryRecord {
+        let cleanName = FinanceCategoryCatalog.displayName(newName)
+        let key = FinanceCategoryCatalog.key(for: cleanName)
+        let now = Date()
+
+        return try database.writer.write { db in
+            guard var category = try FinanceCategoryRecord.fetchOne(db, key: id) else {
+                throw FinanceCategoryMutationError.notFound
+            }
+            if let duplicate = try FinanceCategoryRecord
+                .filter(Column("kind") == category.kind && Column("normalized_key") == key && Column("id") != id)
+                .fetchOne(db) {
+                guard duplicate.isActive else {
+                    var updatedDuplicate = duplicate
+                    updatedDuplicate.isActive = true
+                    updatedDuplicate.updatedAt = now
+                    try updatedDuplicate.update(db)
+                    return updatedDuplicate
+                }
+                throw FinanceCategoryMutationError.duplicateName
+            }
+            category.name = cleanName
+            category.normalizedKey = key
+            category.isDefault = FinanceCategoryCatalog.isDefault(cleanName, kind: FinanceCategoryKind(rawValue: category.kind) ?? .expense)
+            category.updatedAt = now
+            try category.update(db)
+            return category
+        }
+    }
+
+    func deactivateCategory(id: String) throws {
+        try database.writer.write { db in
+            guard var category = try FinanceCategoryRecord.fetchOne(db, key: id) else {
+                throw FinanceCategoryMutationError.notFound
+            }
+            category.isActive = false
+            category.updatedAt = Date()
+            try category.update(db)
+        }
+    }
+
+    @discardableResult
+    func deleteCategorySafely(id: String) throws -> FinanceCategoryDeletionResult {
+        try database.writer.write { db in
+            guard let category = try FinanceCategoryRecord.fetchOne(db, key: id) else {
+                throw FinanceCategoryMutationError.notFound
+            }
+            let names = FinanceCategoryCatalog.matchingNames(for: category.name)
+            let hasReferences = try Self.categoryHasReferences(names: names, db: db)
+            if hasReferences {
+                var archived = category
+                archived.isActive = false
+                archived.updatedAt = Date()
+                try archived.update(db)
+                return .deactivated
+            }
+            _ = try FinanceCategoryRecord.deleteOne(db, key: id)
+            return .deleted
         }
     }
 
@@ -252,7 +432,7 @@ struct FinanceRepository {
                 category: FinanceCategoryCatalog.normalized(category, kind: .expense),
                 spent: spentByCategory[category] ?? 0,
                 budget: budgetByCategory[category],
-                entryCount: expenses.filter { trimmedOrDefault($0.category, defaultValue: "Sonstiges") == category }.count
+                entryCount: expenses.filter { FinanceCategoryCatalog.normalized($0.category, kind: .expense) == category }.count
             )
         }
         .sorted { lhs, rhs in
@@ -327,34 +507,150 @@ struct FinanceRepository {
         }
     }
 
+    private static func categoryHasReferences(names: [String], db: Database) throws -> Bool {
+        let normalizedNames = names.map { FinanceCategoryCatalog.normalized($0, kind: .expense) }
+        let entryCategories = try String.fetchAll(db, sql: "SELECT category FROM finance_entries")
+        let budgetCategories = try String.fetchAll(db, sql: "SELECT category FROM finance_category_budgets")
+        let fixedCostCategories = try String.fetchAll(db, sql: "SELECT category FROM finance_fixed_costs")
+        return (entryCategories + budgetCategories + fixedCostCategories).contains {
+            normalizedNames.contains(FinanceCategoryCatalog.normalized($0, kind: .expense))
+        }
+    }
+
+    static func monthlyAnalysis(
+        currentEntries: [FinanceEntryRecord],
+        previousEntries: [FinanceEntryRecord],
+        trailingMonthEntries: [[FinanceEntryRecord]],
+        fixedCosts: [FinanceFixedCostRecord],
+        budgets: [FinanceCategoryBudgetRecord],
+        monthlyBudget: Double,
+        currency: String,
+        monthInterval: DateInterval,
+        referenceDate: Date,
+        calendar: Calendar
+    ) -> FinanceMonthlyAnalysis {
+        let spent = expenseTotal(currentEntries)
+        let income = incomeTotal(currentEntries)
+        let previousSpent = expenseTotal(previousEntries)
+        let elapsed = elapsedDays(in: monthInterval, referenceDate: referenceDate, calendar: calendar)
+        let totalDays = max(calendar.dateComponents([.day], from: monthInterval.start, to: monthInterval.end).day ?? elapsed, elapsed)
+        let daysRemaining = max(totalDays - elapsed, 0)
+        let averageDailySpend = spent / Double(max(elapsed, 1))
+        let remainingBudget = max(monthlyBudget - spent, 0)
+        let availableDailySpend = remainingBudget / Double(max(daysRemaining + 1, 1))
+        let remainingFixed = remainingFixedCosts(fixedCosts.filter(\.isActive), in: monthInterval, referenceDate: referenceDate, calendar: calendar)
+        let projectedSpend = spent + remainingFixed + averageDailySpend * Double(daysRemaining)
+        let activeExpenseDays = Set(currentEntries.filter { $0.amount >= 0 }.map { DateIntervals.dayKey(for: $0.occurredAt, calendar: calendar) }).count
+        let categorySummaries = categorySummaries(entries: currentEntries, budgets: budgets)
+        let topCategory = categorySummaries.first
+        let largestExpense = currentEntries.filter { $0.amount >= 0 }.max { $0.amount < $1.amount }
+        let categoryTrends = categoryTrends(currentEntries: currentEntries, previousEntries: previousEntries, trailingMonthEntries: trailingMonthEntries, budgets: budgets)
+        let strongestIncrease = categoryTrends
+            .filter { $0.previousSpent != nil && $0.changeFromPrevious > 0.5 }
+            .max { $0.changeFromPrevious < $1.changeFromPrevious }
+        let trailingExpenses = trailingMonthEntries.map(expenseTotal)
+        let monthsWithData = trailingMonthEntries.filter { !$0.isEmpty }.count
+        let trailingAverage = monthsWithData >= 3 ? trailingExpenses.reduce(0, +) / Double(trailingExpenses.count) : nil
+        let savingsRate = income > 0 ? max((income - spent) / income, 0) : nil
+
+        return FinanceMonthlyAnalysis(
+            spent: spent,
+            income: income,
+            balance: income - spent,
+            monthlyBudget: monthlyBudget,
+            remainingBudget: remainingBudget,
+            averageDailySpend: averageDailySpend,
+            availableDailySpendUntilMonthEnd: availableDailySpend,
+            projectedSpend: projectedSpend,
+            previousMonthSpent: previousEntries.isEmpty ? nil : previousSpent,
+            changeFromPreviousMonth: previousEntries.isEmpty ? nil : spent - previousSpent,
+            trailingThreeMonthAverageSpent: trailingAverage,
+            savingsRate: savingsRate,
+            topCategory: topCategory,
+            largestExpense: largestExpense,
+            strongestCategoryIncrease: strongestIncrease,
+            activeExpenseDays: activeExpenseDays,
+            remainingFixedCosts: remainingFixed,
+            categoryTrends: categoryTrends,
+            entryCount: currentEntries.count,
+            currency: currency
+        )
+    }
+
+    static func categoryTrends(
+        currentEntries: [FinanceEntryRecord],
+        previousEntries: [FinanceEntryRecord],
+        trailingMonthEntries: [[FinanceEntryRecord]],
+        budgets: [FinanceCategoryBudgetRecord]
+    ) -> [FinanceCategoryTrend] {
+        let current = expensesByCategory(currentEntries)
+        let previous = expensesByCategory(previousEntries)
+        let trailing = trailingMonthEntries.map(expensesByCategory)
+        let budgetByCategory = Dictionary(uniqueKeysWithValues: budgets.map { (FinanceCategoryCatalog.normalized($0.category, kind: .expense), $0.budgetAmount) })
+        let total = max(current.values.reduce(0, +), 0)
+        let categories = Set(current.keys)
+            .union(previous.keys)
+            .union(budgetByCategory.keys)
+
+        return categories.map { category in
+            let spent = current[category] ?? 0
+            let previousSpent = previousEntries.isEmpty ? nil : previous[category] ?? 0
+            let trailingValues = trailing.map { $0[category] ?? 0 }
+            let trailingAverage = trailingMonthEntries.filter { !$0.isEmpty }.count >= 3 ? trailingValues.reduce(0, +) / Double(trailingValues.count) : nil
+            let budget = budgetByCategory[category]
+            return FinanceCategoryTrend(
+                category: category,
+                spent: spent,
+                share: total > 0 ? spent / total : 0,
+                previousSpent: previousSpent,
+                trailingThreeMonthAverage: trailingAverage,
+                budget: budget,
+                entryCount: currentEntries.filter { FinanceCategoryCatalog.normalized($0.category, kind: .expense) == category && $0.amount >= 0 }.count
+            )
+        }
+        .sorted { lhs, rhs in
+            if lhs.spent == rhs.spent { return lhs.category < rhs.category }
+            return lhs.spent > rhs.spent
+        }
+    }
+
+    private static func expensesByCategory(_ entries: [FinanceEntryRecord]) -> [String: Double] {
+        Dictionary(grouping: entries.filter { $0.amount >= 0 }, by: { FinanceCategoryCatalog.normalized($0.category, kind: .expense) })
+            .mapValues { $0.reduce(0) { $0 + $1.amount } }
+    }
+
     private static func trimmedOrDefault(_ value: String, defaultValue: String) -> String {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? defaultValue : trimmed
     }
 }
 
-enum FinanceCategoryKind {
+enum FinanceCategoryKind: String {
     case expense
     case income
 }
 
 enum FinanceCategoryCatalog {
-    static let expenseCategories = [
+    static let defaultExpenseCategories = [
         "Lebensmittel",
         "Essen unterwegs",
         "Fixkosten",
-        "Miete/Wohnen",
         "Transport",
-        "Gesundheit",
-        "Training/Fitness",
-        "Kleidung",
         "Freizeit",
-        "Abos",
+        "Kleidung",
+        "Gesundheit",
         "Technik",
+        "Lernen",
+        "Haushalt",
+        "Geschenke",
+        "Abos",
+        "Sparen",
         "Sonstiges"
     ]
 
-    static let incomeCategories = [
+    static var expenseCategories: [String] { defaultExpenseCategories }
+
+    static let defaultIncomeCategories = [
         "Gehalt",
         "Nebenjob",
         "Rückzahlung",
@@ -362,28 +658,125 @@ enum FinanceCategoryCatalog {
         "Sonstiges"
     ]
 
+    static var incomeCategories: [String] { defaultIncomeCategories }
+
+    static func defaults(for kind: FinanceCategoryKind) -> [String] {
+        kind == .expense ? defaultExpenseCategories : defaultIncomeCategories
+    }
+
     static func normalized(_ category: String, kind: FinanceCategoryKind) -> String {
-        let trimmed = category.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = displayName(category)
         guard !trimmed.isEmpty else { return "Sonstiges" }
-        let normalized = trimmed.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "de_DE")).lowercased()
+        let normalized = key(for: trimmed)
         let aliases: [String: String] = [
             "essen": "Essen unterwegs",
             "restaurant": "Essen unterwegs",
+            "essen unterwegs": "Essen unterwegs",
             "einkauf": "Lebensmittel",
-            "haushalt": "Lebensmittel",
-            "wohnen": "Miete/Wohnen",
-            "miete": "Miete/Wohnen",
-            "fitness": "Training/Fitness",
-            "sport": "Training/Fitness",
+            "supermarkt": "Lebensmittel",
+            "lebensmittel": "Lebensmittel",
+            "wohnen": "Fixkosten",
+            "miete": "Fixkosten",
+            "miete/wohnen": "Fixkosten",
+            "miete wohnen": "Fixkosten",
+            "training/fitness": "Gesundheit",
+            "training fitness": "Gesundheit",
+            "fitness": "Gesundheit",
+            "sport": "Gesundheit",
+            "abo": "Abos",
             "quick panel": "Sonstiges",
             "rueckzahlung": "Rückzahlung"
         ]
         if let mapped = aliases[normalized] {
             return mapped
         }
-        let categories = kind == .expense ? expenseCategories : incomeCategories
-        return categories.first { $0.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "de_DE")).lowercased() == normalized } ?? trimmed
+        let categories = defaults(for: kind)
+        return categories.first { key(for: $0) == normalized } ?? trimmed
     }
+
+    static func suggestedCategory(for text: String, fallback: String? = nil) -> FinanceCategorySuggestion {
+        let cleanText = text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "de_DE")).lowercased()
+        let rules: [(category: String, keywords: [String])] = [
+            ("Essen unterwegs", ["doner", "doener", "döner", "pizza", "burger", "restaurant", "imbiss", "kebab", "cafe", "kaffee"]),
+            ("Lebensmittel", ["rewe", "edeka", "aldi", "lidl", "netto", "kaufland", "supermarkt", "dm", "rossmann"]),
+            ("Fixkosten", ["miete", "strom", "internet", "handy", "versicherung", "rundfunk", "gez"]),
+            ("Transport", ["bahn", "bus", "uber", "taxi", "benzin", "tanken", "db", "deutsche bahn", "ticket"]),
+            ("Gesundheit", ["gym", "apotheke", "arzt", "zahnarzt", "medikament", "physio"]),
+            ("Abos", ["netflix", "spotify", "notion", "abo", "subscription", "prime", "disney", "icloud"]),
+            ("Technik", ["amazon", "apple", "hardware", "software", "mac", "iphone", "ipad"]),
+            ("Lernen", ["buch", "kurs", "udemy", "coursera", "lernen", "fortbildung"])
+        ]
+
+        for rule in rules where rule.keywords.contains(where: { cleanText.contains($0) }) {
+            return FinanceCategorySuggestion(category: rule.category, confidence: .rule, reason: "Lokale Regel")
+        }
+
+        if let fallback, !fallback.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return FinanceCategorySuggestion(category: normalized(fallback, kind: .expense), confidence: .fallback, reason: "Zuletzt verwendete Kategorie")
+        }
+
+        return FinanceCategorySuggestion(category: "Sonstiges", confidence: .fallback, reason: "Keine passende lokale Regel")
+    }
+
+    static func key(for value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "de_DE"))
+            .lowercased()
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+    }
+
+    static func displayName(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func isDefault(_ category: String, kind: FinanceCategoryKind) -> Bool {
+        let categoryKey = key(for: category)
+        return defaults(for: kind).contains { key(for: $0) == categoryKey }
+    }
+
+    static func matchingNames(for category: String) -> [String] {
+        let normalizedName = normalized(category, kind: .expense)
+        return Array(Set([category, normalizedName]))
+    }
+
+    static func mergedCategoryNames(primary: [String], fallback: [String]) -> [String] {
+        var seen: Set<String> = []
+        var result: [String] = []
+        for name in primary + fallback {
+            let clean = displayName(name)
+            guard !clean.isEmpty else { continue }
+            let key = key(for: clean)
+            guard !seen.contains(key) else { continue }
+            seen.insert(key)
+            result.append(clean)
+        }
+        if !seen.contains(key(for: "Sonstiges")) {
+            result.append("Sonstiges")
+        }
+        return result
+    }
+}
+
+struct FinanceCategorySuggestion: Equatable {
+    enum Confidence: Equatable {
+        case rule
+        case fallback
+    }
+
+    let category: String
+    let confidence: Confidence
+    let reason: String
+}
+
+enum FinanceCategoryMutationError: Error, Equatable {
+    case notFound
+    case duplicateName
+}
+
+enum FinanceCategoryDeletionResult: Equatable {
+    case deleted
+    case deactivated
 }
 
 struct FinanceMonthlySummary: Equatable {
@@ -445,6 +838,92 @@ struct FinanceCategorySummary: Identifiable, Equatable {
         guard let budget else { return false }
         return spent > budget
     }
+}
+
+struct FinanceCategoryTrend: Identifiable, Equatable {
+    var id: String { category }
+    let category: String
+    let spent: Double
+    let share: Double
+    let previousSpent: Double?
+    let trailingThreeMonthAverage: Double?
+    let budget: Double?
+    let entryCount: Int
+
+    var changeFromPrevious: Double {
+        spent - (previousSpent ?? 0)
+    }
+
+    var isOverBudget: Bool {
+        guard let budget else { return false }
+        return spent > budget
+    }
+
+    var hasPreviousComparison: Bool {
+        previousSpent != nil
+    }
+
+    var hasThreeMonthTrend: Bool {
+        trailingThreeMonthAverage != nil
+    }
+}
+
+struct FinanceMonthlyAnalysis: Equatable {
+    let spent: Double
+    let income: Double
+    let balance: Double
+    let monthlyBudget: Double
+    let remainingBudget: Double
+    let averageDailySpend: Double
+    let availableDailySpendUntilMonthEnd: Double
+    let projectedSpend: Double
+    let previousMonthSpent: Double?
+    let changeFromPreviousMonth: Double?
+    let trailingThreeMonthAverageSpent: Double?
+    let savingsRate: Double?
+    let topCategory: FinanceCategorySummary?
+    let largestExpense: FinanceEntryRecord?
+    let strongestCategoryIncrease: FinanceCategoryTrend?
+    let activeExpenseDays: Int
+    let remainingFixedCosts: Double
+    let categoryTrends: [FinanceCategoryTrend]
+    let entryCount: Int
+    let currency: String
+
+    var isForecastOverBudget: Bool {
+        monthlyBudget > 0 && projectedSpend > monthlyBudget
+    }
+
+    var hasEnoughDataForPreviousMonthComparison: Bool {
+        previousMonthSpent != nil
+    }
+
+    var hasEnoughDataForThreeMonthTrend: Bool {
+        trailingThreeMonthAverageSpent != nil
+    }
+
+    static let empty = FinanceMonthlyAnalysis(
+        spent: 0,
+        income: 0,
+        balance: 0,
+        monthlyBudget: 0,
+        remainingBudget: 0,
+        averageDailySpend: 0,
+        availableDailySpendUntilMonthEnd: 0,
+        projectedSpend: 0,
+        previousMonthSpent: nil,
+        changeFromPreviousMonth: nil,
+        trailingThreeMonthAverageSpent: nil,
+        savingsRate: nil,
+        topCategory: nil,
+        largestExpense: nil,
+        strongestCategoryIncrease: nil,
+        activeExpenseDays: 0,
+        remainingFixedCosts: 0,
+        categoryTrends: [],
+        entryCount: 0,
+        currency: "EUR"
+    )
 }
 
 struct FinanceMonthPlan: Equatable {

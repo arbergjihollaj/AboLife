@@ -32,6 +32,15 @@ struct AboLifeApp: App {
         }
         .windowStyle(.titleBar)
 
+        Settings {
+            SettingsView(database: appDatabase)
+                .environmentObject(telegramCoordinator)
+                .frame(minWidth: 580, minHeight: 520)
+                .preferredColorScheme(.dark)
+        }
+        .defaultSize(width: 700, height: 720)
+        .windowResizability(.contentMinSize)
+
         MenuBarExtra("AboLife", systemImage: "sparkles") {
             MenuBarQuickPanelView(database: appDatabase)
                 .environmentObject(telegramCoordinator)

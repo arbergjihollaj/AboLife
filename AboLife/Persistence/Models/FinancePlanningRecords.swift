@@ -1,6 +1,55 @@
 import Foundation
 import GRDB
 
+struct FinanceCategoryRecord: Codable, FetchableRecord, PersistableRecord, Identifiable, Equatable {
+    static let databaseTableName = "finance_categories"
+
+    var id: String
+    var name: String
+    var normalizedKey: String
+    var kind: String
+    var isDefault: Bool
+    var isActive: Bool
+    var sortOrder: Int
+    var createdAt: Date
+    var updatedAt: Date
+
+    init(
+        id: String = UUID().uuidString,
+        name: String,
+        normalizedKey: String? = nil,
+        kind: String = "expense",
+        isDefault: Bool = false,
+        isActive: Bool = true,
+        sortOrder: Int = 0,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date()
+    ) {
+        let cleanName = FinanceCategoryCatalog.displayName(name)
+        self.id = id
+        self.name = cleanName
+        self.normalizedKey = normalizedKey ?? FinanceCategoryCatalog.key(for: cleanName)
+        self.kind = kind
+        self.isDefault = isDefault
+        self.isActive = isActive
+        self.sortOrder = sortOrder
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case normalizedKey = "normalized_key"
+        case kind
+        case isDefault = "is_default"
+        case isActive = "is_active"
+        case sortOrder = "sort_order"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
 struct FinanceCategoryBudgetRecord: Codable, FetchableRecord, PersistableRecord, Identifiable, Equatable {
     static let databaseTableName = "finance_category_budgets"
 

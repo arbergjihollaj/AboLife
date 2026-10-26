@@ -38,6 +38,7 @@ struct MenuBarQuickPanelView: View {
 
     @StateObject private var store: DashboardStore
     @State private var activeInput: QuickPanelInput?
+    @State private var isQuickActionsExpanded = false
     @State private var mealName = ""
     @State private var mealCalories = ""
     @State private var mealProtein = ""
@@ -47,7 +48,6 @@ struct MenuBarQuickPanelView: View {
     @State private var expenseCategory = ""
     @State private var validationMessage: String?
     @State private var toastMessage: String?
-
     private let database: AppDatabase?
 
     init(database: AppDatabase?) {
@@ -59,28 +59,54 @@ struct MenuBarQuickPanelView: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             dayStatus
+            financeStatus
             quickActions
-            telegramSection
-            navigationSection
         }
-        .padding(14)
-        .frame(width: 332)
-        .background(AboLifeColors.premiumBackgroundGradient)
+        .padding(12)
+        .frame(width: 292)
+        .background { panelBackground }
+        .preferredColorScheme(.dark)
         .onAppear {
-            store.refreshFromPersistence()
+            isQuickActionsExpanded = false
+            closeInput()
+            refreshPanel()
         }
+    }
+
+    @ViewBuilder
+    private var panelBackground: some View {
+        let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
+        if #available(macOS 26.0, *) {
+            Color.clear
+                .glassEffect(.regular.tint(AboLifeColors.pageBackground.opacity(0.6)), in: shape)
+        } else {
+            AboLifeLiquidGlassSurface(shape: shape)
+                .overlay { shape.fill(AboLifeColors.pageBackground.opacity(0.35)) }
+        }
+    }
+
+    private var foregroundCardBackground: some View {
+        AboLifeColors.premiumBackgroundGradient
+            .overlay(AboLifeColors.elevatedCardBackground)
     }
 
     private var header: some View {
         HStack(spacing: 10) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(AboLifeColors.review)
-                .frame(width: 28, height: 28)
-                .background(AboLifeColors.elevatedCardBackground, in: Circle())
-                .overlay {
-                    Circle().strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 1)
-                }
+            Button {
+                open(.dashboard)
+            } label: {
+                Text("M")
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundStyle(AboLifeColors.review)
+                    .frame(width: 28, height: 28)
+                    .background { foregroundCardBackground.clipShape(Circle()) }
+                    .overlay {
+                        Circle().strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 1)
+                    }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Hauptfenster öffnen")
+            .help("Hauptfenster öffnen")
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("AboLife")
@@ -108,65 +134,103 @@ struct MenuBarQuickPanelView: View {
 
     private var dayStatus: some View {
         panelSection("Tagesstatus", systemImage: "gauge.with.dots.needle.67percent") {
-            VStack(spacing: 10) {
-                HStack(alignment: .center, spacing: 14) {
-                    MenuBarNutritionDoubleRing(
-                        caloriesConsumed: store.state.caloriesConsumed,
-                        caloriesTarget: store.state.caloriesTarget,
-                        proteinConsumed: store.state.proteinConsumed,
-                        proteinTarget: store.state.proteinTarget,
-                        caloriesProgress: progress(Double(store.state.caloriesConsumed), Double(store.state.caloriesTarget)),
-                        proteinProgress: progress(store.state.proteinConsumed, store.state.proteinTarget)
-                    )
+            MenuBarNutritionDoubleRing(
+                caloriesConsumed: store.state.caloriesConsumed,
+                caloriesTarget: store.state.caloriesTarget,
+                proteinConsumed: store.state.proteinConsumed,
+                proteinTarget: store.state.proteinTarget,
+                caloriesProgress: progress(Double(store.state.caloriesConsumed), Double(store.state.caloriesTarget)),
+                proteinProgress: progress(store.state.proteinConsumed, store.state.proteinTarget)
+            )
+            .frame(maxWidth: .infinity)
+        }
+    }
 
-                    Spacer(minLength: 0)
-                    VStack(alignment: .leading, spacing: 6) {
-                        compactMetric("Kalorien", "\(store.state.caloriesConsumed) / \(store.state.caloriesTarget) kcal", AboLifeColors.nutrition)
-                        compactMetric("Protein", "\(Int(store.state.proteinConsumed.rounded())) / \(Int(store.state.proteinTarget.rounded())) g", AboLifeColors.protein)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                    statusTile(title: "Gewicht", value: weightText, systemImage: "scalemass", tint: AboLifeColors.review)
-                    statusTile(title: "Budget", value: budgetText, systemImage: "eurosign.circle", tint: AboLifeColors.finance)
-                    statusTile(title: "Training", value: trainingText, systemImage: "figure.strengthtraining.traditional", tint: AboLifeColors.training)
-                    statusTile(title: "Habits", value: "\(store.state.completedHabits) / \(store.state.totalHabits)", systemImage: "checkmark.seal", tint: AboLifeColors.habits)
-                }
-            }
+    private var financeStatus: some View {
+        panelSection("Budget", systemImage: "wallet.pass") {
+            MenuBarBudgetRing(
+                monthlyBudget: store.state.monthlyBudget,
+                dailyBudgetRemaining: store.state.dailyBudgetRemaining
+            )
+            .frame(maxWidth: .infinity)
         }
     }
 
     private var quickActions: some View {
-        panelSection("Quick Actions", systemImage: "bolt.circle") {
-            VStack(alignment: .leading, spacing: 9) {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                    actionButton("Mahlzeit hinzufügen", systemImage: "fork.knife", tint: AboLifeColors.nutrition) {
-                        showInput(.meal)
-                    }
-                    actionButton("Gewicht eintragen", systemImage: "scalemass", tint: AboLifeColors.review) {
-                        showInput(.weight)
-                    }
-                    actionButton("Ausgabe hinzufügen", systemImage: "eurosign.circle", tint: AboLifeColors.finance) {
-                        showInput(.expense)
-                    }
-                    actionButton("Training erledigt", systemImage: "figure.strengthtraining.traditional", tint: AboLifeColors.training) {
-                        store.completeHomeWorkout(intensity: .normal)
-                        finishAction("Training")
-                    }
-                    actionButton("Proteinshake erledigt", systemImage: "takeoutbag.and.cup.and.straw", tint: AboLifeColors.protein) {
-                        completeReminderHabit(TelegramReminderHabit.proteinShakeKey, message: "Proteinshake")
-                    }
-                    actionButton("Medikamente erledigt", systemImage: "pills", tint: AboLifeColors.habits) {
-                        completeReminderHabit(TelegramReminderHabit.medicationKey, message: "Medikamente")
-                    }
-                }
+        Button {
+            isQuickActionsExpanded.toggle()
+        } label: {
+            HStack(spacing: 8) {
+                Label("Quick Actions", systemImage: "bolt.circle")
+                Spacer(minLength: 0)
+                Image(systemName: isQuickActionsExpanded ? "chevron.up" : "chevron.down")
+            }
+            .font(AboLifeTypography.caption.weight(.semibold))
+            .foregroundStyle(AboLifeColors.primaryText)
+            .padding(10)
+            .frame(maxWidth: .infinity, minHeight: 36)
+            .background {
+                foregroundCardBackground
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 1)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(isQuickActionsExpanded ? "Ausgeklappt" : "Eingeklappt")
+        .popover(isPresented: $isQuickActionsExpanded, arrowEdge: .bottom) {
+            ScrollView {
+                quickActionContent
+                    .padding(12)
+            }
+            .frame(width: 280, height: 420)
+            .background(AboLifeColors.premiumBackgroundGradient)
+            .preferredColorScheme(.dark)
+        }
+        .onChange(of: isQuickActionsExpanded) { _, expanded in
+            if !expanded { closeInput() }
+        }
+    }
 
-                if let activeInput {
-                    miniInput(activeInput)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
+    private var quickActionContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                actionButton("Mahlzeit hinzufügen", systemImage: "fork.knife", tint: AboLifeColors.nutrition) {
+                    showInput(.meal)
+                }
+                actionButton("Gewicht eintragen", systemImage: "scalemass", tint: AboLifeColors.review) {
+                    showInput(.weight)
+                }
+                actionButton("Ausgabe hinzufügen", systemImage: "eurosign.circle", tint: AboLifeColors.finance) {
+                    showInput(.expense)
+                }
+                actionButton("Training erledigt", systemImage: "figure.strengthtraining.traditional", tint: AboLifeColors.training) {
+                    store.completeHomeWorkout(intensity: .normal)
+                    finishAction("Training")
+                }
+                actionButton("Minimum-Training", systemImage: "checkmark.circle", tint: AboLifeColors.training) {
+                    store.completeHomeWorkout(intensity: .minimum)
+                    finishAction("Minimum")
+                }
+                actionButton("Training mit Details", systemImage: "list.bullet.clipboard", tint: AboLifeColors.training) {
+                    open(.training)
+                }
+                actionButton("Proteinshake erledigt", systemImage: "takeoutbag.and.cup.and.straw", tint: AboLifeColors.protein) {
+                    completeReminderHabit(TelegramReminderHabit.proteinShakeKey, message: "Proteinshake")
+                }
+                actionButton("Medikamente erledigt", systemImage: "pills", tint: AboLifeColors.habits) {
+                    completeReminderHabit(TelegramReminderHabit.medicationKey, message: "Medikamente")
                 }
             }
+
+            if let activeInput {
+                miniInput(activeInput)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+            telegramSection
         }
     }
 
@@ -213,18 +277,6 @@ struct MenuBarQuickPanelView: View {
         }
     }
 
-    private var navigationSection: some View {
-        Button {
-            open(.settings)
-        } label: {
-            Label("Einstellungen öffnen", systemImage: "gearshape")
-                .font(AboLifeTypography.caption.weight(.semibold))
-                .frame(maxWidth: .infinity, minHeight: 32)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(AboLifeColors.review)
-    }
-
     private func panelSection<Content: View>(
         _ title: String,
         systemImage: String,
@@ -238,51 +290,13 @@ struct MenuBarQuickPanelView: View {
             content()
         }
         .padding(10)
-        .background(AboLifeColors.elevatedCardBackground, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background {
+            foregroundCardBackground
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 1)
-        }
-    }
-
-    private func statusTile(title: String, value: String, systemImage: String, tint: Color) -> some View {
-        HStack(spacing: 7) {
-            Image(systemName: systemImage)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(tint)
-                .frame(width: 18)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                    .font(AboLifeTypography.micro)
-                    .foregroundStyle(AboLifeColors.secondaryText)
-                    .lineLimit(1)
-                Text(value)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(AboLifeColors.primaryText)
-                    .monospacedDigit()
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.72)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 8)
-        .frame(height: 40)
-        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-    }
-
-    private func compactMetric(_ title: String, _ value: String, _ tint: Color) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(title)
-                .font(AboLifeTypography.micro)
-                .foregroundStyle(AboLifeColors.secondaryText)
-            Text(value)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundStyle(tint)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.74)
         }
     }
 
@@ -345,9 +359,32 @@ struct MenuBarQuickPanelView: View {
             case .expense:
                 VStack(spacing: 7) {
                     quickTextField("Titel", text: $expenseTitle)
+                        .onChange(of: expenseTitle) { _, newValue in
+                            applyExpenseSuggestion(for: newValue)
+                        }
                     HStack(spacing: 7) {
                         quickTextField("Betrag in EUR", text: $expenseAmount)
                         quickTextField("Kategorie", text: $expenseCategory)
+                    }
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), spacing: 6)], spacing: 6) {
+                        ForEach(menuExpenseCategories, id: \.self) { category in
+                            Button {
+                                expenseCategory = category
+                            } label: {
+                                Text(category)
+                                    .font(AboLifeTypography.micro.weight(.semibold))
+                                    .lineLimit(1)
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.plain)
+                            .foregroundStyle(expenseCategory == category ? AboLifeColors.primaryText : AboLifeColors.secondaryText)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 5)
+                            .background(
+                                (expenseCategory == category ? AboLifeColors.finance.opacity(0.20) : AboLifeColors.elevatedCardBackground),
+                                in: Capsule()
+                            )
+                        }
                     }
                 }
             }
@@ -395,6 +432,9 @@ struct MenuBarQuickPanelView: View {
     private func showInput(_ input: QuickPanelInput) {
         validationMessage = nil
         activeInput = input
+        if input == .expense, expenseCategory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            expenseCategory = suggestedExpenseCategory(for: expenseTitle)
+        }
     }
 
     private func closeInput() {
@@ -471,32 +511,26 @@ struct MenuBarQuickPanelView: View {
         )
         expenseTitle = ""
         expenseAmount = ""
-        expenseCategory = ""
+        expenseCategory = "Sonstiges"
         closeInput()
         finishAction("Ausgabe")
     }
 
     private func completeReminderHabit(_ key: String, message: String) {
-        guard let database else {
-            showToast("Keine Datenbank")
-            return
-        }
-
-        do {
-            try HabitRepository(database: database).upsertCompletion(
-                habitKey: key,
-                date: DateIntervals.dayKey(),
-                isCompleted: true
-            )
+        if store.completeHabit(habitKey: key) {
             finishAction(message)
-        } catch {
+        } else {
             showToast("Nicht gespeichert")
         }
     }
 
     private func finishAction(_ message: String) {
-        store.refreshFromPersistence()
+        refreshPanel()
         showToast("\(message) gespeichert")
+    }
+
+    private func refreshPanel() {
+        store.refreshFromPersistence()
     }
 
     private func showToast(_ message: String) {
@@ -522,6 +556,7 @@ struct MenuBarQuickPanelView: View {
     }
 
     private func open(_ section: AppSection) {
+        isQuickActionsExpanded = false
         navigation.select(section)
         guard navigation.shouldOpenMainWindow() else { return }
 
@@ -537,25 +572,18 @@ struct MenuBarQuickPanelView: View {
         return min(max(current / target, 0), 1)
     }
 
-    private var weightText: String {
-        guard let bodyWeight = store.state.bodyWeight else { return "offen" }
-        if let target = store.state.bodyWeightTarget {
-            return "\(String(format: "%.1f", bodyWeight)) -> \(String(format: "%.1f", target))"
-        }
-        return "\(String(format: "%.1f", bodyWeight)) kg"
+    private var menuExpenseCategories: [String] {
+        Array(FinanceCategoryCatalog.expenseCategories.prefix(6))
     }
 
-    private var budgetText: String {
-        let remaining = max(store.state.monthlyBudget - store.state.monthlySpent, 0)
-        return "\(currency(remaining)) frei"
+    private func applyExpenseSuggestion(for title: String) {
+        let current = expenseCategory.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard current.isEmpty || current == "Sonstiges" || menuExpenseCategories.contains(current) else { return }
+        expenseCategory = suggestedExpenseCategory(for: title)
     }
 
-    private var trainingText: String {
-        "\(store.state.weeklyWorkoutCompleted) / \(store.state.weeklyWorkoutTarget)"
-    }
-
-    private func currency(_ value: Double) -> String {
-        "\(Int(value.rounded())) EUR"
+    private func suggestedExpenseCategory(for title: String) -> String {
+        FinanceCategoryCatalog.normalized(title, kind: .expense)
     }
 
     private var telegramStatusText: String {
@@ -650,57 +678,56 @@ private struct MenuBarNutritionDoubleRing: View {
     }
 }
 
-private struct QuickProgressRing: View {
-    let title: String
-    let value: String
-    let target: String
-    let progress: Double
-    let tint: Color
-    let size: CGFloat
-    let lineWidth: CGFloat
+private struct MenuBarBudgetRing: View {
+    let monthlyBudget: Double
+    let dailyBudgetRemaining: Double
 
-    private var clampedProgress: Double {
-        min(max(progress, 0), 1)
+    private var availableToday: Double {
+        dailyBudgetRemaining.isFinite ? max(dailyBudgetRemaining, 0) : 0
+    }
+
+    private var availableFraction: Double {
+        guard monthlyBudget.isFinite, monthlyBudget > 0 else { return 0 }
+        return min(availableToday / monthlyBudget, 1)
+    }
+
+    private var amountText: String {
+        availableToday.formatted(.currency(code: "EUR"))
     }
 
     var body: some View {
         ZStack {
+            // The full ring is the monthly budget; only today's available share is green.
             Circle()
-                .stroke(AboLifeColors.quietFill, lineWidth: lineWidth)
+                .stroke(Color.gray.opacity(0.24), lineWidth: 8)
 
-            Circle()
-                .trim(from: 0, to: clampedProgress)
-                .stroke(
-                    AngularGradient(
-                        colors: [tint.opacity(0.48), tint.opacity(0.92), tint.opacity(0.60)],
-                        center: .center
-                    ),
-                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .shadow(color: tint.opacity(0.14), radius: 6, x: 0, y: 0)
+            if availableFraction > 0 {
+                Circle()
+                    .trim(from: 0, to: availableFraction)
+                    .stroke(AboLifeColors.nutrition, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
 
-            VStack(spacing: 2) {
-                Text(value)
-                    .font(.system(size: size > 90 ? 20 : 14, weight: .semibold, design: .rounded))
+            VStack(spacing: 5) {
+                Text(amountText)
+                    .font(.system(size: 22, weight: .medium, design: .rounded))
                     .foregroundStyle(AboLifeColors.primaryText)
                     .monospacedDigit()
                     .lineLimit(1)
-                    .minimumScaleFactor(0.62)
-                Text(title)
-                    .font(.system(size: 9, weight: .semibold, design: .rounded))
+                    .minimumScaleFactor(0.6)
+                Text("heute frei")
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundStyle(AboLifeColors.secondaryText)
-                    .lineLimit(1)
-                Text(target)
-                    .font(.system(size: 8, weight: .medium, design: .rounded))
-                    .foregroundStyle(AboLifeColors.tertiaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
             }
-            .padding(.horizontal, lineWidth + 8)
+            .padding(.horizontal, 14)
         }
-        .frame(width: size, height: size)
-        .accessibilityLabel("\(title) \(Int(clampedProgress * 100)) Prozent")
+        .frame(width: 144, height: 144)
+        .padding(6)
+        .animation(.easeInOut(duration: 0.2), value: availableFraction)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Budget: heute verfügbar")
+        .accessibilityValue(amountText)
+        .help("Grau: Monatsbudget. Grün: heute verfügbarer Anteil.")
     }
 }
 

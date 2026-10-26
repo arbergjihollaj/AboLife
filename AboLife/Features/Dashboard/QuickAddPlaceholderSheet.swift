@@ -88,8 +88,6 @@ struct QuickAddPlaceholderSheet: View {
             return "Gewohnheit aktualisieren"
         case .weight:
             return "Gewicht merken"
-        case .note:
-            return "Tagesnotiz"
         }
     }
 
@@ -122,8 +120,6 @@ struct QuickAddPlaceholderSheet: View {
             QuickAddHabitPanel(store: store, setStatus: setStatus)
         case .weight:
             QuickAddWeightPanel(store: store, dismiss: dismiss, setStatus: setStatus)
-        case .note:
-            QuickAddNotePanel(store: store, dismiss: dismiss, setStatus: setStatus)
         }
     }
 

@@ -3,98 +3,82 @@ import Foundation
 enum TrainingPlanSeeder {
     static let weeklyPlan = HomeWorkoutPlan(days: [
         HomeWorkoutDay(
-            id: "monday-push",
+            id: "pull-core",
             weekday: 2,
             weekdayName: "Montag",
-            name: "Push",
-            focusAreas: ["Brust", "Schultern", "Trizeps", "Core"],
-            variants: Self.variants([
-                ("Liegestuetze", "4 x 8-12"),
-                ("Pike Push-ups", "4 x 6-10"),
-                ("Enge Liegestuetze", "3 x 8-12"),
-                ("Diamond Push-ups", "3 x 6-10"),
-                ("Plank", "3 x 45 Sekunden")
-            ])
-        ),
-        HomeWorkoutDay(
-            id: "tuesday-pull",
-            weekday: 3,
-            weekdayName: "Dienstag",
-            name: "Pull",
+            name: "Pull + Core",
             focusAreas: ["Ruecken", "Bizeps", "Griffkraft", "Core"],
-            variants: Self.variants([
-                ("Klimmzuege", "4 Saetze"),
-                ("Negative Klimmzuege", "4 x 3-5"),
-                ("Scapular Pull-ups", "3 x 8"),
-                ("Superman Hold", "3 x 30 Sekunden"),
-                ("Hollow Hold", "3 x 30 Sekunden")
-            ])
+            variants: [
+                .minimum: [
+                    HomeWorkoutExercise(name: "Negative Klimmzuege", prescription: "2 x 3", suggestedSets: 2, suggestedReps: 3),
+                    HomeWorkoutExercise(name: "Rucksack-Rudern", prescription: "2 x 8", suggestedSets: 2, suggestedReps: 8),
+                    HomeWorkoutExercise(name: "Plank", prescription: "2 x 30 Sekunden", suggestedSets: 2, suggestedDurationSec: 30)
+                ],
+                .normal: [
+                    HomeWorkoutExercise(name: "Klimmzuege oder Negative Klimmzuege", prescription: "3 x 3-5", suggestedSets: 3, suggestedReps: 3),
+                    HomeWorkoutExercise(name: "Rucksack-Rudern", prescription: "3 x 10", suggestedSets: 3, suggestedReps: 10),
+                    HomeWorkoutExercise(name: "Plank", prescription: "3 x 40 Sekunden", suggestedSets: 3, suggestedDurationSec: 40),
+                    HomeWorkoutExercise(name: "Beinheben oder Crunches", prescription: "3 x 10", suggestedSets: 3, suggestedReps: 10)
+                ],
+                .strong: [
+                    HomeWorkoutExercise(name: "Klimmzuege oder Chin-ups", prescription: "4 x 3-6", suggestedSets: 4, suggestedReps: 4),
+                    HomeWorkoutExercise(name: "Rucksack-Rudern", prescription: "4 x 12", suggestedSets: 4, suggestedReps: 12),
+                    HomeWorkoutExercise(name: "Plank", prescription: "4 x 45 Sekunden", suggestedSets: 4, suggestedDurationSec: 45),
+                    HomeWorkoutExercise(name: "Beinheben oder Crunches", prescription: "4 x 12", suggestedSets: 4, suggestedReps: 12)
+                ]
+            ]
         ),
         HomeWorkoutDay(
-            id: "wednesday-legs-core",
+            id: "push-legs",
             weekday: 4,
             weekdayName: "Mittwoch",
-            name: "Legs + Core",
-            focusAreas: ["Beine", "Gesaess", "Core"],
-            variants: Self.variants([
-                ("Kniebeugen", "4 x 15-20"),
-                ("Bulgarische Split Squats", "4 x 8-12 pro Seite"),
-                ("Ausfallschritte", "3 x 10 pro Seite"),
-                ("Glute Bridge", "4 x 12-18"),
-                ("Beinheben", "3 x 8-12"),
-                ("Plank", "3 x 45 Sekunden")
-            ])
+            name: "Push + Legs",
+            focusAreas: ["Brust", "Schultern", "Trizeps", "Beine"],
+            variants: [
+                .minimum: [
+                    HomeWorkoutExercise(name: "Liegestuetze", prescription: "2 x 6-8", suggestedSets: 2, suggestedReps: 6),
+                    HomeWorkoutExercise(name: "Kniebeugen", prescription: "2 x 12", suggestedSets: 2, suggestedReps: 12),
+                    HomeWorkoutExercise(name: "Ausfallschritte", prescription: "2 x 8 pro Seite", suggestedSets: 2, suggestedReps: 8)
+                ],
+                .normal: [
+                    HomeWorkoutExercise(name: "Liegestuetze", prescription: "3 x 8-12", suggestedSets: 3, suggestedReps: 8),
+                    HomeWorkoutExercise(name: "Pike Push-ups oder Schulteruebung", prescription: "3 x 6-8", suggestedSets: 3, suggestedReps: 6),
+                    HomeWorkoutExercise(name: "Kniebeugen", prescription: "3 x 15", suggestedSets: 3, suggestedReps: 15),
+                    HomeWorkoutExercise(name: "Ausfallschritte", prescription: "3 x 10 pro Seite", suggestedSets: 3, suggestedReps: 10)
+                ],
+                .strong: [
+                    HomeWorkoutExercise(name: "Liegestuetze", prescription: "4 x 10-15", suggestedSets: 4, suggestedReps: 10),
+                    HomeWorkoutExercise(name: "Pike Push-ups oder Schulteruebung", prescription: "4 x 8", suggestedSets: 4, suggestedReps: 8),
+                    HomeWorkoutExercise(name: "Kniebeugen", prescription: "4 x 18", suggestedSets: 4, suggestedReps: 18),
+                    HomeWorkoutExercise(name: "Ausfallschritte", prescription: "4 x 12 pro Seite", suggestedSets: 4, suggestedReps: 12)
+                ]
+            ]
         ),
         HomeWorkoutDay(
-            id: "thursday-cardio-mobility",
-            weekday: 5,
-            weekdayName: "Donnerstag",
-            name: "Cardio + Mobility",
-            focusAreas: ["Ausdauer", "Mobility", "Regeneration"],
-            variants: Self.variants([
-                ("Laufband", "30-40 Minuten"),
-                ("Dehnen", "12 Minuten"),
-                ("Mobility", "10 Minuten")
-            ])
-        ),
-        HomeWorkoutDay(
-            id: "friday-push-pull",
+            id: "full-body",
             weekday: 6,
             weekdayName: "Freitag",
-            name: "Push + Pull Mix",
-            focusAreas: ["Brust", "Ruecken", "Schultern", "Core"],
-            variants: Self.variants([
-                ("Liegestuetze", "4 x 10-15"),
-                ("Klimmzuege", "4 Saetze"),
-                ("Pike Push-ups", "3 x 6-10"),
-                ("Negative Klimmzuege", "3 x 3-5"),
-                ("Side Plank", "3 x 30 Sekunden pro Seite")
-            ])
-        ),
-        HomeWorkoutDay(
-            id: "saturday-conditioning",
-            weekday: 7,
-            weekdayName: "Samstag",
-            name: "Conditioning",
-            focusAreas: ["Kondition", "Beine", "Core"],
-            variants: Self.variants([
-                ("Laufband", "20-30 Minuten"),
-                ("Kniebeugen", "4 x 20"),
-                ("Ausfallschritte", "3 x 12 pro Seite"),
-                ("Core Circuit", "4 Runden")
-            ])
-        ),
-        HomeWorkoutDay(
-            id: "sunday-recovery",
-            weekday: 1,
-            weekdayName: "Sonntag",
-            name: "Recovery",
-            focusAreas: ["Spaziergang", "Mobility", "Stretching"],
-            variants: Self.variants([
-                ("Spaziergang", "30-60 Minuten"),
-                ("Mobility", "12 Minuten"),
-                ("Stretching", "12 Minuten")
-            ])
+            name: "Full Body",
+            focusAreas: ["Ganzkoerper", "Grundroutine", "Core"],
+            variants: [
+                .minimum: [
+                    HomeWorkoutExercise(name: "Klimmzugvariante", prescription: "2 x 3", suggestedSets: 2, suggestedReps: 3),
+                    HomeWorkoutExercise(name: "Liegestuetze", prescription: "2 x 6-8", suggestedSets: 2, suggestedReps: 6),
+                    HomeWorkoutExercise(name: "Kniebeugen", prescription: "2 x 12", suggestedSets: 2, suggestedReps: 12)
+                ],
+                .normal: [
+                    HomeWorkoutExercise(name: "Klimmzugvariante", prescription: "3 x 3-5", suggestedSets: 3, suggestedReps: 3),
+                    HomeWorkoutExercise(name: "Liegestuetze", prescription: "3 x 8-12", suggestedSets: 3, suggestedReps: 8),
+                    HomeWorkoutExercise(name: "Kniebeugen", prescription: "3 x 15", suggestedSets: 3, suggestedReps: 15),
+                    HomeWorkoutExercise(name: "Core-Uebung", prescription: "3 x 40 Sekunden", suggestedSets: 3, suggestedDurationSec: 40)
+                ],
+                .strong: [
+                    HomeWorkoutExercise(name: "Klimmzugvariante", prescription: "4 x 3-6", suggestedSets: 4, suggestedReps: 4),
+                    HomeWorkoutExercise(name: "Liegestuetze", prescription: "4 x 10-15", suggestedSets: 4, suggestedReps: 10),
+                    HomeWorkoutExercise(name: "Kniebeugen", prescription: "4 x 18", suggestedSets: 4, suggestedReps: 18),
+                    HomeWorkoutExercise(name: "Core-Uebung", prescription: "4 x 45 Sekunden", suggestedSets: 4, suggestedDurationSec: 45)
+                ]
+            ]
         )
     ])
 

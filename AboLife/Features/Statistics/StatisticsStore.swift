@@ -36,8 +36,14 @@ final class StatisticsStore: ObservableObject {
                 calendar: calendar
             )
             let nutritionSummary = try NutritionRepository(database: database).weeklySummary(in: weekInterval, days: 7)
-            let financeWeekly = try FinanceRepository(database: database).weeklySummary(in: weekInterval)
-            let financeMonthly = try FinanceRepository(database: database).monthlyTrend(forDate: Date(), calendar: calendar)
+            let financeRepository = FinanceRepository(database: database)
+            let financeWeekly = try financeRepository.weeklySummary(in: weekInterval)
+            let financeMonthly = try financeRepository.monthlyAnalysis(
+                forDate: Date(),
+                monthlyBudget: settings.monthlyBudget,
+                currency: settings.defaultCurrency,
+                calendar: calendar
+            )
             let weightSummary = try WeightRepository(database: database).summary(days: 30)
             let activeDays = try Self.activeDays(database: database, calendar: calendar)
 
@@ -45,8 +51,15 @@ final class StatisticsStore: ObservableObject {
                 StatisticInsight(
                     title: "Training diese Woche",
                     value: "\(workoutSummary.completedWorkouts)",
-                    detail: workoutSummary.completedWorkouts == 1 ? "1 Einheit abgeschlossen." : "\(workoutSummary.completedWorkouts) Einheiten abgeschlossen.",
+                    detail: trainingDetail(workoutSummary, target: settings.weeklyWorkoutTarget),
                     systemImage: "figure.strengthtraining.traditional",
+                    tintRole: .training
+                ),
+                StatisticInsight(
+                    title: "Trainingsdetails",
+                    value: workoutSummary.totalSets > 0 ? "\(workoutSummary.totalSets)" : "-",
+                    detail: workoutSummary.totalSets > 0 ? "\(workoutSummary.totalReps) Wiederholungen, häufigste Übung: \(workoutSummary.topExerciseName ?? "noch offen")." : "Noch nicht genug Satzdaten für Übungstrends.",
+                    systemImage: "list.bullet.clipboard",
                     tintRole: .training
                 ),
                 StatisticInsight(
@@ -56,8 +69,8 @@ final class StatisticsStore: ObservableObject {
                     systemImage: "checkmark.seal",
                     tintRole: .habits
                 ),
-                nutritionInsight(nutritionSummary),
-                financeInsight(weekly: financeWeekly, monthly: financeMonthly),
+                nutritionInsight(nutritionSummary)
+            ] + financeInsights(weekly: financeWeekly, monthly: financeMonthly) + [
                 weightInsight(weightSummary),
                 StatisticInsight(
                     title: "Aktive Tage",
@@ -93,24 +106,56 @@ final class StatisticsStore: ObservableObject {
         )
     }
 
-    private func financeInsight(weekly: FinanceWeeklySummary, monthly: FinanceMonthlyTrend) -> StatisticInsight {
+    private func trainingDetail(_ summary: WorkoutWeeklySummary, target: Int) -> String {
+        if summary.completedWorkouts == 0 {
+            return "Noch kein Training diese Woche."
+        }
+        let base = "\(summary.completedWorkouts) von \(target) Einheiten abgeschlossen."
+        let progress = summary.progressText.map { " \($0)" } ?? ""
+        let minimum = summary.minimumWorkouts > 0 ? " \(summary.minimumWorkouts)x Minimum statt ausfallen." : ""
+        return base + progress + minimum
+    }
+
+    private func financeInsights(weekly: FinanceWeeklySummary, monthly: FinanceMonthlyAnalysis) -> [StatisticInsight] {
         guard monthly.entryCount >= 3 else {
-            return StatisticInsight(
-                title: "Finanzen",
-                value: "-",
-                detail: "Noch nicht genug Finanzdaten für eine Monatsauswertung.",
-                systemImage: "eurosign.circle",
-                tintRole: .finance
-            )
+            return [
+                StatisticInsight(
+                    title: "Finanzen",
+                    value: "-",
+                    detail: "Noch nicht genug Finanzdaten für eine verlässliche Monatsauswertung.",
+                    systemImage: "eurosign.circle",
+                    tintRole: .finance
+                )
+            ]
         }
 
-        return StatisticInsight(
-            title: "Ausgaben",
-            value: "\(Int(monthly.spent.rounded())) EUR",
-            detail: "Ø \(Int(monthly.averageDailySpend.rounded())) EUR/Tag, Prognose \(Int(monthly.projectedSpend.rounded())) EUR. Voriger Monat: \(Int(monthly.previousSpent.rounded())) EUR.",
-            systemImage: "eurosign.circle",
-            tintRole: .finance
-        )
+        let previousText = monthly.previousMonthSpent.map {
+            "Vormonat \(Int($0.rounded())) \(monthly.currency)."
+        } ?? "Für den Vormonat fehlen noch Vergleichsdaten."
+        let trendText = monthly.trailingThreeMonthAverageSpent.map {
+            "3-Monats-Schnitt \(Int($0.rounded())) \(monthly.currency)."
+        } ?? "Für einen 3-Monats-Trend braucht es noch mehr Daten."
+        let savingsText = monthly.savingsRate.map {
+            "Sparquote \(Int(($0 * 100).rounded()))%."
+        } ?? "Eine Sparquote erscheint, sobald Einnahmen vorhanden sind."
+        let topCategories = monthly.categoryTrends.prefix(3).map(\.category).joined(separator: ", ")
+
+        return [
+            StatisticInsight(
+                title: "Monatsausgaben",
+                value: "\(Int(monthly.spent.rounded())) \(monthly.currency)",
+                detail: "Ø \(Int(monthly.averageDailySpend.rounded())) \(monthly.currency)/Tag, Prognose \(Int(monthly.projectedSpend.rounded())) \(monthly.currency). \(previousText)",
+                systemImage: "eurosign.circle",
+                tintRole: .finance
+            ),
+            StatisticInsight(
+                title: "Finanztrend",
+                value: monthly.balance >= 0 ? "+\(Int(monthly.balance.rounded())) \(monthly.currency)" : "\(Int(monthly.balance.rounded())) \(monthly.currency)",
+                detail: "\(savingsText) \(trendText) Top-Kategorien: \(topCategories.isEmpty ? weekly.topCategory ?? "noch offen" : topCategories).",
+                systemImage: "chart.line.uptrend.xyaxis",
+                tintRole: .finance
+            )
+        ]
     }
 
     private func weightInsight(_ summary: WeightTrendSummary) -> StatisticInsight {

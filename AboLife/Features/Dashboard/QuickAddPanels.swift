@@ -165,14 +165,23 @@ struct QuickAddExpensePanel: View {
     let dismiss: DismissAction
     let setStatus: (String) -> Void
 
+    @State private var title = ""
     @State private var amount = ""
     @State private var category = "Lebensmittel"
     @State private var note = ""
 
-    private let categories = Array(FinanceCategoryCatalog.expenseCategories.prefix(6))
+    private let categories = Array(FinanceCategoryCatalog.expenseCategories.prefix(8))
 
     var body: some View {
         QuickAddFormCard(tint: AboLifeColors.finance, systemImage: "eurosign.circle", title: "Ausgabe") {
+            labeledTextField("Titel / Name", text: $title)
+                .onChange(of: title) { _, newValue in
+                    let suggestion = FinanceCategoryCatalog.normalized(newValue, kind: .expense)
+                    if categories.contains(suggestion) {
+                        category = suggestion
+                    }
+                }
+
             labeledTextField("Betrag in EUR", text: $amount)
 
             Picker("Kategorie", selection: $category) {
@@ -185,7 +194,8 @@ struct QuickAddExpensePanel: View {
             labeledTextField("Notiz optional", text: $note)
 
             QuickAddSubmitButton(title: "Speichern", systemImage: "checkmark.circle.fill", tint: AboLifeColors.finance) {
-                store.addExpense(title: note.isEmpty ? category : note, amount: parseDouble(amount), category: category, note: note)
+                store.addExpense(title: title.isEmpty ? category : title, amount: parseDouble(amount), category: category, note: note)
+                title = ""
                 amount = ""
                 note = ""
                 setStatus("Ausgabe gespeichert")
@@ -338,30 +348,6 @@ struct QuickAddWeightPanel: View {
             if let current = store.snapshot.weight.valueKg {
                 weight = String(format: "%.1f", current)
             }
-        }
-    }
-}
-
-struct QuickAddNotePanel: View {
-    @ObservedObject var store: DashboardStore
-    let dismiss: DismissAction
-    let setStatus: (String) -> Void
-
-    @State private var note = ""
-
-    var body: some View {
-        QuickAddFormCard(tint: AboLifeColors.protein, systemImage: "note.text", title: "Tagesnotiz") {
-            TextField("Kurzer Gedanke zum Tag", text: $note, axis: .vertical)
-                .lineLimit(3...5)
-                .textFieldStyle(.roundedBorder)
-
-            QuickAddSubmitButton(title: "Speichern", systemImage: "checkmark.circle.fill", tint: AboLifeColors.protein) {
-                store.updateDailyNote(note)
-                setStatus("Notiz gespeichert")
-            }
-        }
-        .onAppear {
-            note = store.state.dailyNote ?? ""
         }
     }
 }

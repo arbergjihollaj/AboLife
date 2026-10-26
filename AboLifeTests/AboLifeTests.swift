@@ -145,7 +145,16 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(QuickAddRouting.panel(for: .habit), .habit)
         XCTAssertEqual(QuickAddRouting.panel(for: .general), .generalMenu)
         XCTAssertEqual(QuickAddRouting.panel(for: .weight), .weight)
-        XCTAssertEqual(QuickAddRouting.panel(for: .note), .note)
+    }
+
+    func testQuickAddDoesNotOfferDailyNote() {
+        XCTAssertFalse(QuickAddKind.allCases.map(\.rawValue).contains("note"))
+        XCTAssertFalse(
+            QuickAddAction.dashboardActions.contains {
+                $0.title.localizedCaseInsensitiveContains("Notiz")
+                    || $0.title.localizedCaseInsensitiveContains("Tagesnotiz")
+            }
+        )
     }
 
     func testBottomDockActionsKeepPhase7DStructure() {
@@ -260,9 +269,179 @@ final class AboLifeTests: XCTestCase {
 
     func testFinanceCategoryCatalogKeepsLegacyCategoriesReadableButGroupsKnownAliases() {
         XCTAssertEqual(FinanceCategoryCatalog.normalized("Essen", kind: .expense), "Essen unterwegs")
-        XCTAssertEqual(FinanceCategoryCatalog.normalized("Haushalt", kind: .expense), "Lebensmittel")
-        XCTAssertEqual(FinanceCategoryCatalog.normalized("Wohnen", kind: .expense), "Miete/Wohnen")
+        XCTAssertEqual(FinanceCategoryCatalog.normalized("Haushalt", kind: .expense), "Haushalt")
+        XCTAssertEqual(FinanceCategoryCatalog.normalized("Wohnen", kind: .expense), "Fixkosten")
         XCTAssertEqual(FinanceCategoryCatalog.normalized("Alte Spezialkategorie", kind: .expense), "Alte Spezialkategorie")
+    }
+
+    func testFinanceDefaultCategoriesAreSeededAndFallbackExists() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+
+        let names = try repository.fetchActiveCategoryNames()
+
+        XCTAssertTrue(names.contains("Lebensmittel"))
+        XCTAssertTrue(names.contains("Essen unterwegs"))
+        XCTAssertTrue(names.contains("Fixkosten"))
+        XCTAssertTrue(names.contains("Transport"))
+        XCTAssertTrue(names.contains("Abos"))
+        XCTAssertTrue(names.contains("Sonstiges"))
+        XCTAssertEqual(Set(FinanceCategoryCatalog.defaultExpenseCategories).count, FinanceCategoryCatalog.defaultExpenseCategories.count)
+    }
+
+    func testFinanceCustomCategoryLifecycleAndSafeDelete() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+
+        let created = try repository.createCategory(name: "  Haustier  ")
+        XCTAssertEqual(created.name, "Haustier")
+
+        let renamed = try repository.renameCategory(id: created.id, to: "Katze")
+        XCTAssertEqual(renamed.name, "Katze")
+
+        try repository.insert(FinanceEntryRecord(title: "Futter", amount: 12, category: "Katze"))
+        let deleteResult = try repository.deleteCategorySafely(id: created.id)
+        let archived = try repository.fetchCategories(includeInactive: true).first { $0.id == created.id }
+
+        XCTAssertEqual(deleteResult, .deactivated)
+        XCTAssertEqual(archived?.isActive, false)
+        XCTAssertTrue(try repository.fetchCategoryNamesIncludingLegacy().contains("Katze"))
+        XCTAssertFalse(try repository.fetchActiveCategoryNames().contains("Katze"))
+    }
+
+    func testFinanceCustomCategoryDeletesWhenUnused() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+
+        let category = try repository.createCategory(name: "Projekt")
+        let result = try repository.deleteCategorySafely(id: category.id)
+
+        XCTAssertEqual(result, .deleted)
+        XCTAssertFalse(try repository.fetchCategories(includeInactive: true).contains { $0.id == category.id })
+    }
+
+    func testFinanceCategoryRulesSuggestExpectedCategories() {
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Ausgabe Döner 4,50").category, "Essen unterwegs")
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Pizza").category, "Essen unterwegs")
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Rewe 23,90").category, "Lebensmittel")
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Aldi Einkauf").category, "Lebensmittel")
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Netflix 12,99").category, "Abos")
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Spotify").category, "Abos")
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Bahn 3,40").category, "Transport")
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Taxi").category, "Transport")
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Unbekanntes Ding", fallback: "Freizeit").category, "Freizeit")
+        XCTAssertEqual(FinanceCategoryCatalog.suggestedCategory(for: "Unbekanntes Ding").category, "Sonstiges")
+    }
+
+    func testFinanceMonthlyAnalysisUsesComparisonsAndFixedCostForecast() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+        let calendar = Calendar(identifier: .gregorian)
+        let june10 = DateComponents(calendar: calendar, year: 2026, month: 6, day: 10, hour: 12).date!
+        let june20 = DateComponents(calendar: calendar, year: 2026, month: 6, day: 20, hour: 12).date!
+        let may10 = DateComponents(calendar: calendar, year: 2026, month: 5, day: 10, hour: 12).date!
+        let april10 = DateComponents(calendar: calendar, year: 2026, month: 4, day: 10, hour: 12).date!
+        let march10 = DateComponents(calendar: calendar, year: 2026, month: 3, day: 10, hour: 12).date!
+
+        try repository.insert(FinanceEntryRecord(occurredAt: june10, title: "Rewe", amount: 100, category: "Lebensmittel"))
+        try repository.insert(FinanceEntryRecord(occurredAt: june20, title: "Gehalt", amount: -1000, category: "Gehalt"))
+        try repository.insert(FinanceEntryRecord(occurredAt: may10, title: "Mai", amount: 200, category: "Lebensmittel"))
+        try repository.insert(FinanceEntryRecord(occurredAt: april10, title: "April", amount: 150, category: "Transport"))
+        try repository.insert(FinanceEntryRecord(occurredAt: march10, title: "März", amount: 250, category: "Freizeit"))
+        try repository.upsertFixedCost(FinanceFixedCostRecord(title: "Internet", amount: 50, category: "Fixkosten", dueDay: 25))
+
+        let analysis = try repository.monthlyAnalysis(forDate: june20, monthlyBudget: 800, currency: "EUR", calendar: calendar)
+
+        XCTAssertEqual(analysis.spent, 100, accuracy: 0.001)
+        XCTAssertEqual(analysis.income, 1000, accuracy: 0.001)
+        XCTAssertEqual(analysis.remainingBudget, 700, accuracy: 0.001)
+        XCTAssertEqual(analysis.previousMonthSpent ?? 0, 200, accuracy: 0.001)
+        XCTAssertEqual(analysis.changeFromPreviousMonth ?? 0, -100, accuracy: 0.001)
+        XCTAssertEqual(analysis.trailingThreeMonthAverageSpent ?? 0, 200, accuracy: 0.001)
+        XCTAssertEqual(analysis.savingsRate ?? 0, 0.9, accuracy: 0.001)
+        XCTAssertEqual(analysis.remainingFixedCosts, 50, accuracy: 0.001)
+        XCTAssertGreaterThan(analysis.projectedSpend, analysis.spent)
+        XCTAssertEqual(analysis.topCategory?.category, "Lebensmittel")
+    }
+
+    func testFinanceMonthlyAnalysisKeepsSparseDataComparisonsEmpty() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+        let calendar = Calendar(identifier: .gregorian)
+        let june10 = DateComponents(calendar: calendar, year: 2026, month: 6, day: 10, hour: 12).date!
+
+        try repository.insert(FinanceEntryRecord(occurredAt: june10, title: "Rewe", amount: 100, category: "Lebensmittel"))
+
+        let analysis = try repository.monthlyAnalysis(forDate: june10, monthlyBudget: 800, currency: "EUR", calendar: calendar)
+
+        XCTAssertNil(analysis.previousMonthSpent)
+        XCTAssertNil(analysis.changeFromPreviousMonth)
+        XCTAssertNil(analysis.trailingThreeMonthAverageSpent)
+        XCTAssertNil(analysis.savingsRate)
+    }
+
+    func testFinanceStandardCategoriesIncludeRequiredPhaseCategoriesAndFallback() {
+        let required = [
+            "Lebensmittel",
+            "Essen unterwegs",
+            "Fixkosten",
+            "Transport",
+            "Freizeit",
+            "Kleidung",
+            "Gesundheit",
+            "Technik",
+            "Lernen",
+            "Haushalt",
+            "Geschenke",
+            "Abos",
+            "Sparen",
+            "Sonstiges"
+        ]
+
+        XCTAssertEqual(FinanceCategoryCatalog.normalized("", kind: .expense), "Sonstiges")
+        XCTAssertEqual(FinanceCategoryCatalog.normalized("   ", kind: .expense), "Sonstiges")
+
+        let missing = required.filter { !FinanceCategoryCatalog.expenseCategories.contains($0) }
+        XCTAssertTrue(missing.isEmpty, "Fehlende Standardkategorien: \(missing.joined(separator: ", "))")
+    }
+
+    func testFinanceCategoryMigrationHasCustomCategoryStorageHook() throws {
+        let database = try AppDatabase.makeTemporary()
+
+        let hasCategoriesTable = try database.writer.read { db in
+            try db.tableExists("finance_categories")
+        }
+
+        XCTAssertTrue(hasCategoriesTable, "finance_categories-Tabelle fehlt; CRUD/deactivate/delete-safe ist damit noch nicht testbar.")
+    }
+
+    func testFinanceLegacyUnknownCategoriesStayVisibleAndEmptyCategoryFallsBackToSonstiges() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+
+        try repository.insert(FinanceEntryRecord(title: "Altbestand", amount: 12, category: "Alte Spezialkategorie"))
+        try repository.insert(FinanceEntryRecord(title: "Ohne Kategorie", amount: 8, category: ""))
+
+        let summaries = try repository.categorySummaries()
+
+        XCTAssertTrue(summaries.contains { $0.category == "Alte Spezialkategorie" && $0.spent == 12 })
+        XCTAssertTrue(summaries.contains { $0.category == "Sonstiges" && $0.spent == 8 })
+    }
+
+    func testFinanceCategoryRulesCoverFoodGroceriesSubscriptionsAndTransport() throws {
+        let database = try AppDatabase.makeTemporary()
+        let service = ExternalInputService(database: database)
+
+        XCTAssertSuccess(service.execute(.expense(date: Date(), amount: 4.5, title: "Döner", category: nil)), module: .finance)
+        XCTAssertSuccess(service.execute(.expense(date: Date(), amount: 23.9, title: "Rewe Einkauf", category: nil)), module: .finance)
+        XCTAssertSuccess(service.execute(.expense(date: Date(), amount: 12.99, title: "Netflix", category: nil)), module: .finance)
+        XCTAssertSuccess(service.execute(.expense(date: Date(), amount: 3.4, title: "Bahn Ticket", category: nil)), module: .finance)
+
+        let entriesByTitle = Dictionary(uniqueKeysWithValues: try FinanceRepository(database: database).fetchAll().map { ($0.title, $0.category) })
+        XCTAssertEqual(entriesByTitle["Döner"], "Essen unterwegs")
+        XCTAssertEqual(entriesByTitle["Rewe Einkauf"], "Lebensmittel")
+        XCTAssertEqual(entriesByTitle["Netflix"], "Abos")
+        XCTAssertEqual(entriesByTitle["Bahn Ticket"], "Transport")
     }
 
     func testFinanceMonthlyTrendCalculatesPreviousMonthDailyAverageAndProjection() throws {
@@ -285,6 +464,88 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(trend.previousSpent, 300, accuracy: 0.001)
         XCTAssertEqual(trend.averageDailySpend, 5, accuracy: 0.001)
         XCTAssertEqual(trend.projectedSpend, 150, accuracy: 0.001)
+    }
+
+    func testFinanceMonthlyTrendStaysCalmWithLittleData() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+        let calendar = Calendar(identifier: .gregorian)
+        let june20 = DateComponents(calendar: calendar, year: 2026, month: 6, day: 20, hour: 12).date!
+
+        let trend = try repository.monthlyTrend(forDate: june20, calendar: calendar)
+
+        XCTAssertEqual(trend.spent, 0, accuracy: 0.001)
+        XCTAssertEqual(trend.income, 0, accuracy: 0.001)
+        XCTAssertEqual(trend.previousEntryCount, 0)
+        XCTAssertEqual(trend.projectedSpend, 0, accuracy: 0.001)
+        XCTAssertEqual(trend.savings, 0, accuracy: 0.001)
+    }
+
+    func testFinanceMonthPlanIncludesOnlyActiveUpcomingFixedCostsInForecast() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+        let calendar = Calendar(identifier: .gregorian)
+        let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 12).date!
+
+        try repository.insert(FinanceEntryRecord(occurredAt: date, title: "Rewe", amount: 150, category: "Lebensmittel"))
+        try repository.upsertFixedCost(FinanceFixedCostRecord(title: "Internet", amount: 50, category: "Fixkosten", dueDay: 20, isActive: true))
+        try repository.upsertFixedCost(FinanceFixedCostRecord(title: "Miete erledigt", amount: 800, category: "Fixkosten", dueDay: 1, isActive: true))
+        try repository.upsertFixedCost(FinanceFixedCostRecord(title: "Altes Abo", amount: 30, category: "Abos", dueDay: 25, isActive: false))
+
+        let plan = try repository.monthPlan(for: date, monthlyBudget: 900, currency: "EUR", calendar: calendar)
+
+        XCTAssertEqual(plan.spent, 150, accuracy: 0.001)
+        XCTAssertEqual(plan.plannedFixedCosts, 850, accuracy: 0.001)
+        XCTAssertEqual(plan.remainingFixedCosts, 50, accuracy: 0.001)
+        XCTAssertGreaterThan(plan.forecastSpend, plan.spent)
+        XCTAssertLessThan(plan.forecastSpend, plan.spent + 900)
+        XCTAssertFalse(plan.categorySummaries.contains { $0.category == "Abos" && $0.spent == 30 })
+    }
+
+    func testFinanceCategorySummariesExposeBudgetProgressAndOverBudgetCalmly() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+        let calendar = Calendar(identifier: .gregorian)
+        let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 12).date!
+
+        try repository.insert(FinanceEntryRecord(occurredAt: date, title: "Rewe", amount: 118, category: "Lebensmittel"))
+        try repository.upsertCategoryBudget(monthKey: "2026-06", category: "Lebensmittel", amount: 100, currency: "EUR")
+
+        let summary = try XCTUnwrap(repository.categorySummaries(forMonthContaining: date, calendar: calendar).first)
+
+        XCTAssertEqual(summary.category, "Lebensmittel")
+        XCTAssertEqual(summary.spent, 118, accuracy: 0.001)
+        XCTAssertEqual(summary.budget ?? 0, 100, accuracy: 0.001)
+        XCTAssertEqual(summary.progress, 1, accuracy: 0.001)
+        XCTAssertTrue(summary.isOverBudget)
+    }
+
+    func testDashboardFinanceStatusReflectsPersistedMonthlySpendingAndDailyBudget() throws {
+        let database = try AppDatabase.makeTemporary()
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(caloriesTarget: 2200, proteinTargetG: 150, monthlyBudget: 900, defaultCurrency: "EUR")
+        )
+        try FinanceRepository(database: database).insert(
+            FinanceEntryRecord(title: "Rewe", amount: 90, category: "Lebensmittel")
+        )
+
+        let store = DashboardStore(database: database)
+
+        XCTAssertEqual(store.snapshot.finance.spentThisMonth, 90, accuracy: 0.001)
+        XCTAssertEqual(store.snapshot.finance.monthlyBudget, 900, accuracy: 0.001)
+        XCTAssertGreaterThan(store.snapshot.finance.remainingToday, 0)
+        XCTAssertTrue(store.snapshot.finance.message.contains("EUR"))
+    }
+
+    func testMenuBarFinanceStatusSourceUsesSameDashboardDailyBudgetCalculation() {
+        var state = DashboardMockState.default
+        state.monthlyBudget = 900
+        state.monthlySpent = 450
+        let snapshot = DashboardMockData.snapshot(from: state)
+
+        XCTAssertEqual(snapshot.finance.remainingToday, state.dailyBudgetRemaining, accuracy: 0.001)
+        XCTAssertEqual(snapshot.finance.spentThisMonth, 450, accuracy: 0.001)
+        XCTAssertEqual(snapshot.finance.monthlyBudget, 900, accuracy: 0.001)
     }
 
     func testWeightGoalSummaryCalculatesDistanceAndCorridor() {
@@ -440,6 +701,9 @@ final class AboLifeTests: XCTestCase {
         XCTAssertTrue(tableNames.contains("weekly_reviews"))
         XCTAssertTrue(tableNames.contains("weight_entries"))
         XCTAssertTrue(tableNames.contains("nutrition_templates"))
+        XCTAssertTrue(tableNames.contains("workout_exercises"))
+        XCTAssertTrue(tableNames.contains("workout_sets"))
+        XCTAssertTrue(tableNames.contains("finance_categories"))
 
         let appSettingsColumns: Set<String> = try database.writer.read { db in
             let rows = try Row.fetchAll(db, sql: "PRAGMA table_info(app_settings)")
@@ -455,9 +719,19 @@ final class AboLifeTests: XCTestCase {
         XCTAssertTrue(appSettingsColumns.contains("target_weight_kg"))
         XCTAssertTrue(appSettingsColumns.contains("target_weight_lower_kg"))
         XCTAssertTrue(appSettingsColumns.contains("target_weight_upper_kg"))
+        XCTAssertTrue(appSettingsColumns.contains("morning_reminder_minute_of_day"))
+        XCTAssertTrue(appSettingsColumns.contains("training_reminder_minute_of_day"))
+        XCTAssertTrue(appSettingsColumns.contains("evening_reminder_minute_of_day"))
         XCTAssertTrue(habitEntryColumns.contains("value"))
         XCTAssertTrue(habitEntryColumns.contains("target_value"))
         XCTAssertTrue(habitEntryColumns.contains("unit"))
+
+        let workoutSessionColumns: Set<String> = try database.writer.read { db in
+            let rows = try Row.fetchAll(db, sql: "PRAGMA table_info(workout_sessions)")
+            return Set(rows.compactMap { row in row["name"] as String? })
+        }
+        XCTAssertTrue(workoutSessionColumns.contains("workout_intensity"))
+        XCTAssertTrue(workoutSessionColumns.contains("pain_reported"))
     }
 
     func testNutritionTemplateRepositoryCreatesFavorite() throws {
@@ -801,6 +1075,30 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(normalized.monthlyBudget, 0, accuracy: 0.001)
         XCTAssertEqual(normalized.defaultCurrency, "EUR")
         XCTAssertEqual(normalized.weekStartsOn, 2)
+        XCTAssertEqual(normalized.morningReminderMinuteOfDay, AppSettingsDefaults.morningReminderMinuteOfDay)
+        XCTAssertEqual(SettingsStore.reminderTimeLabel(17 * 60 + 15), "17:15 Uhr")
+    }
+
+    func testSettingsPersistReminderTimes() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = SettingsRepository(database: database)
+
+        _ = try repository.saveSettings(
+            AppSettingsRecord(
+                caloriesTarget: 2200,
+                proteinTargetG: 150,
+                monthlyBudget: 1200,
+                morningReminderMinuteOfDay: 8 * 60 + 15,
+                trainingReminderMinuteOfDay: 18 * 60 + 30,
+                eveningReminderMinuteOfDay: 22 * 60
+            )
+        )
+
+        let loaded = try repository.loadSettings()
+
+        XCTAssertEqual(loaded.morningReminderMinuteOfDay, 495)
+        XCTAssertEqual(loaded.trainingReminderMinuteOfDay, 1110)
+        XCTAssertEqual(loaded.eveningReminderMinuteOfDay, 1320)
     }
 
     func testNutritionRepositoryBuildsDaySummary() throws {
@@ -1106,7 +1404,7 @@ final class AboLifeTests: XCTestCase {
         let scheduled = HomeWorkoutPlanProvider.plan.workout(for: monday, calendar: calendar)
 
         XCTAssertTrue(scheduled.isToday)
-        XCTAssertEqual(scheduled.day.name, "Push")
+        XCTAssertEqual(scheduled.day.name, "Pull + Core")
     }
 
     func testHomeWorkoutPlanReturnsLegsCoreOnWednesday() {
@@ -1116,7 +1414,7 @@ final class AboLifeTests: XCTestCase {
         let scheduled = HomeWorkoutPlanProvider.plan.workout(for: wednesday, calendar: calendar)
 
         XCTAssertTrue(scheduled.isToday)
-        XCTAssertEqual(scheduled.day.name, "Legs + Core")
+        XCTAssertEqual(scheduled.day.name, "Push + Legs")
     }
 
     func testHomeWorkoutPlanReturnsPushPullMixOnFriday() {
@@ -1126,7 +1424,7 @@ final class AboLifeTests: XCTestCase {
         let scheduled = HomeWorkoutPlanProvider.plan.workout(for: friday, calendar: calendar)
 
         XCTAssertTrue(scheduled.isToday)
-        XCTAssertEqual(scheduled.day.name, "Push + Pull Mix")
+        XCTAssertEqual(scheduled.day.name, "Full Body")
     }
 
     func testHomeWorkoutPlanShowsPullOnTuesday() {
@@ -1135,9 +1433,9 @@ final class AboLifeTests: XCTestCase {
 
         let scheduled = HomeWorkoutPlanProvider.plan.workout(for: tuesday, calendar: calendar)
 
-        XCTAssertTrue(scheduled.isToday)
-        XCTAssertEqual(scheduled.day.name, "Pull")
-        XCTAssertEqual(scheduled.day.weekdayName, "Dienstag")
+        XCTAssertFalse(scheduled.isToday)
+        XCTAssertEqual(scheduled.day.name, "Push + Legs")
+        XCTAssertEqual(scheduled.day.weekdayName, "Mittwoch")
     }
 
     func testHomeWorkoutPlanShowsConditioningOnSaturday() {
@@ -1146,9 +1444,9 @@ final class AboLifeTests: XCTestCase {
 
         let scheduled = HomeWorkoutPlanProvider.plan.workout(for: saturday, calendar: calendar)
 
-        XCTAssertTrue(scheduled.isToday)
-        XCTAssertEqual(scheduled.day.name, "Conditioning")
-        XCTAssertEqual(scheduled.day.weekdayName, "Samstag")
+        XCTAssertFalse(scheduled.isToday)
+        XCTAssertEqual(scheduled.day.name, "Pull + Core")
+        XCTAssertEqual(scheduled.day.weekdayName, "Montag")
     }
 
     func testHomeWorkoutIntensityDurations() {
@@ -1201,14 +1499,83 @@ final class AboLifeTests: XCTestCase {
 
         let sessions = try WorkoutRepository(database: database).fetchAll()
         XCTAssertEqual(sessions.count, 1)
-        XCTAssertEqual(sessions.first?.workoutType, "Home Plan: Legs + Core")
+        XCTAssertEqual(sessions.first?.workoutType, "Home Plan: Push + Legs")
         XCTAssertEqual(sessions.first?.durationMin, 30)
         XCTAssertEqual(sessions.first?.status, "done")
+        XCTAssertEqual(sessions.first?.workoutIntensity, "Normal")
         XCTAssertEqual(sessions.first?.note?.contains("Intensität: Normal"), true)
-        XCTAssertEqual(sessions.first?.note?.contains("Erledigt: 3/6"), true)
-        XCTAssertEqual(sessions.first?.note?.contains("Bulgarische Split Squats"), true)
+        XCTAssertEqual(sessions.first?.note?.contains("Erledigt: 3/4"), true)
+        XCTAssertEqual(sessions.first?.note?.contains("Liegestuetze"), true)
         XCTAssertEqual(store.completedWorkoutsThisWeek, 1)
         XCTAssertEqual(store.progress, 1.0 / 3.0, accuracy: 0.001)
+    }
+
+    func testWorkoutRepositoryPersistsExercisesAndSetsAndDeletesWithSession() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = WorkoutRepository(database: database)
+        let session = WorkoutSessionRecord(workoutType: "Home Plan: Pull + Core", durationMin: 30, status: "done", workoutIntensity: "Normal")
+
+        try repository.insertDetailed(
+            session,
+            exercises: [
+                WorkoutExerciseInput(
+                    exerciseName: "Klimmzuege",
+                    sortOrder: 0,
+                    isCompleted: true,
+                    sets: [
+                        WorkoutSetInput(setNumber: 1, reps: 3),
+                        WorkoutSetInput(setNumber: 2, reps: 3),
+                        WorkoutSetInput(setNumber: 3, reps: 2)
+                    ]
+                )
+            ]
+        )
+
+        let summaries = try repository.fetchExerciseSummaries(sessionId: session.id)
+        XCTAssertEqual(summaries.count, 1)
+        XCTAssertEqual(summaries.first?.exercise.exerciseName, "Klimmzuege")
+        XCTAssertEqual(summaries.first?.sets.map(\.reps), [3, 3, 2])
+
+        try repository.delete(id: session.id)
+
+        XCTAssertTrue(try repository.fetchAll().isEmpty)
+        XCTAssertTrue(try repository.fetchAllExerciseSummaries().isEmpty)
+    }
+
+    func testHomeWorkoutPlanCreatesIntensitySpecificExerciseInputs() {
+        let calendar = Calendar(identifier: .gregorian)
+        let monday = DateComponents(calendar: calendar, year: 2026, month: 6, day: 8, hour: 12).date!
+        let scheduled = HomeWorkoutPlanProvider.plan.workout(for: monday, calendar: calendar)
+
+        let minimum = HomeWorkoutPlanProvider.plan.makeExerciseInputs(for: scheduled, intensity: .minimum)
+        let normal = HomeWorkoutPlanProvider.plan.makeExerciseInputs(for: scheduled, intensity: .normal)
+        let strong = HomeWorkoutPlanProvider.plan.makeExerciseInputs(for: scheduled, intensity: .strong)
+
+        XCTAssertLessThan(minimum.count, normal.count)
+        XCTAssertGreaterThanOrEqual(strong.first?.sets.count ?? 0, normal.first?.sets.count ?? 0)
+        XCTAssertEqual(normal.first?.sets.first?.reps, 3)
+    }
+
+    func testTrainingStoreBuildsExerciseProgressFromDetailedSessions() throws {
+        let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let monday = DateComponents(calendar: calendar, year: 2026, month: 6, day: 8, hour: 12).date!
+        let repository = WorkoutRepository(database: database)
+
+        try repository.insertDetailed(
+            WorkoutSessionRecord(occurredAt: monday, workoutType: "Training", durationMin: 30, status: "done", workoutIntensity: "Normal"),
+            exercises: [WorkoutExerciseInput(exerciseName: "Liegestuetze", sortOrder: 0, isCompleted: true, sets: [WorkoutSetInput(setNumber: 1, reps: 8)])]
+        )
+        try repository.insertDetailed(
+            WorkoutSessionRecord(occurredAt: monday.addingTimeInterval(3600), workoutType: "Training", durationMin: 30, status: "done", workoutIntensity: "Normal"),
+            exercises: [WorkoutExerciseInput(exerciseName: "Liegestuetze", sortOrder: 0, isCompleted: true, sets: [WorkoutSetInput(setNumber: 1, reps: 10)])]
+        )
+
+        let store = TrainingStore(database: database, selectedDate: monday, calendar: calendar, now: { monday })
+
+        let status = try XCTUnwrap(store.exerciseProgressStatuses.first { $0.exerciseName == "Liegestuetze" })
+        XCTAssertTrue(status.hasEnoughData)
+        XCTAssertTrue(status.recommendation.contains("verbessert"))
     }
 
     func testHomeWorkoutPlanContainsNoUnsuitableBarExercises() {
@@ -1704,6 +2071,181 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(store.snapshot.habits.progress, 0.2, accuracy: 0.001)
     }
 
+    func testTodaySnapshotServiceCentralizesDailyValues() throws {
+        let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 12).date!
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(caloriesTarget: 2200, proteinTargetG: 150, monthlyBudget: 900, defaultCurrency: "EUR")
+        )
+        try NutritionRepository(database: database).insert(
+            NutritionEntryRecord(occurredAt: date, title: "Skyr", caloriesKcal: 300, proteinG: 35)
+        )
+        try FinanceRepository(database: database).insert(
+            FinanceEntryRecord(occurredAt: date, title: "Lunch", amount: 12, category: "Essen")
+        )
+        try WorkoutRepository(database: database).insert(
+            WorkoutSessionRecord(occurredAt: date, workoutType: "Training", durationMin: 30, status: "done")
+        )
+        try HabitRepository(database: database).upsertCompletion(
+            habitKey: TelegramReminderHabit.proteinShakeKey,
+            date: "2026-06-15",
+            isCompleted: true
+        )
+
+        let snapshot = try TodaySnapshotService(database: database, calendar: calendar).snapshot(for: date)
+
+        XCTAssertEqual(snapshot.nutritionSummary.caloriesKcal, 300)
+        XCTAssertEqual(snapshot.caloriesRemaining, 1900)
+        XCTAssertEqual(snapshot.proteinRemainingG, 115, accuracy: 0.001)
+        XCTAssertEqual(snapshot.spentToday, 12, accuracy: 0.001)
+        XCTAssertTrue(snapshot.workoutCompletedToday)
+        XCTAssertEqual(snapshot.habitValue(for: "training"), 1, accuracy: 0.001)
+        XCTAssertTrue(snapshot.isHabitDone(TelegramReminderHabit.proteinShakeKey))
+    }
+
+    func testTodaySnapshotExposesOpenCockpitValuesWithoutMutatingData() throws {
+        let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 12).date!
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(
+                caloriesTarget: 2200,
+                proteinTargetG: 150,
+                weeklyWorkoutTarget: 3,
+                monthlyBudget: 900,
+                defaultCurrency: "EUR"
+            )
+        )
+        try NutritionRepository(database: database).insert(
+            NutritionEntryRecord(occurredAt: date, title: "Frühstück", caloriesKcal: 1700, proteinG: 108)
+        )
+        try FinanceRepository(database: database).insert(
+            FinanceEntryRecord(occurredAt: date, title: "Lunch", amount: 12, category: "Essen")
+        )
+        try HabitRepository(database: database).upsertCompletion(
+            habitKey: TelegramReminderHabit.medicationKey,
+            date: "2026-06-15",
+            isCompleted: true
+        )
+        try HabitRepository(database: database).upsertCompletion(
+            habitKey: "sleep",
+            date: "2026-06-15",
+            isCompleted: false
+        )
+
+        let before = try HabitRepository(database: database).fetchAll()
+        let snapshot = try TodaySnapshotService(database: database, calendar: calendar).snapshot(for: date)
+        let after = try HabitRepository(database: database).fetchAll()
+
+        XCTAssertEqual(snapshot.caloriesRemaining, 500)
+        XCTAssertEqual(snapshot.proteinRemainingG, 42, accuracy: 0.001)
+        XCTAssertFalse(snapshot.workoutCompletedToday)
+        XCTAssertTrue(snapshot.isHabitDone(TelegramReminderHabit.medicationKey))
+        XCTAssertFalse(snapshot.isHabitDone(TelegramReminderHabit.proteinShakeKey))
+        XCTAssertFalse(snapshot.isHabitDone("sleep"))
+        XCTAssertGreaterThanOrEqual(snapshot.availableToday, 0)
+        XCTAssertEqual(after, before, "Die Heute-offen-Berechnung muss read-only bleiben.")
+    }
+
+    func testTodayOpenCalculationIncludesProteinTrainingHabitsAndTelegramHabits() {
+        let status = TodayOpenStatus.calculate(
+            caloriesConsumed: 1750,
+            caloriesTarget: 2200,
+            proteinConsumedG: 108,
+            proteinTargetG: 150,
+            workoutCompletedToday: false,
+            trainingPausedToday: false,
+            trainingScheduledToday: true,
+            habitValues: ["water": 3, "nutrition": 1, "learning": 15, "sleep": 0],
+            medicationDone: false,
+            proteinShakeDone: true,
+            dailyBudgetRemaining: 28
+        )
+
+        XCTAssertEqual(status.caloriesRemaining, 450)
+        XCTAssertEqual(status.proteinRemainingG, 42, accuracy: 0.001)
+        XCTAssertEqual(status.training, .open)
+        XCTAssertTrue(status.openHabitTitles.contains("Schlafroutine"))
+        XCTAssertTrue(status.isMedicationOpen)
+        XCTAssertFalse(status.isProteinShakeOpen)
+        XCTAssertEqual(status.dailyBudgetRemaining, 28, accuracy: 0.001)
+        XCTAssertTrue(status.summary.contains("42 g Protein"))
+        XCTAssertTrue(status.summary.contains("Training"))
+        XCTAssertTrue(status.summary.contains("Medikamente"))
+    }
+
+    func testTodayOpenCalculationTreatsCompletedOrPausedTrainingCalmly() {
+        let completed = TodayOpenStatus.calculate(
+            caloriesConsumed: 2200,
+            caloriesTarget: 2200,
+            proteinConsumedG: 150,
+            proteinTargetG: 150,
+            workoutCompletedToday: true,
+            trainingPausedToday: false,
+            trainingScheduledToday: true,
+            habitValues: Dictionary(uniqueKeysWithValues: FixedHabit.defaults.map { ($0.key, $0.targetValue) }),
+            medicationDone: true,
+            proteinShakeDone: true,
+            dailyBudgetRemaining: 0
+        )
+        let paused = TodayOpenStatus.calculate(
+            caloriesConsumed: 2200,
+            caloriesTarget: 2200,
+            proteinConsumedG: 150,
+            proteinTargetG: 150,
+            workoutCompletedToday: false,
+            trainingPausedToday: true,
+            trainingScheduledToday: true,
+            habitValues: Dictionary(uniqueKeysWithValues: FixedHabit.defaults.map { ($0.key, $0.targetValue) }),
+            medicationDone: true,
+            proteinShakeDone: true,
+            dailyBudgetRemaining: -20
+        )
+
+        XCTAssertEqual(completed.training, .completed)
+        XCTAssertEqual(completed.summary, "Guter Stand. Für heute ist nichts Wesentliches mehr offen.")
+        XCTAssertEqual(paused.training, .paused)
+        XCTAssertEqual(paused.summary, "Guter Stand. Für heute ist nichts Wesentliches mehr offen.")
+        XCTAssertEqual(paused.dailyBudgetRemaining, 0)
+    }
+
+    func testDashboardStoreLoadsMenuBarCockpitStatusesFromPersistence() throws {
+        let database = try AppDatabase.makeTemporary()
+        let now = Date()
+        let dayKey = DateIntervals.dayKey(for: now)
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(caloriesTarget: 2200, proteinTargetG: 150, monthlyBudget: 900)
+        )
+        try NutritionRepository(database: database).insert(
+            NutritionEntryRecord(occurredAt: now, title: "Skyr", caloriesKcal: 300, proteinG: 35)
+        )
+        try WorkoutRepository(database: database).insert(
+            WorkoutSessionRecord(occurredAt: now, workoutType: "Training", durationMin: 30, status: "done")
+        )
+        try HabitRepository(database: database).upsertCompletion(
+            habitKey: TelegramReminderHabit.medicationKey,
+            date: dayKey,
+            isCompleted: true
+        )
+        try HabitRepository(database: database).upsertCompletion(
+            habitKey: TelegramReminderHabit.proteinShakeKey,
+            date: dayKey,
+            isCompleted: false
+        )
+
+        let store = DashboardStore(database: database)
+
+        XCTAssertEqual(store.state.caloriesConsumed, 300)
+        XCTAssertEqual(store.state.proteinConsumed, 35, accuracy: 0.001)
+        XCTAssertTrue(store.state.workoutCompletedToday)
+        XCTAssertTrue(store.state.medicationDone)
+        XCTAssertFalse(store.state.proteinShakeDone)
+        XCTAssertEqual(store.snapshot.todayOpen.training, .completed)
+        XCTAssertFalse(store.snapshot.todayOpen.isMedicationOpen)
+        XCTAssertTrue(store.snapshot.todayOpen.isProteinShakeOpen)
+    }
+
     func testDashboardStoreUsesPersistedSettingsTargets() throws {
         let database = try AppDatabase.makeTemporary()
         try SettingsRepository(database: database).saveSettings(
@@ -1776,12 +2318,32 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(payload.nutritionEntries.count, 1)
         XCTAssertEqual(payload.nutritionTemplates.count, 1)
         XCTAssertEqual(payload.workoutSessions.count, 1)
+        XCTAssertEqual(payload.workoutExercises.count, 0)
+        XCTAssertEqual(payload.workoutSets.count, 0)
         XCTAssertEqual(payload.financeEntries.count, 1)
         XCTAssertEqual(payload.habitEntries.count, 1)
         XCTAssertEqual(payload.weightEntries.count, 1)
         XCTAssertEqual(payload.bodyMetricEntries.count, 1)
         XCTAssertEqual(payload.weeklyReviews.count, 1)
         XCTAssertEqual(payload.settings.count, 1)
+        XCTAssertNotNil(payload.financeAnalysis)
+        XCTAssertNotNil(payload.financeAnalysis?.categoryTrends)
+        XCTAssertNotNil(object?["financeAnalysis"])
+    }
+
+    func testBackupImportPreflightReadsJSONWithoutWritingData() throws {
+        let database = try AppDatabase.makeTemporary()
+        try seedExportData(in: database)
+        let service = BackupService(database: database, backupDirectory: makeTemporaryBackupDirectory())
+        let exportURL = try service.createJSONExport()
+
+        let report = try service.preflightImport(from: exportURL)
+
+        XCTAssertEqual(report.sourceKind, .json)
+        XCTAssertEqual(report.itemCounts["nutrition_entries"], 1)
+        XCTAssertEqual(report.itemCounts["app_settings"], 1)
+        XCTAssertTrue(report.warnings.contains { $0.contains("keine lokalen Daten überschrieben") })
+        XCTAssertTrue(report.warnings.contains { $0.contains("Telegram-Token") })
     }
 
     func testJSONExportPayloadContainsSettingsAndTableArraysWhenEmpty() throws {
@@ -1795,6 +2357,8 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(payload.nutritionEntries, [])
         XCTAssertEqual(payload.nutritionTemplates, [])
         XCTAssertEqual(payload.workoutSessions, [])
+        XCTAssertEqual(payload.workoutExercises, [])
+        XCTAssertEqual(payload.workoutSets, [])
         XCTAssertEqual(payload.financeEntries, [])
         XCTAssertEqual(payload.habitEntries, [])
         XCTAssertEqual(payload.weightEntries, [])
@@ -1825,6 +2389,8 @@ final class AboLifeTests: XCTestCase {
         let workoutCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/workout_sessions.csv"), encoding: .utf8)
         let workoutExercisesCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/workout_exercises.csv"), encoding: .utf8)
         let financeCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/finance_transactions.csv"), encoding: .utf8)
+        let financeAnalysisCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/finance_monthly_analysis.csv"), encoding: .utf8)
+        let financeCategoryTrendsCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/finance_category_trends.csv"), encoding: .utf8)
         let weightCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/weight_entries.csv"), encoding: .utf8)
         let templatesCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/templates.csv"), encoding: .utf8)
         let reportHTML = try String(contentsOf: exportDirectory.appendingPathComponent("reports/overview_report.html"), encoding: .utf8)
@@ -1848,14 +2414,20 @@ final class AboLifeTests: XCTestCase {
         XCTAssertTrue(habitCSV.contains("water"))
         XCTAssertFalse(habitCSV.contains(";training;"))
         XCTAssertTrue(workoutCSV.contains("workout_type"))
-        XCTAssertTrue(workoutExercisesCSV.hasPrefix("id;session_id;exercise_name;sort_order;sets;reps;weight_kg;duration_sec;distance_m;notes\n"))
+        XCTAssertTrue(workoutExercisesCSV.hasPrefix("id;session_id;exercise_name;sort_order;is_completed;pain_reported;notes\n"))
         XCTAssertTrue(financeCSV.hasPrefix("id;created_at;entry_date;type;category;title;amount;currency;notes;source\n"))
         XCTAssertTrue(financeCSV.contains(";expense;"))
+        XCTAssertTrue(financeAnalysisCSV.hasPrefix("month;currency;spent;income;balance;monthly_budget;remaining_budget;average_daily_spend;projected_spend;"))
+        XCTAssertTrue(financeAnalysisCSV.contains("top_category"))
+        XCTAssertTrue(financeCategoryTrendsCSV.hasPrefix("category;spent;share;previous_month_spent;change_from_previous;budget;is_over_budget\n"))
         XCTAssertTrue(weightCSV.hasPrefix("id;created_at;entry_date;weight_kg;notes;source\n"))
         XCTAssertTrue(templatesCSV.hasPrefix("id;created_at;template_type;title;payload;is_active;notes\n"))
         XCTAssertTrue(reportHTML.contains("AboLife Backup Report"))
+        XCTAssertTrue(reportHTML.contains("Finanzanalyse"))
+        XCTAssertTrue(reportHTML.contains("Kategorie-Trends"))
         XCTAssertTrue(reportHTML.contains("Die CSV-Dateien sind die primäre Backup-Quelle."))
         XCTAssertTrue(summaryMarkdown.contains("AboLife Backup Summary"))
+        XCTAssertTrue(summaryMarkdown.contains("Kategorie-Trends"))
         XCTAssertTrue(summaryMarkdown.contains("Telegram-Token"))
         XCTAssertFalse(reportHTML.contains("https://"))
         XCTAssertFalse(reportHTML.contains("http://"))
@@ -1865,6 +2437,8 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(manifest["decimalSeparator"] as? String, "dot")
         let files = manifest["files"] as! [[String: Any]]
         XCTAssertTrue(files.contains { $0["name"] as? String == "csv/nutrition_entries.csv" && $0["rows"] as? Int == 2 })
+        XCTAssertTrue(files.contains { $0["name"] as? String == "csv/finance_monthly_analysis.csv" && $0["rows"] as? Int == 1 })
+        XCTAssertTrue(files.contains { $0["name"] as? String == "csv/finance_category_trends.csv" })
         XCTAssertTrue(files.contains { $0["name"] as? String == "reports/overview_report.html" && $0["type"] as? String == "report" })
         XCTAssertTrue(files.contains { $0["name"] as? String == "reports/summary.md" && $0["type"] as? String == "markdown" })
         let charts = manifest["charts"] as! [[String: Any]]
@@ -1872,11 +2446,58 @@ final class AboLifeTests: XCTestCase {
         let excluded = manifest["excludedSensitiveFields"] as! [String]
         XCTAssertTrue(excluded.contains("telegram_bot_token"))
         let allExportText = [
-            metadataCSV, nutritionCSV, habitCSV, workoutCSV, workoutExercisesCSV, financeCSV, weightCSV, templatesCSV, reportHTML, summaryMarkdown, caloriesSVG,
+            metadataCSV, nutritionCSV, habitCSV, workoutCSV, workoutExercisesCSV, financeCSV, financeAnalysisCSV, financeCategoryTrendsCSV, weightCSV, templatesCSV, reportHTML, summaryMarkdown, caloriesSVG,
             String(data: manifestData, encoding: .utf8)!
         ].joined(separator: "\n")
         XCTAssertFalse(allExportText.contains("local-test-token"))
         XCTAssertFalse(allExportText.contains("7467527144"))
+    }
+
+    func testFinanceExportsContainPlanningDataAndStayFreeOfSecrets() throws {
+        let database = try AppDatabase.makeTemporary()
+        let repository = FinanceRepository(database: database)
+        try repository.insert(FinanceEntryRecord(title: "Rewe", amount: 42, category: "Lebensmittel"))
+        try repository.upsertCategoryBudget(monthKey: FinanceRepository.monthKey(), category: "Lebensmittel", amount: 300, currency: "EUR")
+        try repository.upsertFixedCost(FinanceFixedCostRecord(title: "Internet", amount: 50, category: "Fixkosten", dueDay: 20))
+        try repository.upsertSavingsGoal(FinanceSavingsGoalRecord(title: "Notgroschen", targetAmount: 1000, currentAmount: 250))
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(
+                caloriesTarget: 2200,
+                proteinTargetG: 150,
+                monthlyBudget: 900,
+                defaultCurrency: "EUR"
+            )
+        )
+        let fixedDate = DateComponents(calendar: .current, year: 2026, month: 6, day: 14, hour: 21, minute: 30).date!
+        let service = BackupService(database: database, backupDirectory: makeTemporaryBackupDirectory(), now: { fixedDate })
+
+        let payload = try service.makeExportPayload()
+        let jsonURL = try service.createJSONExport()
+        let exportDirectory = try service.createCSVExport()
+        let markdownURL = try service.createMarkdownSummaryExport()
+        let json = try String(contentsOf: jsonURL, encoding: .utf8)
+        let budgetCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/finance_category_budgets.csv"), encoding: .utf8)
+        let fixedCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/finance_fixed_costs.csv"), encoding: .utf8)
+        let savingsCSV = try String(contentsOf: exportDirectory.appendingPathComponent("csv/finance_savings_goals.csv"), encoding: .utf8)
+        let reportHTML = try String(contentsOf: exportDirectory.appendingPathComponent("reports/overview_report.html"), encoding: .utf8)
+        let markdown = try String(contentsOf: markdownURL, encoding: .utf8)
+        let allExportText = [json, budgetCSV, fixedCSV, savingsCSV, reportHTML, markdown].joined(separator: "\n")
+
+        XCTAssertEqual(payload.financeCategoryBudgets.count, 1)
+        XCTAssertEqual(payload.financeFixedCosts.count, 1)
+        XCTAssertEqual(payload.financeSavingsGoals.count, 1)
+        XCTAssertTrue(budgetCSV.contains("Lebensmittel"))
+        XCTAssertTrue(fixedCSV.contains("Internet"))
+        XCTAssertTrue(savingsCSV.contains("Notgroschen"))
+        XCTAssertTrue(reportHTML.contains("Finanzpläne"))
+        XCTAssertTrue(markdown.contains("Finanzen"))
+        XCTAssertFalse(allExportText.contains("SECRET_TOKEN_SHOULD_NOT_LEAK"))
+        XCTAssertFalse(allExportText.contains("7467527144"))
+        XCTAssertFalse(allExportText.contains("/Users/"))
+        XCTAssertFalse(allExportText.contains("file://"))
+
+        XCTAssertTrue(markdown.contains("Monatsanalyse") || reportHTML.contains("Monatsanalyse") || reportHTML.contains("Finanzanalyse"))
+        XCTAssertTrue(markdown.contains("Kategorie-Trend") || reportHTML.contains("Kategorie-Trend") || reportHTML.contains("Kategorie-Trends"))
     }
 
     func testMarkdownSummaryExportCreatesSafeStandaloneFile() throws {
@@ -1907,9 +2528,23 @@ final class AboLifeTests: XCTestCase {
 
         XCTAssertTrue(nutritionCSV.hasPrefix("id;created_at;entry_date;meal_type;title;calories;protein_g;carbs_g;fat_g;notes;source\n"))
         XCTAssertEqual(nutritionCSV.components(separatedBy: "\n").filter { !$0.isEmpty }.count, 1)
-        XCTAssertTrue(workoutExercisesCSV.hasPrefix("id;session_id;exercise_name;sort_order;sets;reps;weight_kg;duration_sec;distance_m;notes\n"))
-        XCTAssertTrue(reportHTML.contains("Keine Daten vorhanden"))
+        XCTAssertTrue(workoutExercisesCSV.hasPrefix("id;session_id;exercise_name;sort_order;is_completed;pain_reported;notes\n"))
+        XCTAssertTrue(reportHTML.contains("AboLife Backup Report"))
         XCTAssertTrue(weightSVG.contains("Keine Daten vorhanden."))
+    }
+
+    func testBackupImportPreflightReadsCSVManifest() throws {
+        let database = try AppDatabase.makeTemporary()
+        try seedExportData(in: database)
+        let service = BackupService(database: database, backupDirectory: makeTemporaryBackupDirectory())
+        let exportDirectory = try service.createCSVExport()
+
+        let report = try service.preflightImport(from: exportDirectory)
+
+        XCTAssertEqual(report.sourceKind, .csvDirectory)
+        XCTAssertEqual(report.itemCounts["csv/nutrition_entries.csv"], 1)
+        XCTAssertEqual(report.itemCounts["csv/templates.csv"], 1)
+        XCTAssertTrue(report.warnings.contains { $0.contains("nicht importiert oder exportiert") })
     }
 
     func testExternalInputParserRecognizesQuickInputs() {
@@ -1919,6 +2554,7 @@ final class AboLifeTests: XCTestCase {
         assertWeight(parser.parse("Gewicht 82,4"), 82.4)
         assertWeight(parser.parse("Gewicht 82.4"), 82.4)
         assertWeight(parser.parse("82,4 kg"), 82.4)
+        assertWeight(parser.parse("82kg"), 82)
         if case .weightStatus = parser.parse("Gewicht Status") {} else { XCTFail("Gewicht Status wurde nicht erkannt") }
         if case let .weightTarget(weightKg) = parser.parse("Zielgewicht 80") {
             XCTAssertEqual(weightKg, 80, accuracy: 0.001)
@@ -1932,8 +2568,11 @@ final class AboLifeTests: XCTestCase {
             XCTFail("Zielkorridor wurde nicht erkannt")
         }
         assertExpense(parser.parse("Ausgabe 4,50 Döner"), amount: 4.5, title: "Döner")
+        assertExpense(parser.parse("Ausgabe Döner 4,50€"), amount: 4.5, title: "Döner")
         assertExpense(parser.parse("4.50 Kaffee"), amount: 4.5, title: "Kaffee")
+        assertExpense(parser.parse("Ausgabe 12.50 Kino"), amount: 12.5, title: "Kino")
         assertMeal(parser.parse("Essen Skyr 250 kcal 25 Protein"), name: "Skyr", calories: 250, protein: 25)
+        assertMeal(parser.parse("Essen Skyr 250kcal 25g Protein"), name: "Skyr", calories: 250, protein: 25)
         assertMeal(parser.parse("Meal Skyr 250 kcal 25 Protein"), name: "Skyr", calories: 250, protein: 25)
 
         if case .workoutCompleted = parser.parse("Training erledigt") {} else { XCTFail("Training wurde nicht erkannt") }
@@ -1947,6 +2586,136 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(parser.parse("hilfe"), .help)
         XCTAssertEqual(parser.parse("abbrechen"), .cancel)
         if case .unknown = parser.parse("irgendwas") {} else { XCTFail("Unbekannte Eingabe sollte unknown sein") }
+    }
+
+    func testExternalInputParserRecognizesBareAndCategorizedExpenseText() {
+        let calendar = Calendar(identifier: .gregorian)
+        let fixedDate = DateComponents(calendar: calendar, year: 2026, month: 6, day: 19, hour: 10).date!
+        let parser = ExternalInputParser(now: { fixedDate })
+
+        assertExpense(parser.parse("Döner 4,50"), amount: 4.5, title: "Döner")
+        assertExpense(parser.parse("Rewe 23,90"), amount: 23.9, title: "Rewe")
+        assertExpense(parser.parse("Netflix 12,99 Abo"), amount: 12.99, title: "Netflix")
+        if case let .expense(date, amount, title, category) = parser.parse("Ausgabe gestern 8,90 Essen unterwegs") {
+            XCTAssertEqual(calendar.component(.day, from: date), 18)
+            XCTAssertEqual(amount, 8.9, accuracy: 0.001)
+            XCTAssertEqual(title, "Essen unterwegs")
+            XCTAssertEqual(category, "Essen unterwegs")
+        } else {
+            XCTFail("Ausgabe gestern wurde nicht erkannt")
+        }
+        if case let .expense(_, amount, title, category) = parser.parse("Ausgabe 12,50 Freizeit Kino") {
+            XCTAssertEqual(amount, 12.5, accuracy: 0.001)
+            XCTAssertEqual(title, "Kino")
+            XCTAssertEqual(category, "Freizeit")
+        } else {
+            XCTFail("Ausgabe mit expliziter Kategorie wurde nicht erkannt")
+        }
+    }
+
+    func testTelegramExpenseWithInferredCategoryPersistsWithoutNetwork() async throws {
+        let database = try AppDatabase.makeTemporary()
+        let fakeClient = FakeTelegramBotClient()
+        let bot = TelegramBotService(
+            configuration: TelegramBotConfiguration.load(environment: [
+                "ABOLIFE_TELEGRAM_BOT_TOKEN": "local-test-token",
+                "ABOLIFE_TELEGRAM_ALLOWED_CHAT_ID": "100"
+            ]),
+            dialogManager: ExternalInputDialogManager(service: ExternalInputService(database: database)),
+            client: fakeClient
+        )
+
+        let response = await bot.handle(
+            TelegramUpdate(
+                updateId: 300,
+                message: TelegramMessage(chatId: 100, userId: 7, text: "Ausgabe Döner 4,50"),
+                callback: nil
+            )
+        )
+
+        let entry = try XCTUnwrap(FinanceRepository(database: database).fetchAll().first)
+        XCTAssertTrue(response?.text.contains("Ausgabe gespeichert: 4,5 EUR - Döner · Essen unterwegs.") == true)
+        XCTAssertTrue(response?.text.contains("Heute verfügbar") == true)
+        XCTAssertTrue(response?.text.contains("Monatsrest") == true)
+        XCTAssertEqual(fakeClient.sentResponses.count, 1)
+        XCTAssertEqual(entry.title, "Döner")
+        XCTAssertEqual(entry.amount, 4.5, accuracy: 0.001)
+        XCTAssertEqual(entry.category, "Essen unterwegs")
+    }
+
+    func testTelegramExpenseCanAskForCategoryChangeBeforeSaving() async throws {
+        let database = try AppDatabase.makeTemporary()
+        let fakeClient = FakeTelegramBotClient()
+        let bot = TelegramBotService(
+            configuration: TelegramBotConfiguration.load(environment: [
+                "ABOLIFE_TELEGRAM_BOT_TOKEN": "local-test-token",
+                "ABOLIFE_TELEGRAM_ALLOWED_CHAT_ID": "100"
+            ]),
+            dialogManager: ExternalInputDialogManager(service: ExternalInputService(database: database)),
+            client: fakeClient
+        )
+
+        let prompt = await bot.handle(
+            TelegramUpdate(updateId: 302, message: TelegramMessage(chatId: 100, userId: 7, text: "Ausgabe 4,50 Irgendwas"), callback: nil)
+        )
+        XCTAssertTrue(prompt?.text.contains("Kategorie") == true)
+        XCTAssertTrue(prompt?.keyboard?.rows.flatMap { $0 }.contains { $0.callbackData == "expense.category.change" } == true)
+
+        _ = await bot.handle(TelegramUpdate(updateId: 303, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: "expense.category.change")))
+        _ = await bot.handle(TelegramUpdate(updateId: 304, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: "expense.category.transport")))
+        let saved = await bot.handle(TelegramUpdate(updateId: 305, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: "confirm.save")))
+
+        let entry = try XCTUnwrap(FinanceRepository(database: database).fetchAll().first)
+        XCTAssertTrue(saved?.text.contains("Ausgabe gespeichert") == true)
+        XCTAssertEqual(entry.category, "Transport")
+    }
+
+    func testTelegramUnclearExpenseAsksForMissingDescriptionAndDoesNotSave() async throws {
+        let database = try AppDatabase.makeTemporary()
+        let fakeClient = FakeTelegramBotClient()
+        let bot = TelegramBotService(
+            configuration: TelegramBotConfiguration.load(environment: [
+                "ABOLIFE_TELEGRAM_BOT_TOKEN": "local-test-token",
+                "ABOLIFE_TELEGRAM_ALLOWED_CHAT_ID": "100"
+            ]),
+            dialogManager: ExternalInputDialogManager(service: ExternalInputService(database: database)),
+            client: fakeClient
+        )
+
+        let response = await bot.handle(
+            TelegramUpdate(
+                updateId: 301,
+                message: TelegramMessage(chatId: 100, userId: 7, text: "Ausgabe 12,50"),
+                callback: nil
+            )
+        )
+
+        XCTAssertTrue(response?.text.contains("Beschreibung") == true || response?.text.contains("Kategorie") == true || response?.text.contains("nicht eindeutig") == true)
+        XCTAssertEqual(try FinanceRepository(database: database).fetchAll().count, 0)
+        XCTAssertEqual(fakeClient.sentResponses.count, 1)
+    }
+
+    func testTelegramTrainingMinimumAndSimpleSetInputPersistWithoutNetwork() async throws {
+        let database = try AppDatabase.makeTemporary()
+        let fakeClient = FakeTelegramBotClient()
+        let bot = TelegramBotService(
+            configuration: TelegramBotConfiguration.load(environment: [
+                "ABOLIFE_TELEGRAM_BOT_TOKEN": "local-test-token",
+                "ABOLIFE_TELEGRAM_ALLOWED_CHAT_ID": "100"
+            ]),
+            dialogManager: ExternalInputDialogManager(service: ExternalInputService(database: database)),
+            client: fakeClient
+        )
+
+        _ = await bot.handle(TelegramUpdate(updateId: 401, message: TelegramMessage(chatId: 100, userId: 7, text: "Training Minimum erledigt"), callback: nil))
+        _ = await bot.handle(TelegramUpdate(updateId: 402, message: TelegramMessage(chatId: 100, userId: 7, text: "Liegestuetze 10 8 6"), callback: nil))
+
+        let sessions = try WorkoutRepository(database: database).fetchAll()
+        let history = try WorkoutRepository(database: database).fetchAllExerciseSummaries()
+        XCTAssertEqual(sessions.count, 2)
+        XCTAssertTrue(sessions.contains { $0.workoutIntensity == "Minimum" })
+        XCTAssertTrue(history.contains { $0.exercise.exerciseName == "Liegestuetze" && $0.sets.compactMap(\.reps) == [10, 8, 6] })
+        XCTAssertEqual(fakeClient.sentResponses.count, 2)
     }
 
     func testExternalInputServicePersistsSupportedIntents() throws {
@@ -1999,7 +2768,7 @@ final class AboLifeTests: XCTestCase {
         XCTAssertTrue(manager.hasActiveDialog())
         _ = manager.handle(.text("4,50"))
         let expenseConfirm = manager.handle(.text("Döner"))
-        XCTAssertEqual(expenseConfirm.actions.map(\.id), ["confirm.save", "confirm.cancel"])
+        XCTAssertEqual(expenseConfirm.actions.map(\.id), ["confirm.save", "expense.category.change", "confirm.cancel"])
         XCTAssertSuccess(manager.handle(.action(.confirm)), module: .finance)
 
         _ = manager.handle(.action(.startFlow(.meal)))
@@ -2092,6 +2861,14 @@ final class AboLifeTests: XCTestCase {
         let preview = manager.beginBarcodeMeal(product: product)
         XCTAssertTrue(preview.message.contains("Produkt erkannt"))
         XCTAssertTrue(preview.actions.contains { $0.id == "barcode.amount.55" })
+        XCTAssertEqual(
+            preview.actions.map(\.id),
+            ["barcode.amount.55", "barcode.amount.100", "barcode.amount.150", "barcode.amount.250", "barcode.manual", "flow.cancel"]
+        )
+        XCTAssertTrue(preview.message.contains("Barebells"))
+        XCTAssertTrue(preview.message.contains("Open Food Facts"))
+        XCTAssertTrue(preview.message.contains("362 kcal"))
+        XCTAssertTrue(preview.message.contains("36 g"))
         XCTAssertEqual(try NutritionRepository(database: database).fetchAll().count, 0)
 
         _ = manager.handle(.action(.enterBarcodeAmountManually))
@@ -2233,7 +3010,7 @@ final class AboLifeTests: XCTestCase {
             )
         )
 
-        XCTAssertTrue(response?.text.contains("keinen Barcode") == true)
+        XCTAssertTrue(response?.text.contains("kein Barcode") == true)
         XCTAssertEqual(try NutritionRepository(database: database).fetchAll().count, 0)
     }
 
@@ -2297,8 +3074,16 @@ final class AboLifeTests: XCTestCase {
         let bot = TelegramBotService(configuration: enabled, dialogManager: manager, client: fakeClient)
 
         let start = await bot.handle(TelegramUpdate(updateId: 1, message: TelegramMessage(chatId: 100, userId: 7, text: "/start"), callback: nil))
-        XCTAssertEqual(start?.keyboard?.rows.flatMap { $0 }.map(\.callbackData).first, "flow.weight")
-        XCTAssertTrue(start?.keyboard?.rows.flatMap { $0 }.contains { $0.callbackData == TelegramExportAction.callbackData && $0.label == TelegramExportAction.label } == true)
+        XCTAssertEqual(start?.text, "🏠 AboLife\n\nWas möchtest du heute in Ruhe machen?")
+        XCTAssertEqual(
+            start?.keyboard?.rows.map { $0.map(\.callbackData) },
+            [
+                [TelegramCallbackID.addMeal, TelegramCallbackID.addWorkout],
+                [TelegramCallbackID.addWeight, TelegramCallbackID.addExpense],
+                [TelegramCallbackID.addHabit, TelegramCallbackID.today],
+                [TelegramCallbackID.exportMenu, TelegramCallbackID.help]
+            ]
+        )
 
         let weightPrompt = await bot.handle(TelegramUpdate(updateId: 2, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: "flow.weight")))
         XCTAssertTrue(weightPrompt?.text.contains("Gewicht") == true)
@@ -2309,7 +3094,7 @@ final class AboLifeTests: XCTestCase {
         _ = await bot.handle(TelegramUpdate(updateId: 4, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: "flow.expense")))
         _ = await bot.handle(TelegramUpdate(updateId: 5, message: TelegramMessage(chatId: 100, userId: 7, text: "4,50"), callback: nil))
         let confirmation = await bot.handle(TelegramUpdate(updateId: 6, message: TelegramMessage(chatId: 100, userId: 7, text: "Kaffee"), callback: nil))
-        XCTAssertEqual(confirmation?.keyboard?.rows.flatMap { $0 }.map(\.callbackData), ["confirm.save", "confirm.cancel"])
+        XCTAssertEqual(confirmation?.keyboard?.rows.flatMap { $0 }.map(\.callbackData), ["dialog.save", "expense.category.change", "dialog.cancel"])
         let saved = await bot.handle(TelegramUpdate(updateId: 7, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: "confirm.save")))
         XCTAssertTrue(saved?.text.contains("Ausgabe gespeichert") == true)
 
@@ -2322,6 +3107,54 @@ final class AboLifeTests: XCTestCase {
         let disabledResponse = await disabledBot.handle(TelegramUpdate(updateId: 10, message: TelegramMessage(chatId: 100, userId: 7, text: "/start"), callback: nil))
         XCTAssertNil(disabledResponse)
         XCTAssertEqual(fakeClient.sentResponses.count, 9)
+    }
+
+    func testTelegramMenuHelpNavigationAndExportUX() async throws {
+        let database = try AppDatabase.makeTemporary()
+        let configuration = TelegramBotConfiguration.load(environment: [
+            "ABOLIFE_TELEGRAM_BOT_TOKEN": "local-test-token",
+            "ABOLIFE_TELEGRAM_ALLOWED_CHAT_ID": "100"
+        ])
+        let manager = ExternalInputDialogManager(service: ExternalInputService(database: database))
+        let bot = TelegramBotService(
+            configuration: configuration,
+            dialogManager: manager,
+            client: FakeTelegramBotClient()
+        )
+
+        _ = await bot.handle(TelegramUpdate(updateId: 1, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: "flow.weight")))
+        XCTAssertTrue(manager.hasActiveDialog(sessionID: "telegram.chat.100"))
+
+        let menu = await bot.handle(TelegramUpdate(updateId: 2, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: TelegramCallbackID.mainMenu)))
+        XCTAssertFalse(manager.hasActiveDialog(sessionID: "telegram.chat.100"))
+        XCTAssertTrue(menu?.text.contains("🏠 AboLife") == true)
+
+        let help = await bot.handle(TelegramUpdate(updateId: 3, message: TelegramMessage(chatId: 100, userId: 7, text: "/help"), callback: nil))
+        for example in [
+            "Essen Skyr 250 kcal 25 Protein",
+            "Ausgabe Döner 4,50",
+            "Training erledigt",
+            "Gewicht 82,4",
+            "Habit Schlafroutine erledigt",
+            "Barcode-Foto"
+        ] {
+            XCTAssertTrue(help?.text.contains(example) == true, "Fehlendes Hilfe-Beispiel: \(example)")
+        }
+        XCTAssertEqual(help?.keyboard, TelegramButtonMapper.menuBackKeyboard)
+
+        let export = await bot.handle(TelegramUpdate(updateId: 4, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: TelegramCallbackID.exportMenu)))
+        XCTAssertEqual(
+            export?.keyboard?.rows.flatMap { $0 }.map(\.label),
+            ["📄 Tagesreport HTML", "📅 Wochenreport HTML", "🗓 Monatsreport HTML", "📊 CSV / Numbers", "‹ Zurück"]
+        )
+        XCTAssertEqual(
+            export?.keyboard?.rows.flatMap { $0 }.map(\.callbackData),
+            [TelegramCallbackID.exportSnapshot, "export.weekly_html", "export.monthly_html", TelegramCallbackID.exportData, TelegramCallbackID.mainMenu]
+        )
+        XCTAssertFalse(export?.text.localizedCaseInsensitiveContains("backup") == true)
+
+        let legacy = await bot.handle(TelegramUpdate(updateId: 5, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: "flow.expense")))
+        XCTAssertTrue(legacy?.text.contains("ausgegeben") == true)
     }
 
     func testDailySummaryBuildsMorningMessageWithMissingHintsAndButtons() throws {
@@ -2351,11 +3184,126 @@ final class AboLifeTests: XCTestCase {
         XCTAssertTrue(message.text.contains("* Gewicht: noch nicht eingetragen"))
         XCTAssertTrue(message.text.contains("* Kalorien übrig: 1900 kcal"))
         XCTAssertTrue(message.text.contains("* Protein übrig: 125 g"))
-        XCTAssertTrue(message.text.contains("* Training heute: Push"))
+        XCTAssertTrue(message.text.contains("* Training heute: Pull + Core"))
         XCTAssertTrue(message.text.contains("* Medikamente: offen"))
         XCTAssertTrue(message.text.contains("* Proteinshake: offen"))
         XCTAssertTrue(message.keyboard?.rows.flatMap { $0 }.contains { $0.callbackData == TelegramReminderAction.proteinShakeDone.rawValue } == true)
         XCTAssertTrue(message.keyboard?.rows.flatMap { $0 }.contains { $0.callbackData == TelegramReminderAction.addExpense.rawValue } == true)
+    }
+
+    func testTodayTextContainsCentralDailyWeeklyFinanceHabitAndOpenStatus() throws {
+        let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 12).date!
+        let anotherDayThisWeek = DateComponents(calendar: calendar, year: 2026, month: 6, day: 16, hour: 18).date!
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(
+                caloriesTarget: 2400,
+                proteinTargetG: 160,
+                weeklyWorkoutTarget: 4,
+                monthlyBudget: 900,
+                defaultCurrency: "EUR",
+                weekStartsOn: 2
+            )
+        )
+        try NutritionRepository(database: database).insert(
+            NutritionEntryRecord(occurredAt: date, title: "Frühstück", caloriesKcal: 600, proteinG: 45)
+        )
+        try FinanceRepository(database: database).insert(
+            FinanceEntryRecord(occurredAt: date, title: "Einkauf", amount: 104.5, category: "Lebensmittel")
+        )
+        try WorkoutRepository(database: database).insert(
+            WorkoutSessionRecord(occurredAt: anotherDayThisWeek, workoutType: "Training", durationMin: 0, status: "done")
+        )
+        try HabitRepository(database: database).insert(
+            HabitEntryRecord(habitKey: "sleep", date: "2026-06-15", isCompleted: true, value: 1)
+        )
+        try HabitRepository(database: database).insert(
+            HabitEntryRecord(habitKey: TelegramReminderHabit.medicationKey, date: "2026-06-15", isCompleted: true)
+        )
+
+        let text = try DailySummaryService(database: database, calendar: calendar).todayText(for: date)
+
+        XCTAssertTrue(text.contains("📊 Heute · 15.06.2026"))
+        XCTAssertTrue(text.contains("Kalorien: 600 / 2400 kcal"))
+        XCTAssertTrue(text.contains("Protein: 45 / 160 g"), text)
+        XCTAssertTrue(text.contains("Training heute: Pull + Core · offen"), text)
+        XCTAssertTrue(text.contains("Woche: 1 / 4"))
+        XCTAssertTrue(text.contains("Heute verfügbar:"))
+        XCTAssertTrue(text.contains("Monatsrest:"))
+        XCTAssertTrue(text.contains("795,50"))
+        XCTAssertTrue(text.contains("Habits: 1 / 4 erledigt"))
+        XCTAssertTrue(text.contains("Medikamente: erledigt · Shake: offen"))
+        XCTAssertTrue(text.contains("Noch offen:"))
+        XCTAssertTrue(text.contains("Nächster Schritt:"))
+    }
+
+    func testSaveResultsAreCentrallyEnrichedForAllTelegramDomains() throws {
+        let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 12).date!
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(
+                caloriesTarget: 2300,
+                proteinTargetG: 150,
+                weeklyWorkoutTarget: 3,
+                monthlyBudget: 900,
+                defaultCurrency: "EUR",
+                weekStartsOn: 2
+            )
+        )
+        let service = ExternalInputService(database: database, calendar: calendar, now: { date })
+
+        let weight = service.execute(.weight(date: date, weightKg: 82.4), sessionID: "weight")
+        XCTAssertTrue(weight.message.contains("⚖️ Aktuell: 82,4 kg"))
+
+        let meal = service.execute(
+            .meal(date: date, name: "Skyr", calories: 250, protein: 25, note: nil),
+            sessionID: "meal"
+        )
+        XCTAssertTrue(meal.message.contains("📊 Heute: 250 / 2300 kcal"))
+        XCTAssertTrue(meal.message.contains("25 / 150 g Protein"))
+
+        let expense = service.execute(
+            .expense(date: date, amount: 4.5, title: "Kaffee", category: "Essen unterwegs"),
+            sessionID: "expense"
+        )
+        XCTAssertTrue(expense.message.contains("💶 Heute verfügbar:"))
+        XCTAssertTrue(expense.message.contains("Monatsrest:"))
+        XCTAssertTrue(expense.message.contains("895,50"))
+
+        let workout = service.execute(.workoutCompleted(date: date, note: nil), sessionID: "workout")
+        XCTAssertTrue(workout.message.contains("🏋️ Training erledigt"))
+        XCTAssertTrue(workout.message.contains("Woche: 1 / 3"))
+
+        let habit = service.execute(
+            .habitCompleted(date: date, habitName: "Schlafroutine"),
+            sessionID: "habit"
+        )
+        XCTAssertTrue(habit.message.contains("✅ Habits heute: 1 / 4"))
+        XCTAssertTrue(habit.message.contains("Medikamente: offen"))
+        XCTAssertTrue(habit.message.contains("Shake: offen"))
+    }
+
+    func testUndoUsesCalmExactMessagesAndIsIdempotent() throws {
+        let database = try AppDatabase.makeTemporary()
+        let date = Date(timeIntervalSince1970: 1_800_000_000)
+        let service = ExternalInputService(database: database, now: { date })
+        let result = service.execute(
+            .meal(date: date, name: "Skyr", calories: 250, protein: 25, note: nil),
+            sessionID: "telegram.chat.100"
+        )
+        guard case let .saved(_, _, receipt) = result else {
+            return XCTFail("Gespeicherten Eintrag mit Undo-Beleg erwartet")
+        }
+
+        let firstUndo = service.undo(receiptID: receipt.id, sessionID: "telegram.chat.100")
+        XCTAssertEqual(firstUndo.message, "↩️ Rückgängig gemacht.")
+        XCTAssertEqual(try NutritionRepository(database: database).fetchAll().count, 0)
+
+        let secondUndo = service.undo(receiptID: receipt.id, sessionID: "telegram.chat.100")
+        XCTAssertEqual(secondUndo.message, "Das kann ich leider nicht mehr sicher rückgängig machen.")
+        XCTAssertEqual(try NutritionRepository(database: database).fetchAll().count, 0)
     }
 
     func testReminderServiceMarksProteinShakeAndMedicationDone() throws {
@@ -2367,11 +3315,86 @@ final class AboLifeTests: XCTestCase {
         let protein = try service.handle(action: .proteinShakeDone, date: date)
         let medication = try service.handle(action: .medicationDone, date: date)
 
-        XCTAssertEqual(protein.message, "Proteinshake erledigt.")
-        XCTAssertEqual(medication.message, "Medikamente erledigt.")
+        XCTAssertTrue(protein.message.contains("Proteinshake erledigt."))
+        XCTAssertTrue(medication.message.contains("Medikamente erledigt."))
         let dayKey = DateIntervals.dayKey(for: date, calendar: calendar)
         XCTAssertEqual(try HabitRepository(database: database).fetchEntry(habitKey: TelegramReminderHabit.proteinShakeKey, date: dayKey)?.isCompleted, true)
         XCTAssertEqual(try HabitRepository(database: database).fetchEntry(habitKey: TelegramReminderHabit.medicationKey, date: dayKey)?.isCompleted, true)
+    }
+
+    func testReminderServiceUsesTodayOpenStatusForButtonsTrainingAndCompletion() throws {
+        let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let monday = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 9).date!
+        let tuesday = DateComponents(calendar: calendar, year: 2026, month: 6, day: 16, hour: 18).date!
+        let service = ReminderService(database: database, calendar: calendar, now: { monday })
+        let mondayKey = DateIntervals.dayKey(for: monday, calendar: calendar)
+
+        try HabitRepository(database: database).upsertCompletion(
+            habitKey: TelegramReminderHabit.medicationKey,
+            date: mondayKey,
+            isCompleted: true
+        )
+        let morning = try XCTUnwrap(service.morningHabitReminder(for: monday))
+        let morningCallbacks = morning.keyboard?.rows.flatMap { $0 }.map(\.callbackData) ?? []
+        XCTAssertTrue(morning.text.contains("Proteinshake ist noch offen"))
+        XCTAssertFalse(morning.text.contains("Medikamente sind noch offen"))
+        XCTAssertTrue(morningCallbacks.contains(TelegramReminderAction.proteinShakeDone.rawValue))
+        XCTAssertFalse(morningCallbacks.contains(TelegramReminderAction.medicationDone.rawValue))
+
+        XCTAssertNotNil(try service.trainingReminder(for: monday))
+        XCTAssertNil(try service.trainingReminder(for: tuesday))
+        try WorkoutRepository(database: database).insert(
+            WorkoutSessionRecord(occurredAt: monday, workoutType: "Training", durationMin: 0, status: "done")
+        )
+        XCTAssertNil(try service.trainingReminder(for: monday))
+
+        try HabitRepository(database: database).upsertCompletion(
+            habitKey: TelegramReminderHabit.proteinShakeKey,
+            date: mondayKey,
+            isCompleted: true
+        )
+        let completedMorning = try XCTUnwrap(service.morningHabitReminder(for: monday))
+        XCTAssertEqual(completedMorning.text, "Morgen-Check: Medikamente und Proteinshake sind erledigt.")
+        XCTAssertNil(completedMorning.keyboard)
+    }
+
+    func testEveningReminderReturnsShortPositiveMessageWhenEverythingIsDone() throws {
+        let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 21).date!
+        let dayKey = DateIntervals.dayKey(for: date, calendar: calendar)
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(caloriesTarget: 800, proteinTargetG: 50, monthlyBudget: 900)
+        )
+        try NutritionRepository(database: database).insert(
+            NutritionEntryRecord(occurredAt: date, title: "Tag", caloriesKcal: 800, proteinG: 50)
+        )
+        try WorkoutRepository(database: database).insert(
+            WorkoutSessionRecord(occurredAt: date, workoutType: "Training", durationMin: 0, status: "done")
+        )
+        for habit in FixedHabit.defaults where !habit.isDerived {
+            try HabitRepository(database: database).insert(
+                HabitEntryRecord(
+                    habitKey: habit.key,
+                    date: dayKey,
+                    isCompleted: true,
+                    value: habit.targetValue
+                )
+            )
+        }
+        for key in [TelegramReminderHabit.medicationKey, TelegramReminderHabit.proteinShakeKey] {
+            try HabitRepository(database: database).insert(
+                HabitEntryRecord(habitKey: key, date: dayKey, isCompleted: true)
+            )
+        }
+
+        let message = try XCTUnwrap(
+            ReminderService(database: database, calendar: calendar).eveningCheck(for: date)
+        )
+
+        XCTAssertEqual(message.text, "Für heute ist alles Wichtige erledigt. Ruhiger Feierabend.")
+        XCTAssertNil(message.keyboard)
     }
 
     @MainActor
@@ -2402,6 +3425,45 @@ final class AboLifeTests: XCTestCase {
         XCTAssertEqual(scheduler.sentLogs.count, 2)
     }
 
+    @MainActor
+    func testTelegramReminderSchedulerUsesConfiguredTimesAndRedactsLogs() async throws {
+        let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let defaultMorning = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 9, minute: 0).date!
+        let customMorning = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 8, minute: 15).date!
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(
+                caloriesTarget: 2200,
+                proteinTargetG: 150,
+                monthlyBudget: 900,
+                morningReminderMinuteOfDay: 8 * 60 + 15,
+                trainingReminderMinuteOfDay: 18 * 60 + 30,
+                eveningReminderMinuteOfDay: 22 * 60
+            )
+        )
+        let configuration = TelegramBotConfiguration.load(environment: [
+            "ABOLIFE_TELEGRAM_BOT_TOKEN": "local-test-token",
+            "ABOLIFE_TELEGRAM_ALLOWED_CHAT_ID": "100"
+        ])
+        let fakeClient = FakeTelegramBotClient()
+        let scheduler = TelegramReminderScheduler(
+            configuration: configuration,
+            client: fakeClient,
+            dailySummaryService: DailySummaryService(database: database, calendar: calendar),
+            reminderService: ReminderService(database: database, calendar: calendar),
+            calendar: calendar
+        )
+
+        await scheduler.processDueRemindersForTests(at: defaultMorning)
+        XCTAssertTrue(fakeClient.sentResponses.isEmpty)
+
+        await scheduler.processDueRemindersForTests(at: customMorning)
+        XCTAssertEqual(fakeClient.sentResponses.count, 2)
+        XCTAssertEqual(scheduler.sentLogs.first?.summary, "Reminder gesendet: morningHabits")
+        XCTAssertFalse(scheduler.sentLogs.map(\.summary).joined().contains("Guten Morgen Abo"))
+        XCTAssertFalse(scheduler.sentLogs.map(\.summary).joined().contains("Proteinshake ist noch offen"))
+    }
+
     func testTelegramReminderCallbackUsesReminderService() async throws {
         let database = try AppDatabase.makeTemporary()
         let configuration = TelegramBotConfiguration.load(environment: [
@@ -2425,14 +3487,32 @@ final class AboLifeTests: XCTestCase {
             )
         )
 
-        XCTAssertEqual(response?.text, "Proteinshake erledigt.")
-        XCTAssertEqual(fakeClient.sentResponses.last?.text, "Proteinshake erledigt.")
+        XCTAssertTrue(response?.text.contains("Proteinshake erledigt.") == true)
+        XCTAssertTrue(fakeClient.sentResponses.last?.text.contains("Proteinshake erledigt.") == true)
         XCTAssertEqual(
             try HabitRepository(database: database).fetchEntry(
                 habitKey: TelegramReminderHabit.proteinShakeKey,
                 date: DateIntervals.dayKey()
             )?.isCompleted,
             true
+        )
+
+        let undoCallback = try XCTUnwrap(
+            response?.keyboard?.rows.flatMap { $0 }.first { $0.callbackData.hasPrefix("undo.") }?.callbackData
+        )
+        let undo = await bot.handle(
+            TelegramUpdate(
+                updateId: 100,
+                message: nil,
+                callback: TelegramCallbackAction(chatId: 100, userId: 7, data: undoCallback)
+            )
+        )
+        XCTAssertEqual(undo?.text, "↩️ Rückgängig gemacht.")
+        XCTAssertNil(
+            try HabitRepository(database: database).fetchEntry(
+                habitKey: TelegramReminderHabit.proteinShakeKey,
+                date: DateIntervals.dayKey()
+            )
         )
     }
 
@@ -2455,11 +3535,55 @@ final class AboLifeTests: XCTestCase {
         XCTAssertTrue(html.contains("15.06.2026"))
         XCTAssertTrue(html.contains("Heute wurden noch keine Ausgaben eingetragen."))
         XCTAssertTrue(html.contains("Heute gibt es noch keinen Trainingseintrag."))
+        XCTAssertTrue(html.contains("Kalorien heute"))
+        XCTAssertTrue(html.contains("Protein heute"))
+        XCTAssertTrue(html.contains("Wochenstatus"))
+        XCTAssertTrue(html.contains("Ein ruhiger nächster Schritt"))
+        XCTAssertTrue(html.contains("name=\"viewport\""))
+        XCTAssertTrue(html.contains("@media (max-width:520px)"))
         XCTAssertTrue(html.contains("&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;"))
         XCTAssertFalse(html.contains("<script>alert"))
         XCTAssertFalse(html.contains("local-test-token"))
         XCTAssertFalse(html.contains("ABOLIFE_TELEGRAM_BOT_TOKEN"))
+        XCTAssertFalse(html.contains("7467527144"))
         XCTAssertFalse(html.contains("/Users/"))
+        XCTAssertFalse(html.contains("file://"))
+        XCTAssertFalse(html.contains("http://"))
+        XCTAssertFalse(html.contains("https://"))
+        XCTAssertFalse(html.contains("<script src="))
+        XCTAssertFalse(html.contains("<link rel=\"stylesheet\""))
+    }
+
+    func testHtmlSnapshotIncludesFinanceStatusWithoutSensitiveValuesOrLocalPaths() throws {
+        let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 10, minute: 30).date!
+        try SettingsRepository(database: database).saveSettings(
+            AppSettingsRecord(caloriesTarget: 2400, proteinTargetG: 160, monthlyBudget: 900, defaultCurrency: "EUR")
+        )
+        try FinanceRepository(database: database).insert(
+            FinanceEntryRecord(
+                occurredAt: date,
+                title: "Rewe",
+                amount: 42,
+                category: "Lebensmittel",
+                note: "ABOLIFE_TELEGRAM_BOT_TOKEN=123456789:SECRET_TOKEN_SHOULD_NOT_LEAK /Users/local/path"
+            )
+        )
+        let service = HtmlSnapshotExportService(database: database, calendar: calendar, now: { date })
+
+        let html = try service.renderHTML()
+
+        XCTAssertTrue(html.contains("Finanzen"))
+        XCTAssertTrue(html.contains("Rewe"))
+        XCTAssertTrue(html.contains("Lebensmittel"))
+        XCTAssertTrue(html.contains("42 EUR"))
+        XCTAssertFalse(html.contains("SECRET_TOKEN_SHOULD_NOT_LEAK"))
+        XCTAssertFalse(html.contains("123456789:"))
+        XCTAssertFalse(html.contains("/Users/local/path"))
+        XCTAssertFalse(html.contains("file://"))
+        XCTAssertFalse(html.contains("https://"))
+        XCTAssertFalse(html.contains("http://"))
     }
 
     func testHtmlSnapshotExportServiceCreatesExpectedFileName() throws {
@@ -2468,14 +3592,40 @@ final class AboLifeTests: XCTestCase {
         let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 10, minute: 30).date!
         let directory = makeTemporaryBackupDirectory()
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let service = HtmlSnapshotExportService(database: database, calendar: calendar, now: { date }, temporaryDirectory: directory)
+        let service = HtmlSnapshotExportService(
+            database: database,
+            calendar: calendar,
+            now: { date },
+            temporaryDirectory: directory,
+            uniqueIdentifier: { "test-id" }
+        )
 
         let file = try service.makeSnapshotFile()
 
-        XCTAssertEqual(file.url.lastPathComponent, "abolife_snapshot_2026-06-15_10-30.html")
+        XCTAssertEqual(file.url.lastPathComponent, "abolife_snapshot_2026-06-15_10-30_test-id.html")
         XCTAssertTrue(FileManager.default.fileExists(atPath: file.url.path))
         XCTAssertTrue(file.html.contains("AboLife Snapshot"))
         try? FileManager.default.removeItem(at: directory)
+    }
+
+    func testHtmlSnapshotUsesDefaultTemporaryDirectoryInsteadOfBackupDirectory() throws {
+        let database = try AppDatabase.makeTemporary()
+        let backupDirectory = makeTemporaryBackupDirectory()
+        try FileManager.default.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
+        let service = HtmlSnapshotExportService(database: database)
+
+        let file = try service.makeSnapshotFile()
+        defer {
+            try? FileManager.default.removeItem(at: file.url)
+            try? FileManager.default.removeItem(at: backupDirectory)
+        }
+
+        XCTAssertEqual(
+            file.url.deletingLastPathComponent().standardizedFileURL,
+            FileManager.default.temporaryDirectory.standardizedFileURL
+        )
+        XCTAssertFalse(file.url.path.hasPrefix(backupDirectory.path))
+        XCTAssertTrue((try FileManager.default.contentsOfDirectory(atPath: backupDirectory.path)).isEmpty)
     }
 
     func testTelegramLiveClientSendDocumentBuildsMultipartRequest() async throws {
@@ -2548,7 +3698,7 @@ final class AboLifeTests: XCTestCase {
             "ABOLIFE_TELEGRAM_ALLOWED_CHAT_ID": "100"
         ])
         let updateClient = ScriptedTelegramUpdateClient(batches: [
-            [TelegramUpdate(updateId: 60, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, callbackQueryId: "cb-export", data: TelegramExportAction.callbackData))]
+            [TelegramUpdate(updateId: 60, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, callbackQueryId: "cb-export", data: TelegramCallbackID.exportSnapshot))]
         ])
         let messageClient = FakeTelegramBotClient()
         let documentClient = RecordingTelegramDocumentClient()
@@ -2559,7 +3709,13 @@ final class AboLifeTests: XCTestCase {
             dialogManager: ExternalInputDialogManager(service: ExternalInputService(database: database)),
             client: messageClient,
             documentClient: documentClient,
-            snapshotExportService: HtmlSnapshotExportService(database: database, calendar: calendar, now: { date }, temporaryDirectory: directory)
+            snapshotExportService: HtmlSnapshotExportService(
+                database: database,
+                calendar: calendar,
+                now: { date },
+                temporaryDirectory: directory,
+                uniqueIdentifier: { "test-id" }
+            )
         )
         let controller = TelegramPollingController(
             configuration: configuration,
@@ -2571,21 +3727,29 @@ final class AboLifeTests: XCTestCase {
             automaticallyPollsOnStart: false
         )
 
-        controller.start()
         await controller.processOnceForTests()
 
         XCTAssertEqual(updateClient.answeredCallbackIds, ["cb-export"])
         XCTAssertEqual(documentClient.sentDocuments.count, 1)
         XCTAssertEqual(documentClient.sentDocuments.first?.chatId, 100)
         XCTAssertEqual(documentClient.sentDocuments.first?.caption, "AboLife Snapshot")
-        XCTAssertEqual(documentClient.sentDocuments.first?.fileName, "abolife_snapshot_2026-06-15_10-30.html")
-        XCTAssertFalse(FileManager.default.fileExists(atPath: directory.appendingPathComponent("abolife_snapshot_2026-06-15_10-30.html").path))
-        XCTAssertTrue(messageClient.sentResponses.isEmpty)
+        XCTAssertEqual(documentClient.sentDocuments.first?.fileName, "abolife_snapshot_2026-06-15_10-30_test-id.html")
+        XCTAssertEqual(documentClient.attemptedFileURLs.first?.deletingLastPathComponent(), directory)
+        XCTAssertEqual(documentClient.fileExistedDuringAttempts, [true])
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: directory.appendingPathComponent("abolife_snapshot_2026-06-15_10-30_test-id.html").path),
+            (try? FileManager.default.contentsOfDirectory(atPath: directory.path).joined(separator: ", ")) ?? "Verzeichnis nicht lesbar"
+        )
+        XCTAssertEqual(messageClient.sentResponses.map(\.text), ["Snapshot gesendet."])
         try? FileManager.default.removeItem(at: directory)
     }
 
     func testTelegramExportCallbackReportsSendFailure() async throws {
         let database = try AppDatabase.makeTemporary()
+        let calendar = Calendar(identifier: .gregorian)
+        let date = DateComponents(calendar: calendar, year: 2026, month: 6, day: 15, hour: 10, minute: 31).date!
+        let directory = makeTemporaryBackupDirectory()
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let configuration = TelegramBotConfiguration.load(environment: [
             "ABOLIFE_TELEGRAM_BOT_TOKEN": "local-test-token",
             "ABOLIFE_TELEGRAM_ALLOWED_CHAT_ID": "100"
@@ -2597,13 +3761,24 @@ final class AboLifeTests: XCTestCase {
             dialogManager: ExternalInputDialogManager(service: ExternalInputService(database: database)),
             client: messageClient,
             documentClient: documentClient,
-            snapshotExportService: HtmlSnapshotExportService(database: database)
+            snapshotExportService: HtmlSnapshotExportService(
+                database: database,
+                calendar: calendar,
+                now: { date },
+                temporaryDirectory: directory,
+                uniqueIdentifier: { "failure-id" }
+            )
         )
 
-        let response = await bot.handle(TelegramUpdate(updateId: 61, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: TelegramExportAction.callbackData)))
+        let response = await bot.handle(TelegramUpdate(updateId: 61, message: nil, callback: TelegramCallbackAction(chatId: 100, userId: 7, data: TelegramCallbackID.exportSnapshot)))
 
-        XCTAssertEqual(response?.text, "Export konnte nicht gesendet werden.")
-        XCTAssertEqual(messageClient.sentResponses.last?.text, "Export konnte nicht gesendet werden.")
+        XCTAssertEqual(response?.text, "Der Snapshot konnte nicht gesendet werden.")
+        XCTAssertEqual(messageClient.sentResponses.last?.text, "Der Snapshot konnte nicht gesendet werden.")
+        let attemptedURL = try XCTUnwrap(documentClient.attemptedFileURLs.first)
+        XCTAssertTrue(documentClient.fileExistedDuringAttempts.first == true)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: attemptedURL.path))
+        XCTAssertTrue((try FileManager.default.contentsOfDirectory(atPath: directory.path)).isEmpty)
+        try? FileManager.default.removeItem(at: directory)
     }
 
     @MainActor
@@ -2890,9 +4065,10 @@ final class AboLifeTests: XCTestCase {
     }
 
     private func XCTAssertSuccess(_ result: ExternalInputResult, module: ExternalInputAffectedModule, file: StaticString = #filePath, line: UInt = #line) {
-        if case let .success(_, affectedModule) = result {
+        switch result {
+        case let .success(_, affectedModule), let .saved(_, affectedModule, _):
             XCTAssertEqual(affectedModule, module, file: file, line: line)
-        } else {
+        default:
             XCTFail("Erwartet success, erhalten: \(result)", file: file, line: line)
         }
     }
@@ -3039,6 +4215,8 @@ final class RecordingTelegramDocumentClient: TelegramDocumentClient {
     }
 
     private(set) var sentDocuments: [SentDocument] = []
+    private(set) var attemptedFileURLs: [URL] = []
+    private(set) var fileExistedDuringAttempts: [Bool] = []
     var error: Error?
 
     init(error: Error? = nil) {
@@ -3046,6 +4224,8 @@ final class RecordingTelegramDocumentClient: TelegramDocumentClient {
     }
 
     func sendDocument(chatId: Int64, fileURL: URL, caption: String?) async throws {
+        attemptedFileURLs.append(fileURL)
+        fileExistedDuringAttempts.append(FileManager.default.fileExists(atPath: fileURL.path))
         if let error { throw error }
         sentDocuments.append(
             SentDocument(

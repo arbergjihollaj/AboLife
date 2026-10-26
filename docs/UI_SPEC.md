@@ -35,14 +35,17 @@ Sidebar-Struktur:
 
 ```text
 Dashboard
-Ernährung
-Training
+Gesundheit
+├── Ernährung
+├── Training
+└── Gewicht
 Finanzen
 Gewohnheiten
+Statistiken
 Wochenreview
-Körperwerte
-Einstellungen
 ```
+
+„Gesundheit“ ist standardmäßig eingeklappt. Die drei Unterseiten öffnen innerhalb der bestehenden Hauptnavigation. Wird eine davon über eine Schnellaktion geöffnet, klappt die Gruppe automatisch auf. Bei eingeklappter Gruppe markiert die bestehende Auswahlfarbe den Gruppentitel, wenn eine Gesundheitsseite aktiv ist. Einstellungen bleiben ausschließlich über ⌘, und das App-Menü erreichbar.
 
 ## 4. Dashboard-Zonen
 
@@ -284,3 +287,18 @@ Detailseiten zeigen Historie, Listen, Bearbeitung und tiefergehende Charts.
 - Numeric Quick-Add-Eingaben werden stabil normalisiert, sodass keine NaN-/Inf-Werte in Ringe, Charts oder Persistenz gelangen.
 - Dashboard verwendet keine sichtbaren Mock-/Debug-Aktivitäten im Laufzeitpfad und nutzt dieselbe Tagesbudget-Logik wie Finanzen.
 - Settings zeigt Backup & Export mit SQLite, JSON und CSV für Numbers im bestehenden Glass-Stil.
+
+### Menüleisten-Popover
+
+- Das Popover ist 292 Punkte breit, die ausgeklappte Aktionsauswahl 280 Punkte. Nur der äußere Popover-Hintergrund verwendet ab macOS 26 natives Liquid Glass im dunklen App-Farbton; ältere Versionen nutzen die vorhandene materialbasierte Glasdarstellung. Vordergrundkarten, Diagramme, Beschriftungen und Buttons behalten die App-Palette. Die Karten besitzen eine dunkle Unterlage, damit der durchscheinende Desktop ihre Farben nicht verändert. Die ausgeklappte Aktionsauswahl behält den ursprünglichen dunklen Verlauf. Ein dunkles Farbschema sichert den Kontrast der hellen Beschriftungen.
+- „Tagesstatus“ zeigt ausschließlich den vorhandenen Kalorien-/Protein-Doppelring.
+- „Budget“ zeigt einen dezenten grauen Monatsbudget-Ring mit 8 Punkten Strichstärke. Der grüne Anteil mit runden Enden entspricht `dailyBudgetRemaining / monthlyBudget`; bei null verfügbarem Budget verschwindet er vollständig. In der Mitte steht das heute verfügbare Budget mit Centangabe und ruhiger Schriftgewichtung.
+- Tagesbudget und Ausgaben verwenden weiterhin `DashboardStore` und die gemeinsame Berechnung in `FinanceStore`. Nach dem Speichern einer Ausgabe aktualisiert sich der Ring aus diesen Daten. Bei ausgeschöpftem oder fehlendem Budget bleibt der Ring grau.
+- Ein einzelner „Quick Actions“-Button öffnet eine scrollbare Aktionsauswahl mit den bisherigen Eingaben, Trainings-/Habit-Aktionen und Telegram-Steuerung. Beim erneuten Öffnen des Menüleisten-Popovers ist sie eingeklappt.
+- Das M-Logo links oben öffnet beziehungsweise fokussiert das Hauptfenster über `AppNavigationCoordinator`. Die separaten Buttons „Hauptfenster“ und „Einstellungen“ entfallen.
+
+### Eigenes Einstellungsfenster
+
+- Die bestehende Einstellungsansicht öffnet in einer nativen SwiftUI-`Settings`-Scene über ⌘, oder das macOS-App-Menü „AboLife → Einstellungen …“.
+- Die Seitenleiste enthält keinen Einstellungsbutton. Das Einstellungsfenster ist ausschließlich über ⌘, und das macOS-App-Menü erreichbar. Die aktuell geöffnete Hauptseite bleibt dabei erhalten.
+- Das Einstellungsfenster ist separat schließbar und in der Größe veränderbar. Es verwendet dieselbe Datenbank und denselben Telegram-Koordinator wie die App.

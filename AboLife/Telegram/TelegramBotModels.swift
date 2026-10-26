@@ -1,5 +1,48 @@
 import Foundation
 
+enum TelegramCallbackID {
+    static let mainMenu = "menu.main"
+    static let addMenu = "menu.add"
+    static let today = "menu.today"
+    static let exportMenu = "menu.export"
+    static let help = "menu.help"
+
+    static let addWeight = "add.weight"
+    static let addExpense = "add.expense"
+    static let addMeal = "add.meal"
+    static let addTemplate = "add.template"
+    static let addWorkout = "add.workout"
+    static let addHabit = "add.habit"
+
+    static let save = "dialog.save"
+    static let cancel = "dialog.cancel"
+    static let exportSnapshot = "export.snapshot"
+    static let exportData = "export.data"
+
+    static func canonical(_ callbackData: String) -> String {
+        switch callbackData {
+        case "flow.weight":
+            return addWeight
+        case "flow.expense":
+            return addExpense
+        case "flow.meal":
+            return addMeal
+        case "flow.template":
+            return addTemplate
+        case "flow.workout":
+            return addWorkout
+        case "flow.habit":
+            return addHabit
+        case "confirm.save":
+            return save
+        case "confirm.cancel", "flow.cancel":
+            return cancel
+        default:
+            return callbackData
+        }
+    }
+}
+
 struct TelegramBotConfiguration: Equatable {
     let token: String?
     let allowedChatId: Int64?

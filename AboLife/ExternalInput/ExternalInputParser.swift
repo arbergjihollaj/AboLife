@@ -16,8 +16,24 @@ struct ExternalInputParser {
         if ["/help", "hilfe", "help"].contains(lowered) { return .help }
         if ["/cancel", "abbrechen", "cancel"].contains(lowered) { return .cancel }
 
+        if ["training pausieren", "training pause", "workout pausieren"].contains(lowered) {
+            return .workoutPaused(date: now())
+        }
+
+        if ["training minimum erledigt", "workout minimum erledigt", "minimum training erledigt"].contains(lowered) {
+            return .homeWorkoutCompleted(date: now(), workoutName: nil, intensity: .minimum, note: "Telegram")
+        }
+
         if ["training erledigt", "workout erledigt", "trainiert"].contains(lowered) {
             return .workoutCompleted(date: now(), note: nil)
+        }
+
+        if let workout = parseNamedWorkout(lowered: lowered) {
+            return .homeWorkoutCompleted(date: now(), workoutName: workout, intensity: .normal, note: "Telegram")
+        }
+
+        if let sets = parseWorkoutSets(text: text, lowered: lowered) {
+            return sets
         }
 
         if lowered.hasPrefix("habit "), lowered.hasSuffix(" erledigt") {
@@ -50,7 +66,13 @@ struct ExternalInputParser {
         let normalized = rawValue
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: ",", with: ".")
-        guard let value = Double(normalized), value.isFinite else { return nil }
+        let candidate: String
+        if let match = firstNumber(in: normalized) {
+            candidate = match
+        } else {
+            candidate = normalized
+        }
+        guard let value = Double(candidate), value.isFinite else { return nil }
         return value
     }
 
@@ -83,7 +105,7 @@ struct ExternalInputParser {
             return .weight(date: now(), weightKg: value)
         }
 
-        if lowered.hasSuffix(" kg"), let numberText = firstNumber(in: text), let value = parseNumber(numberText) {
+        if (lowered.hasSuffix(" kg") || lowered.hasSuffix("kg")), let numberText = firstNumber(in: text), let value = parseNumber(numberText) {
             return .weight(date: now(), weightKg: value)
         }
 
@@ -91,26 +113,57 @@ struct ExternalInputParser {
     }
 
     private func parseExpense(text: String, lowered: String) -> ExternalInputIntent? {
-        let source: String
+        var source: String
+        let isExplicitExpense: Bool
         if lowered.hasPrefix("ausgabe ") {
             source = String(text.dropFirst("Ausgabe ".count))
+            isExplicitExpense = true
         } else {
             source = text
+            isExplicitExpense = false
         }
 
-        guard let numberText = firstNumber(in: source), source.trimmingCharacters(in: .whitespaces).hasPrefix(numberText) else {
+        let date = parseRelativeExpenseDate(from: &source) ?? now()
+
+        guard let match = firstNumberMatch(in: source) else {
             return nil
         }
+        let trimmedSource = source.trimmingCharacters(in: .whitespacesAndNewlines)
+        let numberText = match.value
+        guard isExplicitExpense || trimmedSource.hasPrefix(numberText) || plausiblePlainExpense(source: trimmedSource, numberRange: match.range) else { return nil }
         guard let amount = parseNumber(numberText) else {
             return .unknown(rawText: text, reason: "Bitte gib den Betrag als Zahl an.")
         }
 
-        let title = String(source.dropFirst(numberText.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        var beforeAmount = String(source[..<match.range.lowerBound])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        var afterAmount = String(source[match.range.upperBound...])
+            .replacingOccurrences(of: "€", with: "")
+            .replacingOccurrences(of: "eur", with: "", options: [.caseInsensitive])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let explicitCategoryAfterAmount = extractLeadingCategory(from: &afterAmount)
+        let explicitCategoryBeforeAmount = extractTrailingCategory(from: &beforeAmount)
+        let explicitCategory = explicitCategoryAfterAmount ?? explicitCategoryBeforeAmount
+
+        var title: String
+        if trimmedSource.hasPrefix(numberText) {
+            title = afterAmount
+        } else {
+            title = beforeAmount
+        }
+        title = title
+            .replacingOccurrences(of: "€", with: "")
+            .replacingOccurrences(of: "eur", with: "", options: [.caseInsensitive])
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if title.isEmpty, let explicitCategory {
+            title = explicitCategory
+        }
         guard !title.isEmpty else {
             return .unknown(rawText: text, reason: "Bitte ergänze eine Beschreibung für die Ausgabe.")
         }
 
-        return .expense(date: now(), amount: amount, title: title, category: nil)
+        return .expense(date: date, amount: amount, title: title.isEmpty ? "Ausgabe" : title, category: explicitCategory)
     }
 
     private func parseMeal(text: String, lowered: String) -> ExternalInputIntent? {
@@ -142,7 +195,88 @@ struct ExternalInputParser {
         return .meal(date: now(), name: name, calories: calories, protein: protein, note: nil)
     }
 
+    private func parseNamedWorkout(lowered: String) -> String? {
+        guard lowered.hasSuffix(" erledigt") else { return nil }
+        let name = lowered.dropLast(" erledigt".count).trimmingCharacters(in: .whitespacesAndNewlines)
+        switch name {
+        case "pull":
+            return "Pull + Core"
+        case "push":
+            return "Push + Legs"
+        case "full body", "fullbody":
+            return "Full Body"
+        default:
+            return nil
+        }
+    }
+
+    private func parseWorkoutSets(text: String, lowered: String) -> ExternalInputIntent? {
+        let parts = text.split(separator: " ").map(String.init)
+        guard parts.count >= 3 else { return nil }
+        let numbers = parts.dropFirst().compactMap { Int($0) }
+        guard numbers.count == parts.count - 1, numbers.allSatisfy({ $0 >= 0 && $0 <= 300 }) else {
+            return nil
+        }
+        let exerciseName = parts[0]
+        let knownPrefixes = ["klimm", "liegest", "squat", "squats", "kniebeug", "plank", "rudern"]
+        guard knownPrefixes.contains(where: { lowered.hasPrefix($0) }) else { return nil }
+        return .workoutExerciseSets(date: now(), exerciseName: exerciseName, reps: numbers)
+    }
+
     private func firstNumber(in text: String) -> String? {
+        firstNumberMatch(in: text)?.value
+    }
+
+    private func parseRelativeExpenseDate(from source: inout String) -> Date? {
+        let trimmed = source.trimmingCharacters(in: .whitespacesAndNewlines)
+        let lowered = trimmed.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "de_DE")).lowercased()
+        let prefixes: [(String, Int)] = [
+            ("gestern ", -1),
+            ("heute ", 0)
+        ]
+        guard let match = prefixes.first(where: { lowered.hasPrefix($0.0) }) else { return nil }
+        source = String(trimmed.dropFirst(match.0.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        return Calendar.current.date(byAdding: .day, value: match.1, to: now()) ?? now()
+    }
+
+    private func plausiblePlainExpense(source: String, numberRange: Range<String.Index>) -> Bool {
+        let before = source[..<numberRange.lowerBound].trimmingCharacters(in: .whitespacesAndNewlines)
+        let after = source[numberRange.upperBound...].trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !before.isEmpty || !after.isEmpty else { return false }
+        if before.split(separator: " ").count <= 4, !before.contains("kcal"), !before.contains("kg") {
+            return true
+        }
+        return source.contains("€") || source.localizedCaseInsensitiveContains(" eur")
+    }
+
+    private func extractLeadingCategory(from text: inout String) -> String? {
+        let categories = FinanceExpenseInputService.suggestedExpenseCategories.sorted { $0.count > $1.count }
+        let normalizedText = normalized(text)
+        guard let category = categories.first(where: { normalizedText == normalized($0) || normalizedText.hasPrefix(normalized($0) + " ") }) else {
+            return nil
+        }
+        text = String(text.dropFirst(category.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        return category
+    }
+
+    private func extractTrailingCategory(from text: inout String) -> String? {
+        let categories = FinanceExpenseInputService.suggestedExpenseCategories.sorted { $0.count > $1.count }
+        let normalizedText = normalized(text)
+        guard let category = categories.first(where: { normalizedText == normalized($0) || normalizedText.hasSuffix(" " + normalized($0)) }) else {
+            return nil
+        }
+        text = String(text.dropLast(category.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        return category
+    }
+
+    private func normalized(_ value: String) -> String {
+        value
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "de_DE"))
+            .lowercased()
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func firstNumberMatch(in text: String) -> (value: String, range: Range<String.Index>)? {
         let pattern = #"^\s*([0-9]+(?:[\.,][0-9]+)?)|([0-9]+(?:[\.,][0-9]+)?)"#
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
@@ -150,7 +284,7 @@ struct ExternalInputParser {
         for index in 1..<match.numberOfRanges {
             let matchRange = match.range(at: index)
             if matchRange.location != NSNotFound, let swiftRange = Range(matchRange, in: text) {
-                return String(text[swiftRange])
+                return (String(text[swiftRange]), swiftRange)
             }
         }
         return nil

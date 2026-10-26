@@ -17,6 +17,7 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     header
                     heroCard
+                    openTodayCard
 
                     dashboardGrid
                 }
@@ -172,6 +173,43 @@ struct DashboardView: View {
         QuickAddAction.bottomDockActions
     }
 
+    private var openTodayCard: some View {
+        AboLifeCard {
+            HStack(alignment: .top, spacing: 14) {
+                Image(systemName: hasOpenItems ? "moon.stars.fill" : "checkmark.circle.fill")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(hasOpenItems ? AboLifeColors.review : AboLifeColors.protein)
+                    .frame(width: 34, height: 34)
+                    .background(AboLifeColors.quietFill, in: Circle())
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Heute noch offen")
+                        .font(AboLifeTypography.cardTitle)
+                        .foregroundStyle(AboLifeColors.primaryText)
+
+                    Text(store.snapshot.todayOpen.summary)
+                        .font(AboLifeTypography.body)
+                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 12)
+
+                if store.state.dailyBudgetRemaining > 0 {
+                    AboLifeGlassCapsule {
+                        Label(
+                            "\(Int(store.state.dailyBudgetRemaining.rounded())) EUR Tagesbudget",
+                            systemImage: "wallet.pass"
+                        )
+                        .font(AboLifeTypography.micro)
+                        .foregroundStyle(AboLifeColors.finance)
+                        .monospacedDigit()
+                    }
+                }
+            }
+        }
+    }
+
     private var dashboardGrid: some View {
         ViewThatFits(in: .horizontal) {
             wideDashboardGrid
@@ -260,7 +298,24 @@ struct DashboardView: View {
                     .font(AboLifeTypography.body)
                     .foregroundStyle(AboLifeColors.secondaryText)
 
+                Text("Nächstes: \(store.snapshot.training.nextWorkout)")
+                    .font(AboLifeTypography.micro)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .lineLimit(1)
+
+                if let detail = store.snapshot.training.progressDetail {
+                    Text(detail)
+                        .font(AboLifeTypography.micro)
+                        .foregroundStyle(AboLifeColors.tertiaryText)
+                        .lineLimit(1)
+                }
+
                 MetricProgressView(progress: store.snapshot.training.progress, tint: AboLifeColors.training)
+
+                Text(store.snapshot.training.calmMessage)
+                    .font(AboLifeTypography.caption)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .lineLimit(2)
 
                 Spacer(minLength: 0)
             }
@@ -269,19 +324,43 @@ struct DashboardView: View {
 
     private var financeCard: some View {
         AboLifeCard(minHeight: 154) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 9) {
                 cardTitle(store.snapshot.finance.title, systemImage: "eurosign.circle", tint: AboLifeColors.finance)
 
-                kpiValue("\(Int(store.snapshot.finance.remainingToday))", suffix: "EUR Tagesbudget")
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Text("\(Int(store.snapshot.finance.remainingToday.rounded()))")
+                        .font(AboLifeTypography.metric)
+                        .foregroundStyle(AboLifeColors.primaryText)
+                        .monospacedDigit()
+                    Text("EUR heute frei")
+                        .font(AboLifeTypography.metricUnit)
+                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.78)
+                }
 
                 BudgetProgressBar(
                     spent: store.snapshot.finance.spentThisMonth,
                     budget: store.snapshot.finance.monthlyBudget
                 )
 
-                Text(store.snapshot.finance.message)
+                HStack(spacing: 7) {
+                    miniFinancePill(
+                        "Monat",
+                        "\(Int(financeMonthRemaining.rounded())) EUR",
+                        AboLifeColors.review
+                    )
+                    miniFinancePill(
+                        "Ausgaben",
+                        "\(Int(store.snapshot.finance.spentThisMonth.rounded())) EUR",
+                        AboLifeColors.finance
+                    )
+                }
+
+                Text(financeStatusSentence)
                     .font(AboLifeTypography.caption)
                     .foregroundStyle(AboLifeColors.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -410,6 +489,61 @@ struct DashboardView: View {
             Image(systemName: systemImage)
                 .foregroundStyle(tint)
         }
+    }
+
+    private func miniFinancePill(_ title: String, _ value: String, _ tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title)
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(AboLifeColors.secondaryText)
+            Text(value)
+                .font(AboLifeTypography.micro.weight(.semibold))
+                .foregroundStyle(tint)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+    }
+
+    private var financeMonthRemaining: Double {
+        max(store.snapshot.finance.monthlyBudget - store.snapshot.finance.spentThisMonth, 0)
+    }
+
+    private var financeProjectedSpend: Double {
+        let spent = store.snapshot.finance.spentThisMonth
+        guard spent > 0 else { return 0 }
+        let calendar = Calendar.current
+        let today = Date()
+        let elapsedDay = max(calendar.component(.day, from: today), 1)
+        let range = calendar.range(of: .day, in: .month, for: today)
+        let daysInMonth = max(range?.count ?? elapsedDay, elapsedDay)
+        return spent / Double(elapsedDay) * Double(daysInMonth)
+    }
+
+    private var financeStatusSentence: String {
+        if store.snapshot.finance.spentThisMonth <= 0 {
+            return "Noch keine Monatsausgaben. Das Budget ist ruhig bereit."
+        }
+        if financeProjectedSpend > store.snapshot.finance.monthlyBudget {
+            return "Die Prognose liegt leicht über dem Monatsbudget."
+        }
+        if store.snapshot.finance.remainingToday > 0 {
+            return "Du bist aktuell im Budget. Heute sind noch ca. \(Int(store.snapshot.finance.remainingToday.rounded())) EUR frei."
+        }
+        return store.snapshot.finance.message
+    }
+
+    private var hasOpenItems: Bool {
+        let status = store.snapshot.todayOpen
+        return status.proteinRemainingG > 0
+            || status.training == .open
+            || status.isMedicationOpen
+            || status.isProteinShakeOpen
+            || !status.openHabitTitles.isEmpty
     }
 }
 

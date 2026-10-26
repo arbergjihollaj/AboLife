@@ -9,9 +9,17 @@ enum AppSection: String, CaseIterable, Identifiable {
     case habits
     case statistics
     case weeklyReview
-    case settings
 
     var id: String { rawValue }
+
+    var isHealthSection: Bool {
+        switch self {
+        case .nutrition, .training, .weight:
+            return true
+        default:
+            return false
+        }
+    }
 
     var title: String {
         switch self {
@@ -31,8 +39,6 @@ enum AppSection: String, CaseIterable, Identifiable {
             return "Statistiken"
         case .weeklyReview:
             return "Wochenreview"
-        case .settings:
-            return "Einstellungen"
         }
     }
 
@@ -54,8 +60,6 @@ enum AppSection: String, CaseIterable, Identifiable {
             return "chart.bar.xaxis"
         case .weeklyReview:
             return "calendar.badge.clock"
-        case .settings:
-            return "gearshape"
         }
     }
 }
@@ -63,6 +67,7 @@ enum AppSection: String, CaseIterable, Identifiable {
 struct AppRouter: View {
     @Environment(\.appDatabase) private var appDatabase
     @EnvironmentObject private var navigation: AppNavigationCoordinator
+    @State private var isHealthExpanded = false
 
     var body: some View {
         NavigationSplitView {
@@ -72,12 +77,21 @@ struct AppRouter: View {
                 VStack(alignment: .leading, spacing: 18) {
                     sidebarHeader
 
-                    List(AppSection.allCases, selection: $navigation.selectedSection) { section in
-                        sidebarRow(section)
-                            .tag(section)
-                            .listRowInsets(EdgeInsets(top: 3, leading: 0, bottom: 3, trailing: 0))
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
+                    List {
+                        sidebarButton(.dashboard)
+
+                        healthCategory
+
+                        if isHealthExpanded {
+                            ForEach(AppSection.allCases.filter(\.isHealthSection)) { section in
+                                sidebarButton(section)
+                                    .padding(.leading, 12)
+                            }
+                        }
+
+                        ForEach(AppSection.allCases.filter { $0 != .dashboard && !$0.isHealthSection }) { section in
+                            sidebarButton(section)
+                        }
                     }
                     .scrollContentBackground(.hidden)
                     .listStyle(.sidebar)
@@ -108,24 +122,79 @@ struct AppRouter: View {
                     StatisticsView(database: appDatabase)
                 case .weeklyReview:
                     WeeklyReviewView(database: appDatabase)
-                case .settings:
-                    SettingsView(database: appDatabase)
                 }
             }
             .frame(minWidth: 860, minHeight: 640)
         }
+        .onAppear {
+            if navigation.selectedSection?.isHealthSection == true {
+                isHealthExpanded = true
+            }
+        }
+        .onChange(of: navigation.selectedSection) { _, section in
+            if section?.isHealthSection == true {
+                isHealthExpanded = true
+            }
+        }
+    }
+
+    private var healthCategory: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.16)) {
+                isHealthExpanded.toggle()
+            }
+        } label: {
+            sidebarLabel(
+                title: "Gesundheit",
+                systemImage: "heart",
+                isSelected: navigation.selectedSection?.isHealthSection == true && !isHealthExpanded
+            )
+            .overlay(alignment: .trailing) {
+                Image(systemName: isHealthExpanded ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .padding(.trailing, 10)
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Gesundheit")
+        .accessibilityValue(isHealthExpanded ? "Ausgeklappt" : "Eingeklappt")
+        .selectionDisabled()
+        .listRowInsets(EdgeInsets(top: 3, leading: 0, bottom: 3, trailing: 0))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+
+    private func sidebarButton(_ section: AppSection) -> some View {
+        Button {
+            navigation.select(section)
+        } label: {
+            sidebarRow(section)
+                .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits((navigation.selectedSection ?? .dashboard) == section ? .isSelected : [])
+        // The row already draws its own selection surface.
+        .selectionDisabled()
+        .listRowInsets(EdgeInsets(top: 3, leading: 0, bottom: 3, trailing: 0))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
     }
 
     private func sidebarRow(_ section: AppSection) -> some View {
         let isSelected = (navigation.selectedSection ?? .dashboard) == section
+        return sidebarLabel(title: section.title, systemImage: section.systemImage, isSelected: isSelected)
+    }
 
+    private func sidebarLabel(title: String, systemImage: String, isSelected: Bool) -> some View {
         return HStack(spacing: 12) {
-            Image(systemName: section.systemImage)
+            Image(systemName: systemImage)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(isSelected ? AboLifeColors.primaryText : AboLifeColors.secondaryText)
                 .frame(width: 24)
 
-            Text(section.title)
+            Text(title)
                 .font(.system(size: 14, weight: isSelected ? .semibold : .medium, design: .rounded))
                 .foregroundStyle(isSelected ? AboLifeColors.primaryText : AboLifeColors.secondaryText)
 

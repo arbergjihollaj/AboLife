@@ -1,15 +1,23 @@
 import Foundation
 
 struct DailySummarySnapshot: Equatable {
+    let dateText: String
     let weightText: String
+    let caloriesText: String
+    let proteinText: String
     let caloriesRemainingText: String
     let proteinRemainingText: String
     let trainingText: String
+    let trainingWeekText: String
+    let habitText: String
     let medicationText: String
     let proteinShakeText: String
     let dailyBudgetText: String
+    let monthlyBudgetRemainingText: String
     let spentText: String
     let availableTodayText: String
+    let openStatusText: String
+    let nextStepText: String?
     let isProteinShakeOpen: Bool
     let isMedicationOpen: Bool
 }
@@ -17,6 +25,29 @@ struct DailySummarySnapshot: Equatable {
 struct DailySummaryService {
     let database: AppDatabase
     var calendar: Calendar = .current
+
+    func todayText(for date: Date = Date()) throws -> String {
+        let snapshot = try snapshot(for: date)
+        var lines = [
+            "📊 Heute · \(snapshot.dateText)",
+            "",
+            "🍽 Kalorien: \(snapshot.caloriesText)",
+            "🥛 Protein: \(snapshot.proteinText)",
+            "🏋️ Training heute: \(snapshot.trainingText)",
+            "Woche: \(snapshot.trainingWeekText)",
+            "💶 Heute verfügbar: \(snapshot.availableTodayText)",
+            "Monatsrest: \(snapshot.monthlyBudgetRemainingText)",
+            "✅ Habits: \(snapshot.habitText)",
+            "💊 Medikamente: \(snapshot.medicationText) · Shake: \(snapshot.proteinShakeText)",
+            "",
+            snapshot.openStatusText
+        ]
+        if let nextStep = snapshot.nextStepText {
+            lines.append("Nächster Schritt: \(nextStep)")
+        }
+
+        return lines.joined(separator: "\n")
+    }
 
     func morningSummary(for date: Date = Date()) throws -> TelegramReminderMessage {
         let snapshot = try snapshot(for: date)
@@ -36,53 +67,70 @@ struct DailySummaryService {
         * Verfügbar heute: \(snapshot.availableTodayText)
         """
 
+        var actions: [TelegramReminderAction] = []
+        if snapshot.isProteinShakeOpen {
+            actions.append(.proteinShakeDone)
+        }
+        if snapshot.isMedicationOpen {
+            actions.append(.medicationDone)
+        }
+        let today = try TodaySnapshotService(database: database, calendar: calendar).snapshot(for: date)
+        if today.todayOpenStatus.training == .open {
+            actions.append(.startTraining)
+        }
+        actions.append(contentsOf: [.addMeal, .addExpense, .remindLater])
+
         return TelegramReminderMessage(
             kind: .morningSummary,
             text: text,
-            keyboard: actionKeyboard([
-                .proteinShakeDone,
-                .medicationDone,
-                .startTraining,
-                .addMeal,
-                .addExpense,
-                .remindLater
-            ])
+            keyboard: actionKeyboard(actions)
         )
     }
 
     func snapshot(for date: Date = Date()) throws -> DailySummarySnapshot {
-        let settings = try SettingsRepository(database: database).loadSettings()
-        let nutrition = try NutritionRepository(database: database).daySummary(for: date, calendar: calendar)
-        let todayFinance = try FinanceRepository(database: database).fetch(in: DateIntervals.day(containing: date, calendar: calendar))
-        let monthlySpent = try FinanceRepository(database: database).monthSpending(for: date, calendar: calendar)
-        let weight = try WeightRepository(database: database).fetchEntry(for: date, calendar: calendar) ?? WeightRepository(database: database).latest()
-        let dayKey = DateIntervals.dayKey(for: date, calendar: calendar)
-        let proteinShakeDone = try isHabitDone(TelegramReminderHabit.proteinShakeKey, dayKey: dayKey)
-        let medicationDone = try isHabitDone(TelegramReminderHabit.medicationKey, dayKey: dayKey)
-
-        let caloriesRemaining = max(settings.caloriesTarget - nutrition.caloriesKcal, 0)
-        let proteinRemaining = max(settings.proteinTargetG - nutrition.proteinG, 0)
-        let spentToday = todayFinance.reduce(0) { $0 + $1.amount }
-        let dailyBudget = FinanceStore.dailyBudgetRemaining(spent: monthlySpent, budget: settings.monthlyBudget, date: date, calendar: calendar)
-        let availableToday = max(dailyBudget - spentToday, 0)
+        let today = try TodaySnapshotService(database: database, calendar: calendar).snapshot(for: date)
+        let proteinShakeDone = today.isHabitDone(TelegramReminderHabit.proteinShakeKey)
+        let medicationDone = today.isHabitDone(TelegramReminderHabit.medicationKey)
+        let openStatus = today.todayOpenStatus
+        let scheduledWorkout = HomeWorkoutPlanProvider.plan.workout(for: date, calendar: calendar)
+        let trainingText: String
+        switch openStatus.training {
+        case .completed:
+            trainingText = "\(scheduledWorkout.day.name) · erledigt"
+        case .paused:
+            trainingText = "\(scheduledWorkout.day.name) · pausiert"
+        case .open:
+            trainingText = "\(scheduledWorkout.day.name) · offen"
+        case .notScheduled:
+            trainingText = "Heute kein Training geplant"
+        }
+        let regularHabits = FixedHabit.defaults.filter { !$0.isDerived }
+        let completedHabits = regularHabits.filter { today.habitValue(for: $0.key) >= $0.targetValue }.count
 
         return DailySummarySnapshot(
-            weightText: weight.map { WeightStore.formatWeight($0.weightKg) } ?? "noch nicht eingetragen",
-            caloriesRemainingText: "\(caloriesRemaining) kcal",
-            proteinRemainingText: "\(Int(proteinRemaining.rounded())) g",
-            trainingText: TrainingPlanSeeder.weeklyPlan.workout(for: date, calendar: calendar).day.name,
+            dateText: formattedDate(date),
+            weightText: today.latestWeight.map { WeightStore.formatWeight($0.weightKg) } ?? "noch nicht eingetragen",
+            caloriesText: "\(today.nutritionSummary.caloriesKcal) / \(today.settings.caloriesTarget) kcal",
+            proteinText: "\(Int(today.nutritionSummary.proteinG.rounded())) / \(Int(today.settings.proteinTargetG.rounded())) g",
+            caloriesRemainingText: "\(today.caloriesRemaining) kcal",
+            proteinRemainingText: "\(Int(today.proteinRemainingG.rounded())) g",
+            trainingText: trainingText,
+            trainingWeekText: "\(today.weeklyWorkoutCompleted) / \(today.settings.weeklyWorkoutTarget)",
+            habitText: "\(completedHabits) / \(regularHabits.count) erledigt",
             medicationText: medicationDone ? "erledigt" : "offen",
             proteinShakeText: proteinShakeDone ? "erledigt" : "offen",
-            dailyBudgetText: euro(dailyBudget, currency: settings.defaultCurrency),
-            spentText: euro(spentToday, currency: settings.defaultCurrency),
-            availableTodayText: euro(availableToday, currency: settings.defaultCurrency),
+            dailyBudgetText: money(today.dailyBudgetRemaining, currency: today.settings.defaultCurrency),
+            monthlyBudgetRemainingText: money(
+                max(today.settings.monthlyBudget - today.monthlySpent, 0),
+                currency: today.settings.defaultCurrency
+            ),
+            spentText: money(today.spentToday, currency: today.settings.defaultCurrency),
+            availableTodayText: money(today.availableToday, currency: today.settings.defaultCurrency),
+            openStatusText: openStatus.summary,
+            nextStepText: openStatus.nextStep,
             isProteinShakeOpen: !proteinShakeDone,
             isMedicationOpen: !medicationDone
         )
-    }
-
-    private func isHabitDone(_ key: String, dayKey: String) throws -> Bool {
-        try HabitRepository(database: database).fetchEntry(habitKey: key, date: dayKey)?.isCompleted == true
     }
 
     private func actionKeyboard(_ actions: [TelegramReminderAction]) -> TelegramKeyboard {
@@ -92,7 +140,15 @@ struct DailySummaryService {
         })
     }
 
-    private func euro(_ value: Double, currency: String) -> String {
-        "\(Int(value.rounded())) \(currency)"
+    private func formattedDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateFormat = "dd.MM.yyyy"
+        return formatter.string(from: date)
+    }
+
+    private func money(_ value: Double, currency: String) -> String {
+        ExternalInputFormatting.currency(value, currencyCode: currency)
     }
 }

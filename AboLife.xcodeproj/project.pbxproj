@@ -20,6 +20,7 @@
 		100000000000000000000125 /* FloatingQuickAddBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000025 /* FloatingQuickAddBar.swift */; };
 		AB7D00000000000000000101 /* QuickAddPanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7D00000000000000000001 /* QuickAddPanels.swift */; };
 		AB7D00000000000000000102 /* QuickAddComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7D00000000000000000002 /* QuickAddComponents.swift */; };
+		AB1600000000000000000101 /* TodaySnapshotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1600000000000000000001 /* TodaySnapshotService.swift */; };
 		100000000000000000000110 /* NutritionPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000010 /* NutritionPlaceholderView.swift */; };
 		100000000000000000000126 /* NutritionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000026 /* NutritionView.swift */; };
 		100000000000000000000127 /* NutritionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000027 /* NutritionStore.swift */; };
@@ -216,6 +217,7 @@
 		AB1500000000000000000004 /* TelegramBarcodeFoodScanService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelegramBarcodeFoodScanService.swift; sourceTree = "<group>"; };
 		AB1300000000000000000001 /* AppNavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNavigationCoordinator.swift; sourceTree = "<group>"; };
 		AB1300000000000000000002 /* MenuBarQuickPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarQuickPanelView.swift; sourceTree = "<group>"; };
+		AB1600000000000000000001 /* TodaySnapshotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaySnapshotService.swift; sourceTree = "<group>"; };
 		100000000000000000000201 /* AboLife.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AboLife.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		100000000000000000000202 /* AboLifeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AboLifeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -255,7 +257,7 @@
 		100000000000000000000504 /* Features */ = {isa = PBXGroup; children = (100000000000000000000510 /* Dashboard */, 100000000000000000000511 /* Nutrition */, 100000000000000000000512 /* Training */, AB9A00000000000000000501 /* Weight */, 100000000000000000000513 /* Finance */, 100000000000000000000514 /* Habits */, AB9A00000000000000000502 /* Statistics */, 100000000000000000000515 /* Review */, 100000000000000000000516 /* Settings */, 100000000000000000000016 /* PlaceholderFeatureView.swift */); path = Features; sourceTree = "<group>"; };
 		100000000000000000000505 /* Charts */ = {isa = PBXGroup; children = (100000000000000000000017 /* CoreRingView.swift */, 100000000000000000000018 /* MiniTrendChart.swift */, 100000000000000000000019 /* BudgetProgressBar.swift */); path = Charts; sourceTree = "<group>"; };
 		100000000000000000000506 /* PreviewSupport */ = {isa = PBXGroup; children = (100000000000000000000020 /* PreviewData.swift */); path = PreviewSupport; sourceTree = "<group>"; };
-		100000000000000000000510 /* Dashboard */ = {isa = PBXGroup; children = (100000000000000000000007 /* DashboardView.swift */, 100000000000000000000008 /* DashboardStore.swift */, 100000000000000000000009 /* DashboardMockData.swift */, 100000000000000000000022 /* QuickAddPlaceholderSheet.swift */, AB7D00000000000000000001 /* QuickAddPanels.swift */, AB7D00000000000000000002 /* QuickAddComponents.swift */, 100000000000000000000024 /* QuickAddAction.swift */, 100000000000000000000025 /* FloatingQuickAddBar.swift */); path = Dashboard; sourceTree = "<group>"; };
+		100000000000000000000510 /* Dashboard */ = {isa = PBXGroup; children = (100000000000000000000007 /* DashboardView.swift */, 100000000000000000000008 /* DashboardStore.swift */, AB1600000000000000000001 /* TodaySnapshotService.swift */, 100000000000000000000009 /* DashboardMockData.swift */, 100000000000000000000022 /* QuickAddPlaceholderSheet.swift */, AB7D00000000000000000001 /* QuickAddPanels.swift */, AB7D00000000000000000002 /* QuickAddComponents.swift */, 100000000000000000000024 /* QuickAddAction.swift */, 100000000000000000000025 /* FloatingQuickAddBar.swift */); path = Dashboard; sourceTree = "<group>"; };
 		100000000000000000000511 /* Nutrition */ = {isa = PBXGroup; children = (100000000000000000000010 /* NutritionPlaceholderView.swift */, 100000000000000000000026 /* NutritionView.swift */, 100000000000000000000027 /* NutritionStore.swift */, 100000000000000000000028 /* NutritionDoubleRingView.swift */, AB1500000000000000000001 /* FoodQuantityParser.swift */, AB1500000000000000000002 /* FoodProductLookupService.swift */, AB1500000000000000000003 /* BarcodeScannerService.swift */); path = Nutrition; sourceTree = "<group>"; };
 		100000000000000000000512 /* Training */ = {isa = PBXGroup; children = (100000000000000000000011 /* TrainingPlaceholderView.swift */, 100000000000000000000029 /* TrainingView.swift */, 100000000000000000000030 /* TrainingStore.swift */, AB1000000000000000000001 /* TrainingDomainModels.swift */, AB1000000000000000000002 /* TrainingProgressionService.swift */, AB1000000000000000000003 /* BodyProgressService.swift */, AB1000000000000000000004 /* TrainingPlanSeeder.swift */, AB0700000000000000000001 /* HomeWorkoutPlan.swift */, AB0700000000000000000002 /* TrainingDoubleProgressRing.swift */); path = Training; sourceTree = "<group>"; };
 		100000000000000000000513 /* Finance */ = {isa = PBXGroup; children = (100000000000000000000012 /* FinancePlaceholderView.swift */, 100000000000000000000031 /* FinanceView.swift */, 100000000000000000000032 /* FinanceStore.swift */); path = Finance; sourceTree = "<group>"; };
@@ -353,6 +355,7 @@
 				AB7D00000000000000000102 /* QuickAddComponents.swift in Sources */,
 				100000000000000000000124 /* QuickAddAction.swift in Sources */,
 				100000000000000000000125 /* FloatingQuickAddBar.swift in Sources */,
+				AB1600000000000000000101 /* TodaySnapshotService.swift in Sources */,
 				100000000000000000000110 /* NutritionPlaceholderView.swift in Sources */,
 				100000000000000000000126 /* NutritionView.swift in Sources */,
 				100000000000000000000127 /* NutritionStore.swift in Sources */,

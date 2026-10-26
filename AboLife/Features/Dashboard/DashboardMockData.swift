@@ -14,7 +14,7 @@ struct DashboardSnapshot {
     let habits: HabitStatus
     let week: WeekStatus
     let weight: WeightDashboardStatus
-    let dailyNote: String?
+    let todayOpen: TodayOpenStatus
     let recentActions: [DashboardActivityItem]
 }
 
@@ -36,6 +36,10 @@ struct TrainingToday {
     let title: String
     let status: String
     let weeklyProgress: String
+    let todayStatus: TodayTrainingStatus
+    let nextWorkout: String
+    let progressDetail: String?
+    let calmMessage: String
     let progress: Double
     let isDone: Bool
 }
@@ -125,13 +129,27 @@ enum DashboardMockData {
         let completedHabitTitles = state.habits.filter(\.isCompleted).map(\.title)
         let openHabitTitles = state.habits.filter { !$0.isCompleted }.map(\.title)
         let trainingProgress = progress(current: Double(state.weeklyWorkoutCompleted), target: Double(state.weeklyWorkoutTarget))
+        let todayWorkout = HomeWorkoutPlanProvider.plan.workout(for: Date())
+        let todayOpen = TodayOpenStatus.calculate(
+            caloriesConsumed: state.caloriesConsumed,
+            caloriesTarget: state.caloriesTarget,
+            proteinConsumedG: state.proteinConsumed,
+            proteinTargetG: state.proteinTarget,
+            workoutCompletedToday: state.workoutCompletedToday,
+            trainingPausedToday: state.trainingPausedToday,
+            trainingScheduledToday: state.trainingScheduledToday,
+            habitValues: Dictionary(uniqueKeysWithValues: state.habits.map { ($0.key, $0.value) }),
+            medicationDone: state.medicationDone,
+            proteinShakeDone: state.proteinShakeDone,
+            dailyBudgetRemaining: state.dailyBudgetRemaining
+        )
 
         return DashboardSnapshot(
             greeting: "Guten Abend, Arber",
             dateLine: formattedDateLine(),
             coreProgress: coreProgress,
             coreMessage: coreMessage(for: state, coreProgress: coreProgress),
-            nextStep: nextStep(for: state),
+            nextStep: todayOpen.nextStep ?? "Der Tag steht gut. Du kannst ihn ruhig ausklingen lassen.",
             calories: ProgressMetric(
                 title: "Kalorien",
                 current: Double(state.caloriesConsumed),
@@ -152,6 +170,10 @@ enum DashboardMockData {
                 title: "Training heute",
                 status: trainingStatus(for: state),
                 weeklyProgress: "\(state.weeklyWorkoutCompleted) / \(state.weeklyWorkoutTarget) Einheiten diese Woche",
+                todayStatus: todayOpen.training,
+                nextWorkout: todayWorkout.isToday ? todayWorkout.day.name : "\(todayWorkout.day.name) am \(todayWorkout.day.weekdayName)",
+                progressDetail: state.lastWorkoutType.map { "Letztes Training: \($0)." },
+                calmMessage: calmTrainingMessage(for: state, todayOpen: todayOpen),
                 progress: trainingProgress,
                 isDone: state.weeklyWorkoutCompleted >= state.weeklyWorkoutTarget
             ),
@@ -180,7 +202,7 @@ enum DashboardMockData {
                 date: state.bodyWeightDate,
                 changeKg: state.bodyWeightChange
             ),
-            dailyNote: state.dailyNote,
+            todayOpen: todayOpen,
             recentActions: state.recentActions
         )
     }
@@ -213,22 +235,6 @@ enum DashboardMockData {
         return "Der Tag bewegt sich. Ein kleiner Eintrag reicht, damit das Dashboard direkt reagiert."
     }
 
-    private static func nextStep(for state: DashboardMockState) -> String {
-        if state.proteinConsumed < state.proteinTarget {
-            return "Nächster sinnvoller Schritt: proteinreiche Mahlzeit erfassen."
-        }
-
-        if state.weeklyWorkoutCompleted < state.weeklyWorkoutTarget {
-            return "Nächster sinnvoller Schritt: Training abschließen."
-        }
-
-        if state.completedHabits < state.totalHabits {
-            return "Nächster sinnvoller Schritt: eine offene Gewohnheit abhaken."
-        }
-
-        return "Nächster sinnvoller Schritt: kurze Tagesnotiz festhalten."
-    }
-
     private static func caloriesMessage(for state: DashboardMockState) -> String {
         let remaining = state.caloriesTarget - state.caloriesConsumed
         if remaining > 0 {
@@ -248,11 +254,31 @@ enum DashboardMockData {
     }
 
     private static func trainingStatus(for state: DashboardMockState) -> String {
+        if state.trainingPausedToday {
+            return "Heute pausiert"
+        }
         if let type = state.lastWorkoutType, let duration = state.lastWorkoutDurationMinutes {
             return "\(type) erledigt · \(duration) Min"
         }
 
-        return state.weeklyWorkoutCompleted >= state.weeklyWorkoutTarget ? "Wochentraining erledigt" : "Push Day offen"
+        let scheduled = HomeWorkoutPlanProvider.plan.workout(for: Date())
+        if scheduled.isToday {
+            return "\(scheduled.day.name) offen"
+        }
+        return state.weeklyWorkoutCompleted >= state.weeklyWorkoutTarget ? "Wochentraining erledigt" : "Heute kein Plantraining"
+    }
+
+    private static func calmTrainingMessage(for state: DashboardMockState, todayOpen: TodayOpenStatus) -> String {
+        if todayOpen.training == .paused {
+            return "Pause ist okay. Morgen wieder sauber einsteigen reicht."
+        }
+        if todayOpen.training == .open {
+            return "Heute reicht auch die Minimum-Variante."
+        }
+        if state.weeklyWorkoutCompleted >= state.weeklyWorkoutTarget {
+            return "Wochenziel erreicht. Jetzt geht es um Erholung."
+        }
+        return "Diese Woche \(state.weeklyWorkoutCompleted) von \(state.weeklyWorkoutTarget) Trainings erledigt."
     }
 
     private static func financeMessage(for state: DashboardMockState) -> String {

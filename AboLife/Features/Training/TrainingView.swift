@@ -3,6 +3,7 @@ import SwiftUI
 struct TrainingView: View {
     @StateObject private var store: TrainingStore
     @State private var checklistState = HomeWorkoutChecklistState()
+    @State private var detailedDraft: DetailedWorkoutDraft?
 
     init(database: AppDatabase?) {
         _store = StateObject(wrappedValue: TrainingStore(database: database))
@@ -31,6 +32,20 @@ struct TrainingView: View {
         .navigationTitle("")
         .onAppear {
             store.reload()
+        }
+        .sheet(item: $detailedDraft) { draft in
+            DetailedWorkoutSheet(draft: draft) { completedDraft in
+                store.completeDetailedHomeWorkout(
+                    intensity: completedDraft.intensity,
+                    exercises: completedDraft.exercises,
+                    note: completedDraft.note,
+                    painReported: completedDraft.painReported
+                )
+                checklistState.resetCompletedExercises()
+                detailedDraft = nil
+            } cancel: {
+                detailedDraft = nil
+            }
         }
     }
 
@@ -174,6 +189,20 @@ struct TrainingView: View {
                 .tint(AboLifeColors.training)
                 .disabled(store.isSavingPlanWorkout)
 
+                Button {
+                    detailedDraft = DetailedWorkoutDraft(
+                        intensity: checklistState.selectedIntensity,
+                        workoutName: scheduledWorkout.day.name,
+                        exercises: store.makeDetailedHomeWorkoutExercises(intensity: checklistState.selectedIntensity)
+                    )
+                } label: {
+                    Label("Mit Details", systemImage: "list.bullet.clipboard")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .disabled(store.isSavingPlanWorkout)
+
                 if let completionMessage = store.completionMessage {
                     Label(completionMessage, systemImage: "checkmark.circle")
                         .font(AboLifeTypography.caption)
@@ -272,6 +301,45 @@ struct TrainingView: View {
                 sectionHeader(title: "Progression", systemImage: "chart.line.uptrend.xyaxis", value: "\(store.exerciseProgressions.count) Übungen")
 
                 VStack(spacing: 10) {
+                    if store.exerciseProgressStatuses.isEmpty {
+                        Text("Noch nicht genug Satzdaten für echte Übungstrends. Ein paar detaillierte Trainings reichen, dann wird es hier konkreter.")
+                            .font(AboLifeTypography.caption)
+                            .foregroundStyle(AboLifeColors.secondaryText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 13)
+                            .padding(.vertical, 11)
+                            .background(rowBackground)
+                    }
+
+                    ForEach(store.exerciseProgressStatuses.prefix(4)) { status in
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: status.hasEnoughData ? "chart.line.uptrend.xyaxis.circle.fill" : "circle.dashed")
+                                .foregroundStyle(status.hasEnoughData ? AboLifeColors.training : AboLifeColors.secondaryText)
+                                .frame(width: 22)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(status.exerciseName)
+                                    .font(AboLifeTypography.body.weight(.semibold))
+                                    .foregroundStyle(AboLifeColors.primaryText)
+
+                                Text(progressDetail(status))
+                                    .font(AboLifeTypography.caption)
+                                    .foregroundStyle(AboLifeColors.secondaryText)
+                                    .fixedSize(horizontal: false, vertical: true)
+
+                                Text(status.recommendation)
+                                    .font(AboLifeTypography.micro)
+                                    .foregroundStyle(AboLifeColors.tertiaryText)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 13)
+                        .padding(.vertical, 11)
+                        .background(rowBackground)
+                    }
+
                     ForEach(store.recommendations, id: \.id) { recommendation in
                         HStack(alignment: .center, spacing: 12) {
                             Image(systemName: icon(for: recommendation.outcomeRawValue))
@@ -335,9 +403,11 @@ struct TrainingView: View {
                     statTile("Diese Woche", "\(store.trainingStatistics.trainingsThisWeek)", "Workouts")
                     statTile("Streak", "\(store.trainingStatistics.currentStreak)", "Tage")
                     statTile("Gesamtvolumen", "\(store.trainingStatistics.totalVolume)", "Punkte")
+                    statTile("Ø Sätze", String(format: "%.1f", store.trainingStatistics.averageSetsPerTraining), "pro Training")
                     statTile("Push", "\(store.trainingStatistics.pushVolume)", "Vol.")
                     statTile("Pull", "\(store.trainingStatistics.pullVolume)", "Vol.")
                     statTile("Beine", "\(store.trainingStatistics.legVolume)", "Vol.")
+                    statTile("Minimum", "\(store.trainingStatistics.minimumWorkouts)", "Einheiten")
                     statTile("Stärkste Woche", "\(store.trainingStatistics.strongestWeek)", "Einheiten")
                 }
             }
@@ -680,6 +750,221 @@ struct TrainingView: View {
             return AboLifeColors.review
         default:
             return AboLifeColors.protein
+        }
+    }
+
+    private func progressDetail(_ status: ExerciseProgressStatus) -> String {
+        let last = status.lastSetsText.map { "Letztes Mal: \($0) Wiederholungen." } ?? "Letztes Mal: erledigt."
+        let best = status.bestSetReps.map { " Bester Satz: \($0)." } ?? ""
+        return last + best
+    }
+}
+
+private struct DetailedWorkoutDraft: Identifiable, Equatable {
+    let id = UUID()
+    var intensity: HomeWorkoutIntensity
+    var workoutName: String
+    var exercises: [WorkoutExerciseInput]
+    var note = ""
+    var painReported = false
+}
+
+private struct DetailedWorkoutSheet: View {
+    @State private var draft: DetailedWorkoutDraft
+    let save: (DetailedWorkoutDraft) -> Void
+    let cancel: () -> Void
+
+    init(draft: DetailedWorkoutDraft, save: @escaping (DetailedWorkoutDraft) -> Void, cancel: @escaping () -> Void) {
+        _draft = State(initialValue: draft)
+        self.save = save
+        self.cancel = cancel
+    }
+
+    var body: some View {
+        ZStack {
+            AboLifePremiumBackground()
+
+            VStack(alignment: .leading, spacing: 14) {
+                header
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        recoveryNote
+                        ForEach(draft.exercises.indices, id: \.self) { index in
+                            exerciseEditor(index: index)
+                        }
+                        sessionNote
+                    }
+                    .padding(.vertical, 2)
+                }
+
+                footer
+            }
+            .padding(18)
+            .frame(minWidth: 560, minHeight: 620)
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .top, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(draft.workoutName)
+                    .font(AboLifeTypography.cardTitle)
+                    .foregroundStyle(AboLifeColors.primaryText)
+                Text("\(draft.intensity.rawValue) · Sätze schnell anpassen")
+                    .font(AboLifeTypography.caption)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+            }
+
+            Spacer()
+
+            Picker("Intensität", selection: $draft.intensity) {
+                ForEach(HomeWorkoutIntensity.allCases) { intensity in
+                    Text(intensity.rawValue).tag(intensity)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 260)
+        }
+    }
+
+    private var recoveryNote: some View {
+        Toggle(isOn: $draft.painReported) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Schmerz oder Erholung beachten")
+                    .font(AboLifeTypography.caption.weight(.semibold))
+                    .foregroundStyle(AboLifeColors.primaryText)
+                Text(draft.painReported ? "Minimum ist heute völlig okay." : "Wenn sich etwas nicht gut anfühlt, lieber reduzieren.")
+                    .font(AboLifeTypography.micro)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+            }
+        }
+        .toggleStyle(.checkbox)
+        .padding(12)
+        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func exerciseEditor(index: Int) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Toggle(isOn: $draft.exercises[index].isCompleted) {
+                    Text(draft.exercises[index].exerciseName)
+                        .font(AboLifeTypography.body.weight(.semibold))
+                        .foregroundStyle(AboLifeColors.primaryText)
+                }
+                .toggleStyle(.checkbox)
+
+                Spacer()
+
+                Button {
+                    draft.exercises[index].sets.append(WorkoutSetInput(setNumber: draft.exercises[index].sets.count + 1, reps: 0))
+                } label: {
+                    Label("Satz", systemImage: "plus.circle")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+
+            VStack(spacing: 7) {
+                ForEach(draft.exercises[index].sets.indices, id: \.self) { setIndex in
+                    HStack(spacing: 8) {
+                        Text("Satz \(setIndex + 1)")
+                            .font(AboLifeTypography.micro)
+                            .foregroundStyle(AboLifeColors.secondaryText)
+                            .frame(width: 54, alignment: .leading)
+
+                        Stepper(value: repsBinding(exerciseIndex: index, setIndex: setIndex), in: 0...200) {
+                            Text("\(draft.exercises[index].sets[setIndex].reps ?? 0) Wdh.")
+                                .font(AboLifeTypography.caption.weight(.semibold))
+                                .foregroundStyle(AboLifeColors.primaryText)
+                                .monospacedDigit()
+                        }
+
+                        if let seconds = draft.exercises[index].sets[setIndex].durationSec {
+                            Text("\(seconds)s")
+                                .font(AboLifeTypography.micro)
+                                .foregroundStyle(AboLifeColors.tertiaryText)
+                                .monospacedDigit()
+                        }
+
+                        Button(role: .destructive) {
+                            draft.exercises[index].sets.remove(at: setIndex)
+                            renumberSets(exerciseIndex: index)
+                        } label: {
+                            Image(systemName: "trash")
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+            }
+
+            TextField("Notiz zur Übung", text: noteBinding(exerciseIndex: index))
+                .textFieldStyle(.roundedBorder)
+        }
+        .padding(12)
+        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 0.7)
+        }
+    }
+
+    private var sessionNote: some View {
+        TextField("Notiz zur Session", text: $draft.note)
+            .textFieldStyle(.roundedBorder)
+            .padding(.top, 2)
+    }
+
+    private var footer: some View {
+        HStack {
+            Button("Abbrechen", action: cancel)
+                .buttonStyle(.bordered)
+
+            Spacer()
+
+            Text("Pause ist okay. Speichern soll helfen, nicht stressen.")
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(AboLifeColors.secondaryText)
+
+            Button {
+                save(normalizedDraft)
+            } label: {
+                Label("Training speichern", systemImage: "checkmark.circle.fill")
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AboLifeColors.training)
+        }
+    }
+
+    private var normalizedDraft: DetailedWorkoutDraft {
+        var copy = draft
+        for exerciseIndex in copy.exercises.indices {
+            copy.exercises[exerciseIndex].sets = copy.exercises[exerciseIndex].sets.enumerated().map { index, set in
+                var updated = set
+                updated.setNumber = index + 1
+                return updated
+            }
+        }
+        return copy
+    }
+
+    private func repsBinding(exerciseIndex: Int, setIndex: Int) -> Binding<Int> {
+        Binding(
+            get: { draft.exercises[exerciseIndex].sets[setIndex].reps ?? 0 },
+            set: { draft.exercises[exerciseIndex].sets[setIndex].reps = $0 }
+        )
+    }
+
+    private func noteBinding(exerciseIndex: Int) -> Binding<String> {
+        Binding(
+            get: { draft.exercises[exerciseIndex].note ?? "" },
+            set: { draft.exercises[exerciseIndex].note = $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }
+        )
+    }
+
+    private func renumberSets(exerciseIndex: Int) {
+        for index in draft.exercises[exerciseIndex].sets.indices {
+            draft.exercises[exerciseIndex].sets[index].setNumber = index + 1
         }
     }
 }

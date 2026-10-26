@@ -65,6 +65,34 @@ struct TelegramReminderMessage: Equatable {
     let keyboard: TelegramKeyboard?
 }
 
+struct TelegramReminderSchedule: Equatable {
+    let morningMinuteOfDay: Int
+    let trainingMinuteOfDay: Int
+    let eveningMinuteOfDay: Int
+
+    init(
+        morningMinuteOfDay: Int = AppSettingsDefaults.morningReminderMinuteOfDay,
+        trainingMinuteOfDay: Int = AppSettingsDefaults.trainingReminderMinuteOfDay,
+        eveningMinuteOfDay: Int = AppSettingsDefaults.eveningReminderMinuteOfDay
+    ) {
+        self.morningMinuteOfDay = Self.normalized(morningMinuteOfDay, defaultValue: AppSettingsDefaults.morningReminderMinuteOfDay)
+        self.trainingMinuteOfDay = Self.normalized(trainingMinuteOfDay, defaultValue: AppSettingsDefaults.trainingReminderMinuteOfDay)
+        self.eveningMinuteOfDay = Self.normalized(eveningMinuteOfDay, defaultValue: AppSettingsDefaults.eveningReminderMinuteOfDay)
+    }
+
+    init(settings: AppSettingsRecord) {
+        self.init(
+            morningMinuteOfDay: settings.morningReminderMinuteOfDay,
+            trainingMinuteOfDay: settings.trainingReminderMinuteOfDay,
+            eveningMinuteOfDay: settings.eveningReminderMinuteOfDay
+        )
+    }
+
+    private static func normalized(_ value: Int, defaultValue: Int) -> Int {
+        (0..<24 * 60).contains(value) ? value : defaultValue
+    }
+}
+
 enum TelegramReminderHabit {
     static let proteinShakeKey = "protein_shake"
     static let medicationKey = "medication"

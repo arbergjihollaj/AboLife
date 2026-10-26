@@ -4,3 +4,6 @@
 .abolife-telegram.env
 telegram.local.json
 *.local.secrets
+
+work/
+outputs/

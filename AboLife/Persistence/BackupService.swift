@@ -8,15 +8,148 @@ struct AboLifeExportPayload: Codable, Equatable {
     let nutritionEntries: [NutritionEntryRecord]
     let nutritionTemplates: [NutritionTemplateRecord]
     let workoutSessions: [WorkoutSessionRecord]
+    let workoutExercises: [WorkoutExerciseRecord]
+    let workoutSets: [WorkoutSetRecord]
     let financeEntries: [FinanceEntryRecord]
     let financeCategoryBudgets: [FinanceCategoryBudgetRecord]
     let financeFixedCosts: [FinanceFixedCostRecord]
     let financeSavingsGoals: [FinanceSavingsGoalRecord]
+    let financeAnalysis: FinanceExportAnalysis?
     let habitEntries: [HabitEntryRecord]
     let weightEntries: [WeightEntryRecord]
     let bodyMetricEntries: [BodyMetricEntryRecord]
     let weeklyReviews: [WeeklyReviewRecord]
     let settings: [AppSettingsRecord]
+
+    enum CodingKeys: String, CodingKey {
+        case exportVersion
+        case createdAt
+        case appName
+        case nutritionEntries
+        case nutritionTemplates
+        case workoutSessions
+        case workoutExercises
+        case workoutSets
+        case financeEntries
+        case financeCategoryBudgets
+        case financeFixedCosts
+        case financeSavingsGoals
+        case financeAnalysis
+        case habitEntries
+        case weightEntries
+        case bodyMetricEntries
+        case weeklyReviews
+        case settings
+    }
+
+    init(
+        exportVersion: Int,
+        createdAt: Date,
+        appName: String,
+        nutritionEntries: [NutritionEntryRecord],
+        nutritionTemplates: [NutritionTemplateRecord],
+        workoutSessions: [WorkoutSessionRecord],
+        workoutExercises: [WorkoutExerciseRecord] = [],
+        workoutSets: [WorkoutSetRecord] = [],
+        financeEntries: [FinanceEntryRecord],
+        financeCategoryBudgets: [FinanceCategoryBudgetRecord],
+        financeFixedCosts: [FinanceFixedCostRecord],
+        financeSavingsGoals: [FinanceSavingsGoalRecord],
+        financeAnalysis: FinanceExportAnalysis?,
+        habitEntries: [HabitEntryRecord],
+        weightEntries: [WeightEntryRecord],
+        bodyMetricEntries: [BodyMetricEntryRecord],
+        weeklyReviews: [WeeklyReviewRecord],
+        settings: [AppSettingsRecord]
+    ) {
+        self.exportVersion = exportVersion
+        self.createdAt = createdAt
+        self.appName = appName
+        self.nutritionEntries = nutritionEntries
+        self.nutritionTemplates = nutritionTemplates
+        self.workoutSessions = workoutSessions
+        self.workoutExercises = workoutExercises
+        self.workoutSets = workoutSets
+        self.financeEntries = financeEntries
+        self.financeCategoryBudgets = financeCategoryBudgets
+        self.financeFixedCosts = financeFixedCosts
+        self.financeSavingsGoals = financeSavingsGoals
+        self.financeAnalysis = financeAnalysis
+        self.habitEntries = habitEntries
+        self.weightEntries = weightEntries
+        self.bodyMetricEntries = bodyMetricEntries
+        self.weeklyReviews = weeklyReviews
+        self.settings = settings
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.exportVersion = try container.decode(Int.self, forKey: .exportVersion)
+        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
+        self.appName = try container.decode(String.self, forKey: .appName)
+        self.nutritionEntries = try container.decode([NutritionEntryRecord].self, forKey: .nutritionEntries)
+        self.nutritionTemplates = try container.decodeIfPresent([NutritionTemplateRecord].self, forKey: .nutritionTemplates) ?? []
+        self.workoutSessions = try container.decode([WorkoutSessionRecord].self, forKey: .workoutSessions)
+        self.workoutExercises = try container.decodeIfPresent([WorkoutExerciseRecord].self, forKey: .workoutExercises) ?? []
+        self.workoutSets = try container.decodeIfPresent([WorkoutSetRecord].self, forKey: .workoutSets) ?? []
+        self.financeEntries = try container.decode([FinanceEntryRecord].self, forKey: .financeEntries)
+        self.financeCategoryBudgets = try container.decodeIfPresent([FinanceCategoryBudgetRecord].self, forKey: .financeCategoryBudgets) ?? []
+        self.financeFixedCosts = try container.decodeIfPresent([FinanceFixedCostRecord].self, forKey: .financeFixedCosts) ?? []
+        self.financeSavingsGoals = try container.decodeIfPresent([FinanceSavingsGoalRecord].self, forKey: .financeSavingsGoals) ?? []
+        self.financeAnalysis = try container.decodeIfPresent(FinanceExportAnalysis.self, forKey: .financeAnalysis)
+        self.habitEntries = try container.decode([HabitEntryRecord].self, forKey: .habitEntries)
+        self.weightEntries = try container.decodeIfPresent([WeightEntryRecord].self, forKey: .weightEntries) ?? []
+        self.bodyMetricEntries = try container.decode([BodyMetricEntryRecord].self, forKey: .bodyMetricEntries)
+        self.weeklyReviews = try container.decode([WeeklyReviewRecord].self, forKey: .weeklyReviews)
+        self.settings = try container.decode([AppSettingsRecord].self, forKey: .settings)
+    }
+}
+
+struct FinanceExportAnalysis: Codable, Equatable {
+    let generatedForMonth: String
+    let currency: String
+    let monthlySpent: Double
+    let monthlyIncome: Double
+    let monthlyBalance: Double
+    let monthlyBudget: Double
+    let remainingBudget: Double
+    let averageDailySpend: Double
+    let projectedSpend: Double
+    let previousMonthSpent: Double?
+    let threeMonthAverageSpend: Double?
+    let savingsRate: Double?
+    let topCategory: String?
+    let largestExpenseTitle: String?
+    let largestExpenseAmount: Double?
+    let activeExpenseDays: Int
+    let remainingFixedCosts: Double
+    let categoryTrends: [FinanceCategoryExportTrend]
+}
+
+struct FinanceCategoryExportTrend: Codable, Equatable {
+    let category: String
+    let spent: Double
+    let share: Double
+    let previousMonthSpent: Double?
+    let changeFromPrevious: Double?
+    let budget: Double?
+    let isOverBudget: Bool
+}
+
+enum BackupImportSourceKind: String, Equatable {
+    case json
+    case sqlite
+    case csvDirectory
+}
+
+struct BackupImportPreflightReport: Equatable {
+    let sourceKind: BackupImportSourceKind
+    let itemCounts: [String: Int]
+    let warnings: [String]
+
+    var totalItems: Int {
+        itemCounts.values.reduce(0, +)
+    }
 }
 
 enum BackupServiceError: LocalizedError, Equatable {
@@ -24,6 +157,8 @@ enum BackupServiceError: LocalizedError, Equatable {
     case databaseFileMissing
     case backupDirectoryUnavailable
     case backupIntegrityCheckFailed(String)
+    case importSourceUnsupported
+    case importSourceInvalid(String)
 
     var errorDescription: String? {
         switch self {
@@ -35,6 +170,10 @@ enum BackupServiceError: LocalizedError, Equatable {
             return "Der Backup-Ordner konnte nicht erstellt werden."
         case .backupIntegrityCheckFailed:
             return "Das Backup konnte nicht geprüft werden."
+        case .importSourceUnsupported:
+            return "Dieses Importformat wird noch nicht unterstützt."
+        case .importSourceInvalid:
+            return "Die Importquelle konnte nicht geprüft werden."
         }
     }
 }
@@ -184,17 +323,28 @@ struct BackupService {
         )
         try writeCSVFile(
             relativePath: "csv/workout_sessions.csv",
-            headers: ["id", "created_at", "started_at", "ended_at", "entry_date", "title", "workout_type", "duration_min", "notes", "source"],
+            headers: ["id", "created_at", "started_at", "ended_at", "entry_date", "title", "workout_type", "duration_min", "intensity", "pain_reported", "notes", "source"],
             rows: payload.workoutSessions.map {
-                [$0.id, csvDate($0.createdAt), csvDate($0.occurredAt), "", dayString($0.occurredAt), $0.workoutType, $0.workoutType, "\($0.durationMin)", $0.note ?? "", "manual"]
+                [$0.id, csvDate($0.createdAt), csvDate($0.occurredAt), "", dayString($0.occurredAt), $0.workoutType, $0.workoutType, "\($0.durationMin)", $0.workoutIntensity ?? "", "\($0.painReported)", $0.note ?? "", "manual"]
             },
             root: exportDirectory,
             files: &files
         )
         try writeCSVFile(
             relativePath: "csv/workout_exercises.csv",
-            headers: ["id", "session_id", "exercise_name", "sort_order", "sets", "reps", "weight_kg", "duration_sec", "distance_m", "notes"],
-            rows: [],
+            headers: ["id", "session_id", "exercise_name", "sort_order", "is_completed", "pain_reported", "notes"],
+            rows: payload.workoutExercises.map {
+                [$0.id, $0.sessionId, $0.exerciseName, "\($0.sortOrder)", "\($0.isCompleted)", "\($0.painReported)", $0.note ?? ""]
+            },
+            root: exportDirectory,
+            files: &files
+        )
+        try writeCSVFile(
+            relativePath: "csv/workout_sets.csv",
+            headers: ["id", "exercise_id", "set_number", "reps", "weight_kg", "duration_sec", "rpe", "pain_reported", "notes"],
+            rows: payload.workoutSets.map {
+                [$0.id, $0.exerciseId, "\($0.setNumber)", csvOptionalInt($0.reps), csvOptional($0.weightKg), csvOptionalInt($0.durationSec), csvOptional($0.rpe), "\($0.painReported)", $0.note ?? ""]
+            },
             root: exportDirectory,
             files: &files
         )
@@ -232,6 +382,50 @@ struct BackupService {
             rows: payload.financeSavingsGoals.map {
                 [$0.id, csvDate($0.createdAt), $0.title, csvNumber($0.targetAmount), csvNumber($0.currentAmount), $0.currency, $0.targetDate.map(csvDate) ?? "", $0.isActive ? "true" : "false", $0.note ?? ""]
             },
+            root: exportDirectory,
+            files: &files
+        )
+        try writeCSVFile(
+            relativePath: "csv/finance_monthly_analysis.csv",
+            headers: ["month", "currency", "spent", "income", "balance", "monthly_budget", "remaining_budget", "average_daily_spend", "projected_spend", "previous_month_spent", "three_month_average_spend", "savings_rate", "top_category", "largest_expense_title", "largest_expense_amount", "active_expense_days", "remaining_fixed_costs"],
+            rows: payload.financeAnalysis.map {
+                [[
+                    $0.generatedForMonth,
+                    $0.currency,
+                    csvNumber($0.monthlySpent),
+                    csvNumber($0.monthlyIncome),
+                    csvNumber($0.monthlyBalance),
+                    csvNumber($0.monthlyBudget),
+                    csvNumber($0.remainingBudget),
+                    csvNumber($0.averageDailySpend),
+                    csvNumber($0.projectedSpend),
+                    $0.previousMonthSpent.map(csvNumber) ?? "",
+                    $0.threeMonthAverageSpend.map(csvNumber) ?? "",
+                    $0.savingsRate.map(csvNumber) ?? "",
+                    $0.topCategory ?? "",
+                    $0.largestExpenseTitle ?? "",
+                    $0.largestExpenseAmount.map(csvNumber) ?? "",
+                    "\($0.activeExpenseDays)",
+                    csvNumber($0.remainingFixedCosts)
+                ]]
+            } ?? [],
+            root: exportDirectory,
+            files: &files
+        )
+        try writeCSVFile(
+            relativePath: "csv/finance_category_trends.csv",
+            headers: ["category", "spent", "share", "previous_month_spent", "change_from_previous", "budget", "is_over_budget"],
+            rows: payload.financeAnalysis?.categoryTrends.map {
+                [
+                    $0.category,
+                    csvNumber($0.spent),
+                    csvNumber($0.share),
+                    $0.previousMonthSpent.map(csvNumber) ?? "",
+                    $0.changeFromPrevious.map(csvNumber) ?? "",
+                    $0.budget.map(csvNumber) ?? "",
+                    $0.isOverBudget ? "true" : "false"
+                ]
+            } ?? [],
             root: exportDirectory,
             files: &files
         )
@@ -304,25 +498,174 @@ struct BackupService {
         let createdAt = now()
 
         return try database.writer.read { db in
-            AboLifeExportPayload(
+            let nutritionEntries = try fetchIfTableExists(NutritionEntryRecord.self, table: "nutrition_entries", db: db, orderSQL: "occurred_at ASC, id ASC")
+            let nutritionTemplates = try fetchIfTableExists(NutritionTemplateRecord.self, table: "nutrition_templates", db: db, orderSQL: "updated_at ASC, name ASC, id ASC")
+            let workoutSessions = try fetchIfTableExists(WorkoutSessionRecord.self, table: "workout_sessions", db: db, orderSQL: "occurred_at ASC, id ASC")
+            let workoutExercises = try fetchIfTableExists(WorkoutExerciseRecord.self, table: "workout_exercises", db: db, orderSQL: "session_id ASC, sort_order ASC, id ASC")
+            let workoutSets = try fetchIfTableExists(WorkoutSetRecord.self, table: "workout_sets", db: db, orderSQL: "exercise_id ASC, set_number ASC, id ASC")
+            let financeEntries = try fetchIfTableExists(FinanceEntryRecord.self, table: "finance_entries", db: db, orderSQL: "occurred_at ASC, id ASC")
+            let financeCategoryBudgets = try fetchIfTableExists(FinanceCategoryBudgetRecord.self, table: "finance_category_budgets", db: db, orderSQL: "month_key ASC, category ASC, id ASC")
+            let financeFixedCosts = try fetchIfTableExists(FinanceFixedCostRecord.self, table: "finance_fixed_costs", db: db, orderSQL: "due_day ASC, title ASC, id ASC")
+            let financeSavingsGoals = try fetchIfTableExists(FinanceSavingsGoalRecord.self, table: "finance_savings_goals", db: db, orderSQL: "is_active DESC, title ASC, id ASC")
+            let settings = try fetchIfTableExists(AppSettingsRecord.self, table: "app_settings", db: db, orderSQL: "id ASC")
+            return AboLifeExportPayload(
                 exportVersion: 1,
                 createdAt: createdAt,
                 appName: "AboLife",
-                nutritionEntries: try fetchIfTableExists(NutritionEntryRecord.self, table: "nutrition_entries", db: db, orderSQL: "occurred_at ASC, id ASC"),
-                nutritionTemplates: try fetchIfTableExists(NutritionTemplateRecord.self, table: "nutrition_templates", db: db, orderSQL: "updated_at ASC, name ASC, id ASC"),
-                workoutSessions: try fetchIfTableExists(WorkoutSessionRecord.self, table: "workout_sessions", db: db, orderSQL: "occurred_at ASC, id ASC"),
-                financeEntries: try fetchIfTableExists(FinanceEntryRecord.self, table: "finance_entries", db: db, orderSQL: "occurred_at ASC, id ASC"),
-                financeCategoryBudgets: try fetchIfTableExists(FinanceCategoryBudgetRecord.self, table: "finance_category_budgets", db: db, orderSQL: "month_key ASC, category ASC, id ASC"),
-                financeFixedCosts: try fetchIfTableExists(FinanceFixedCostRecord.self, table: "finance_fixed_costs", db: db, orderSQL: "due_day ASC, title ASC, id ASC"),
-                financeSavingsGoals: try fetchIfTableExists(FinanceSavingsGoalRecord.self, table: "finance_savings_goals", db: db, orderSQL: "is_active DESC, title ASC, id ASC"),
+                nutritionEntries: nutritionEntries,
+                nutritionTemplates: nutritionTemplates,
+                workoutSessions: workoutSessions,
+                workoutExercises: workoutExercises,
+                workoutSets: workoutSets,
+                financeEntries: financeEntries,
+                financeCategoryBudgets: financeCategoryBudgets,
+                financeFixedCosts: financeFixedCosts,
+                financeSavingsGoals: financeSavingsGoals,
+                financeAnalysis: makeFinanceAnalysis(
+                    entries: financeEntries,
+                    budgets: financeCategoryBudgets,
+                    fixedCosts: financeFixedCosts,
+                    settings: settings.first,
+                    createdAt: createdAt
+                ),
                 habitEntries: try fetchIfTableExists(HabitEntryRecord.self, table: "habit_entries", db: db, orderSQL: "date ASC, habit_key ASC, id ASC"),
                 weightEntries: try fetchIfTableExists(WeightEntryRecord.self, table: "weight_entries", db: db, orderSQL: "date ASC, id ASC"),
                 bodyMetricEntries: try fetchIfTableExists(BodyMetricEntryRecord.self, table: "body_metric_entries", db: db, orderSQL: "occurred_at ASC, id ASC"),
                 weeklyReviews: try fetchIfTableExists(WeeklyReviewRecord.self, table: "weekly_reviews", db: db, orderSQL: "week_start_date ASC, id ASC"),
-                settings: try fetchIfTableExists(AppSettingsRecord.self, table: "app_settings", db: db, orderSQL: "id ASC")
+                settings: settings
             )
         }
     }
+
+    func preflightImport(from sourceURL: URL) throws -> BackupImportPreflightReport {
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: sourceURL.path, isDirectory: &isDirectory) else {
+            throw BackupServiceError.importSourceInvalid("Quelle wurde nicht gefunden.")
+        }
+
+        if isDirectory.boolValue {
+            return try preflightCSVDirectory(sourceURL)
+        }
+
+        switch sourceURL.pathExtension.lowercased() {
+        case "json":
+            return try preflightJSON(sourceURL)
+        case "sqlite", "db":
+            return try preflightSQLite(sourceURL)
+        default:
+            throw BackupServiceError.importSourceUnsupported
+        }
+    }
+
+    private func preflightJSON(_ url: URL) throws -> BackupImportPreflightReport {
+        do {
+            let data = try Data(contentsOf: url)
+            let payload = try Self.jsonDecoder.decode(AboLifeExportPayload.self, from: data)
+            return BackupImportPreflightReport(
+                sourceKind: .json,
+                itemCounts: itemCounts(payload),
+                warnings: sensitiveImportWarnings()
+            )
+        } catch {
+            throw BackupServiceError.importSourceInvalid("JSON-Export ist nicht lesbar.")
+        }
+    }
+
+    private func preflightSQLite(_ url: URL) throws -> BackupImportPreflightReport {
+        do {
+            let queue = try DatabaseQueue(path: url.path, configuration: DatabaseConfiguration.makeConfiguration())
+            let counts = try queue.read { db in
+                var result: [String: Int] = [:]
+                for table in Self.importableTables {
+                    if try tableExists(table, db: db) {
+                        result[table] = try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM \(table)") ?? 0
+                    }
+                }
+                return result
+            }
+            guard !counts.isEmpty else {
+                throw BackupServiceError.importSourceInvalid("SQLite-Datei enthält keine bekannten AboLife-Tabellen.")
+            }
+            return BackupImportPreflightReport(
+                sourceKind: .sqlite,
+                itemCounts: counts,
+                warnings: sensitiveImportWarnings()
+            )
+        } catch let error as BackupServiceError {
+            throw error
+        } catch {
+            throw BackupServiceError.importSourceInvalid("SQLite-Backup ist nicht lesbar.")
+        }
+    }
+
+    private func preflightCSVDirectory(_ url: URL) throws -> BackupImportPreflightReport {
+        let manifestURL = url.appendingPathComponent("export_manifest.json", isDirectory: false)
+        let csvURL = url.appendingPathComponent("csv", isDirectory: true)
+        guard fileManager.fileExists(atPath: manifestURL.path),
+              fileManager.fileExists(atPath: csvURL.path) else {
+            throw BackupServiceError.importSourceInvalid("CSV-Backup braucht export_manifest.json und einen csv-Ordner.")
+        }
+
+        do {
+            let manifestData = try Data(contentsOf: manifestURL)
+            let manifest = try Self.jsonDecoder.decode(ExportManifest.self, from: manifestData)
+            let counts = Dictionary(
+                uniqueKeysWithValues: manifest.files
+                    .filter { $0.type == "csv" }
+                    .map { ($0.name, $0.rows ?? 0) }
+            )
+            return BackupImportPreflightReport(
+                sourceKind: .csvDirectory,
+                itemCounts: counts,
+                warnings: sensitiveImportWarnings()
+            )
+        } catch {
+            throw BackupServiceError.importSourceInvalid("CSV-Manifest ist nicht lesbar.")
+        }
+    }
+
+    private func itemCounts(_ payload: AboLifeExportPayload) -> [String: Int] {
+        [
+            "nutrition_entries": payload.nutritionEntries.count,
+            "nutrition_templates": payload.nutritionTemplates.count,
+            "workout_sessions": payload.workoutSessions.count,
+            "workout_exercises": payload.workoutExercises.count,
+            "workout_sets": payload.workoutSets.count,
+            "finance_entries": payload.financeEntries.count,
+            "finance_category_budgets": payload.financeCategoryBudgets.count,
+            "finance_fixed_costs": payload.financeFixedCosts.count,
+            "finance_savings_goals": payload.financeSavingsGoals.count,
+            "habit_entries": payload.habitEntries.count,
+            "weight_entries": payload.weightEntries.count,
+            "body_metric_entries": payload.bodyMetricEntries.count,
+            "weekly_reviews": payload.weeklyReviews.count,
+            "app_settings": payload.settings.count
+        ]
+    }
+
+    private func sensitiveImportWarnings() -> [String] {
+        [
+            "Import ist aktuell nur Vorprüfung; es werden keine lokalen Daten überschrieben.",
+            "Telegram-Token und erlaubte Chat-ID werden nicht importiert oder exportiert."
+        ]
+    }
+
+    private static let importableTables = [
+        "nutrition_entries",
+        "nutrition_templates",
+        "workout_sessions",
+        "workout_exercises",
+        "workout_sets",
+        "finance_entries",
+        "finance_category_budgets",
+        "finance_fixed_costs",
+        "finance_savings_goals",
+        "habit_entries",
+        "weight_entries",
+        "body_metric_entries",
+        "weekly_reviews",
+        "app_settings"
+    ]
 
     private func metadataRows(createdAt: Date) -> [[String]] {
         [
@@ -486,11 +829,14 @@ struct BackupService {
             \(metricCard("Mahlzeiten", payload.nutritionEntries.count))
             \(metricCard("Gewichtseinträge", payload.weightEntries.count))
             \(metricCard("Trainings", payload.workoutSessions.count))
+            \(metricCard("Trainingsübungen", payload.workoutExercises.count))
+            \(metricCard("Trainingssätze", payload.workoutSets.count))
             \(metricCard("Finanztransaktionen", payload.financeEntries.count))
             \(metricCard("Finanzpläne", payload.financeCategoryBudgets.count + payload.financeFixedCosts.count + payload.financeSavingsGoals.count))
             \(metricCard("Habit-Einträge", payload.habitEntries.filter { $0.habitKey != "training" }.count))
             \(metricCard("Wochenreviews", payload.weeklyReviews.count))
           </section>
+          \(financeAnalysisHTML(payload.financeAnalysis))
           \(chartCards)
           <section class="card">
             <h2>Hinweise</h2>
@@ -503,6 +849,28 @@ struct BackupService {
         </main>
         </body>
         </html>
+        """
+    }
+
+    private func financeAnalysisHTML(_ analysis: FinanceExportAnalysis?) -> String {
+        guard let analysis else {
+            return """
+            <section class="card"><h2>Finanzanalyse</h2><p>Noch nicht genug Finanzdaten für eine Monatsanalyse.</p></section>
+            """
+        }
+        let trends = analysis.categoryTrends.prefix(5).map { trend in
+            let budget = trend.budget.map { " · Budget \(csvNumber($0)) \(analysis.currency)" } ?? ""
+            let previous = trend.changeFromPrevious.map { " · ggü. Vormonat \(csvNumber($0)) \(analysis.currency)" } ?? ""
+            return "<li>\(htmlEscape(trend.category)): \(csvNumber(trend.spent)) \(htmlEscape(analysis.currency))\(budget)\(previous)</li>"
+        }.joined()
+        return """
+        <section class="card">
+          <h2>Finanzanalyse</h2>
+          <p>Monat \(htmlEscape(analysis.generatedForMonth)): \(csvNumber(analysis.monthlySpent)) \(htmlEscape(analysis.currency)) Ausgaben · Prognose \(csvNumber(analysis.projectedSpend)) \(htmlEscape(analysis.currency)) · Restbudget \(csvNumber(analysis.remainingBudget)) \(htmlEscape(analysis.currency))</p>
+          <p>Top-Kategorie: \(htmlEscape(analysis.topCategory ?? "noch offen")) · aktive Ausgabentage: \(analysis.activeExpenseDays) · ausstehende Fixkosten: \(csvNumber(analysis.remainingFixedCosts)) \(htmlEscape(analysis.currency))</p>
+          <h2>Kategorie-Trends</h2>
+          <ul>\(trends)</ul>
+        </section>
         """
     }
 
@@ -520,6 +888,8 @@ struct BackupService {
         - Mahlzeiten: \(payload.nutritionEntries.count)
         - Gewichtseintraege: \(payload.weightEntries.count)
         - Trainings: \(payload.workoutSessions.count)
+        - Trainingsuebungen: \(payload.workoutExercises.count)
+        - Trainingssaetze: \(payload.workoutSets.count)
         - Finanztransaktionen: \(payload.financeEntries.count)
         - Habit-Eintraege: \(payload.habitEntries.filter { $0.habitKey != "training" }.count)
         - Wochenreviews: \(payload.weeklyReviews.count)
@@ -528,10 +898,32 @@ struct BackupService {
 
         - Einnahmen gesamt: \(csvNumber(income)) \(payload.financeEntries.first?.currency ?? "EUR")
         - Ausgaben gesamt: \(csvNumber(expenses)) \(payload.financeEntries.first?.currency ?? "EUR")
+        \(markdownFinanceAnalysis(payload.financeAnalysis))
 
         ## Datenschutz
 
         Telegram-Token, erlaubte Chat-ID und lokale Environment-Werte werden nicht exportiert.
+        """
+    }
+
+    private func markdownFinanceAnalysis(_ analysis: FinanceExportAnalysis?) -> String {
+        guard let analysis else { return "- Monatsanalyse: noch nicht genug Daten" }
+        let savings = analysis.savingsRate.map { "\n- Sparquote: \(csvNumber($0 * 100)) %" } ?? ""
+        let categories = analysis.categoryTrends.prefix(5).map {
+            "- \($0.category): \(csvNumber($0.spent)) \(analysis.currency)"
+        }.joined(separator: "\n")
+        return """
+
+        - Monatsanalyse: \(analysis.generatedForMonth)
+        - Ausgaben aktueller Monat: \(csvNumber(analysis.monthlySpent)) \(analysis.currency)
+        - Prognose: \(csvNumber(analysis.projectedSpend)) \(analysis.currency)
+        - Restbudget: \(csvNumber(analysis.remainingBudget)) \(analysis.currency)
+        - Top-Kategorie: \(analysis.topCategory ?? "noch offen")
+        - Ausstehende Fixkosten: \(csvNumber(analysis.remainingFixedCosts)) \(analysis.currency)\(savings)
+
+        ### Kategorie-Trends
+
+        \(categories.isEmpty ? "Noch keine Kategorie-Daten." : categories)
         """
     }
 
@@ -590,6 +982,81 @@ struct BackupService {
         let grouped = Dictionary(grouping: entries.filter { $0.amount >= 0 }, by: { String(dayString($0.occurredAt).prefix(7)) })
             .mapValues { $0.reduce(0) { $0 + abs($1.amount) } }
         return grouped.keys.sorted().map { ($0, grouped[$0] ?? 0) }
+    }
+
+    private func makeFinanceAnalysis(
+        entries: [FinanceEntryRecord],
+        budgets: [FinanceCategoryBudgetRecord],
+        fixedCosts: [FinanceFixedCostRecord],
+        settings: AppSettingsRecord?,
+        createdAt: Date
+    ) -> FinanceExportAnalysis {
+        let calendar = Calendar(identifier: .gregorian)
+        let monthKey = String(dayString(createdAt).prefix(7))
+        let previousMonthKey = calendar.date(byAdding: .month, value: -1, to: createdAt).map { String(dayString($0).prefix(7)) }
+        let currentEntries = entries.filter { String(dayString($0.occurredAt).prefix(7)) == monthKey }
+        let previousEntries = previousMonthKey.map { key in entries.filter { String(dayString($0.occurredAt).prefix(7)) == key } } ?? []
+        let expenses = currentEntries.filter { $0.amount >= 0 }
+        let previousExpenses = previousEntries.filter { $0.amount >= 0 }
+        let monthlySpent = expenses.reduce(0) { $0 + $1.amount }
+        let monthlyIncome = currentEntries.filter { $0.amount < 0 }.reduce(0) { $0 + abs($1.amount) }
+        let monthlyBudget = settings?.monthlyBudget ?? 0
+        let monthStart = calendar.dateInterval(of: .month, for: createdAt)?.start ?? createdAt
+        let elapsedDays = max((calendar.dateComponents([.day], from: monthStart, to: calendar.startOfDay(for: createdAt)).day ?? 0) + 1, 1)
+        let totalMonthDays = max(calendar.range(of: .day, in: .month, for: createdAt)?.count ?? elapsedDays, elapsedDays)
+        let activeExpenseDays = Set(expenses.map { dayString($0.occurredAt) }).count
+        let averageDailySpend = monthlySpent / Double(elapsedDays)
+        let remainingFixedCosts = fixedCosts
+            .filter(\.isActive)
+            .filter { min(max($0.dueDay, 1), 31) >= calendar.component(.day, from: createdAt) }
+            .reduce(0) { $0 + $1.amount }
+        let projectedSpend = monthlySpent + averageDailySpend * Double(max(totalMonthDays - elapsedDays, 0)) + remainingFixedCosts
+        let groupedCurrent = Dictionary(grouping: expenses, by: { FinanceCategoryCatalog.normalized($0.category, kind: .expense) })
+            .mapValues { $0.reduce(0) { $0 + $1.amount } }
+        let groupedPrevious = Dictionary(grouping: previousExpenses, by: { FinanceCategoryCatalog.normalized($0.category, kind: .expense) })
+            .mapValues { $0.reduce(0) { $0 + $1.amount } }
+        let budgetByCategory = Dictionary(uniqueKeysWithValues: budgets.filter { $0.monthKey == monthKey }.map { (FinanceCategoryCatalog.normalized($0.category, kind: .expense), $0.budgetAmount) })
+        let categories = Set(groupedCurrent.keys).union(groupedPrevious.keys).union(budgetByCategory.keys)
+        let categoryTrends = categories.map { category in
+            let spent = groupedCurrent[category] ?? 0
+            let previous = groupedPrevious[category]
+            let budget = budgetByCategory[category]
+            return FinanceCategoryExportTrend(
+                category: category,
+                spent: spent,
+                share: monthlySpent > 0 ? spent / monthlySpent : 0,
+                previousMonthSpent: previous,
+                changeFromPrevious: previous.map { spent - $0 },
+                budget: budget,
+                isOverBudget: budget.map { spent > $0 } ?? false
+            )
+        }.sorted {
+            if $0.spent == $1.spent { return $0.category < $1.category }
+            return $0.spent > $1.spent
+        }
+        let monthlyTotals = monthlyExpenses(entries).suffix(3).map(\.1)
+        let largestExpense = expenses.max { $0.amount < $1.amount }
+
+        return FinanceExportAnalysis(
+            generatedForMonth: monthKey,
+            currency: settings?.defaultCurrency ?? entries.first?.currency ?? "EUR",
+            monthlySpent: monthlySpent,
+            monthlyIncome: monthlyIncome,
+            monthlyBalance: monthlyIncome - monthlySpent,
+            monthlyBudget: monthlyBudget,
+            remainingBudget: max(monthlyBudget - monthlySpent, 0),
+            averageDailySpend: averageDailySpend,
+            projectedSpend: projectedSpend,
+            previousMonthSpent: previousEntries.isEmpty ? nil : previousExpenses.reduce(0) { $0 + $1.amount },
+            threeMonthAverageSpend: monthlyTotals.count >= 3 ? monthlyTotals.reduce(0, +) / Double(monthlyTotals.count) : nil,
+            savingsRate: monthlyIncome > 0 ? max((monthlyIncome - monthlySpent) / monthlyIncome, 0) : nil,
+            topCategory: categoryTrends.first(where: { $0.spent > 0 })?.category,
+            largestExpenseTitle: largestExpense?.title,
+            largestExpenseAmount: largestExpense?.amount,
+            activeExpenseDays: activeExpenseDays,
+            remainingFixedCosts: remainingFixedCosts,
+            categoryTrends: categoryTrends
+        )
     }
 
     private func expensesByCategory(_ entries: [FinanceEntryRecord]) -> [(String, Double)] {
@@ -781,6 +1248,15 @@ struct BackupService {
         return csvNumber(value)
     }
 
+    private func csvOptional(_ value: Int?) -> String {
+        value.map(String.init) ?? ""
+    }
+
+    private func csvOptionalInt(_ value: Int?) -> String {
+        guard let value else { return "" }
+        return "\(value)"
+    }
+
     private func csvNumber(_ value: Double) -> String {
         guard value.isFinite else { return "" }
         return String(format: "%.6g", locale: Locale(identifier: "en_US_POSIX"), value)
@@ -888,6 +1364,12 @@ struct BackupService {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         encoder.dateEncodingStrategy = .iso8601
         return encoder
+    }()
+
+    static let jsonDecoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
     }()
 
     private static let isoFormatter = ISO8601DateFormatter()

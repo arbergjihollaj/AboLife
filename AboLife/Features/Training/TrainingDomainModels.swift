@@ -240,6 +240,25 @@ struct TrainingStatistics: Equatable {
     let legVolume: Int
     let strongestWeek: Int
     let trainingRate: Double
+    let averageSetsPerTraining: Double
+    let minimumWorkouts: Int
+    let normalWorkouts: Int
+    let strongWorkouts: Int
+    let pausedWorkouts: Int
+    let mostFrequentExercise: String?
+}
+
+struct ExerciseProgressStatus: Identifiable, Equatable {
+    let id: String
+    let exerciseName: String
+    let lastSetsText: String?
+    let bestSetReps: Int?
+    let recentTotalReps: [Int]
+    let recommendation: String
+
+    var hasEnoughData: Bool {
+        recentTotalReps.count >= 2
+    }
 }
 
 struct NutritionTrainingStatus: Equatable {
