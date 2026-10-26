@@ -5,7 +5,7 @@ import SwiftUI
 final class AppNavigationCoordinator: ObservableObject {
     static let mainWindowID = "main"
 
-    @Published var selectedSection: AppSection? = .dashboard
+    @Published var selectedSection: AppSection? = .calendar
     private var isOpeningMainWindow = false
 
     func select(_ section: AppSection) {
@@ -53,7 +53,7 @@ final class AppNavigationCoordinator: ObservableObject {
             if window.identifier?.rawValue == Self.mainWindowID {
                 return true
             }
-            return window.title == "AboLife"
+            return window.title == "AboLife Kalender"
         }
     }
 }

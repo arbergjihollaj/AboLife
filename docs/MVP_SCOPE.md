@@ -136,3 +136,7 @@ Ein Feature wird aus Version 1 entfernt, wenn:
 - es den Quick-Add-Flow verlangsamt
 - es das Dashboard überlädt
 - es keine tägliche Entscheidung unterstützt
+
+## Freigegebener Erweiterungsumfang 0.2 (26. Oktober 2026)
+
+Eigenständige, parallel nutzbare Kalender-Version: eigene Kennung und Datenkopie; manuelle Uni-/Trainings-/Privattermine; Wochenserien mit Semesterende und Ausnahmen; lokale ICS-Vorschau und kontrollierter Wiederimport; persönliche Lern- und Wegezeiten; Lernthemen, Tagesgrenzen, Prüfungstermine, automatische Vorschläge, Fixieren, Verschieben, Auslassen und Bewertungen. Keine Apple-Kalender-Anbindung, PDF-Erkennung, Cloud oder externe KI. Persönliche Stundenplandaten müssen bei der Einrichtung eingetragen oder importiert werden.

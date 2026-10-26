@@ -20,6 +20,7 @@ struct AboLifeExportPayload: Codable, Equatable {
     let bodyMetricEntries: [BodyMetricEntryRecord]
     let weeklyReviews: [WeeklyReviewRecord]
     let settings: [AppSettingsRecord]
+    let calendarWorkspace: CalendarWorkspace?
 
     enum CodingKeys: String, CodingKey {
         case exportVersion
@@ -40,6 +41,7 @@ struct AboLifeExportPayload: Codable, Equatable {
         case bodyMetricEntries
         case weeklyReviews
         case settings
+        case calendarWorkspace
     }
 
     init(
@@ -60,7 +62,8 @@ struct AboLifeExportPayload: Codable, Equatable {
         weightEntries: [WeightEntryRecord],
         bodyMetricEntries: [BodyMetricEntryRecord],
         weeklyReviews: [WeeklyReviewRecord],
-        settings: [AppSettingsRecord]
+        settings: [AppSettingsRecord],
+        calendarWorkspace: CalendarWorkspace? = nil
     ) {
         self.exportVersion = exportVersion
         self.createdAt = createdAt
@@ -80,6 +83,7 @@ struct AboLifeExportPayload: Codable, Equatable {
         self.bodyMetricEntries = bodyMetricEntries
         self.weeklyReviews = weeklyReviews
         self.settings = settings
+        self.calendarWorkspace = calendarWorkspace
     }
 
     init(from decoder: Decoder) throws {
@@ -102,6 +106,7 @@ struct AboLifeExportPayload: Codable, Equatable {
         self.bodyMetricEntries = try container.decode([BodyMetricEntryRecord].self, forKey: .bodyMetricEntries)
         self.weeklyReviews = try container.decode([WeeklyReviewRecord].self, forKey: .weeklyReviews)
         self.settings = try container.decode([AppSettingsRecord].self, forKey: .settings)
+        self.calendarWorkspace = try container.decodeIfPresent(CalendarWorkspace.self, forKey: .calendarWorkspace)
     }
 }
 
@@ -455,6 +460,11 @@ struct BackupService {
             files: &files
         )
 
+        if let calendar = payload.calendarWorkspace {
+            try Self.jsonEncoder.encode(calendar).write(to: exportDirectory.appendingPathComponent("calendar_workspace.json"), options: [.atomic])
+            files.append(ExportManifestFile(name: "calendar_workspace.json", type: "json", rows: nil))
+        }
+
         let report = makeReportArtifacts(payload: payload, habitRows: habitRows, createdAt: createdAt)
         for chart in report.charts {
             let url = exportDirectory.appendingPathComponent(chart.name, isDirectory: false)
@@ -532,9 +542,16 @@ struct BackupService {
                 weightEntries: try fetchIfTableExists(WeightEntryRecord.self, table: "weight_entries", db: db, orderSQL: "date ASC, id ASC"),
                 bodyMetricEntries: try fetchIfTableExists(BodyMetricEntryRecord.self, table: "body_metric_entries", db: db, orderSQL: "occurred_at ASC, id ASC"),
                 weeklyReviews: try fetchIfTableExists(WeeklyReviewRecord.self, table: "weekly_reviews", db: db, orderSQL: "week_start_date ASC, id ASC"),
-                settings: settings
+                settings: settings,
+                calendarWorkspace: try calendarWorkspaceForExport(db)
             )
         }
+    }
+
+    private func calendarWorkspaceForExport(_ db: Database) throws -> CalendarWorkspace? {
+        guard try db.tableExists("calendar_workspace"),
+              let data = try Data.fetchOne(db, sql: "SELECT payload FROM calendar_workspace WHERE id = ?", arguments: ["main"]) else { return nil }
+        return try JSONDecoder().decode(CalendarWorkspace.self, from: data)
     }
 
     func preflightImport(from sourceURL: URL) throws -> BackupImportPreflightReport {

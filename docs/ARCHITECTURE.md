@@ -236,3 +236,11 @@ Keine Architektur für:
 - Web-App
 - HealthKit
 - KI-Agenten
+
+## Version 0.2: Kalender/Lernplanung und Versionsgrenze
+
+Die neue App trägt die Kennung `com.private.AboLife.calendarPreview`, Version 0.2, und nutzt `AboLife-Calendar-Preview` für Daten und Sicherungen. Version 0.1 bleibt als App- und Quellcodearchiv sowie Git-Tag `abolife-v0.1-stable-20261026` erhalten. Es gibt keinen gemeinsam migrierten Datenbestand.
+
+`Features/Calendar` enthält Datenmodelle, `CalendarRepository`, `CalendarPlannerStore`, `ICSImporter`, `StudyPlannerEngine` und die SwiftUI-Oberfläche mit Editoren. Die Engine ist unabhängig von Views und Persistenz: fixe Termine → Wiederholungen auflösen → bekannte Wege reservieren → freie Fenster → Tagesgrenze, Pausen, Fälligkeit und Prüfungsende berücksichtigen → gültige Vorschläge erhalten oder neu verteilen. Uhrzeit und Zeitzone sind in Tests explizit gesetzt.
+
+Der MainActor-Store serialisiert Änderungen und speichert erst nach erfolgreicher Planung atomar. Relevante Eingaben planen sofort neu; eine Minute nach Ablauf aktualisiert auch die geöffnete Ansicht ihren Stand. Es gibt keinen externen KI-Dienst und keinen Hintergrundzugriff auf Apple Kalender. Offene Wege und Konflikte mit fixierten Blöcken werden angezeigt. Die erste Wiederholungsregel ist eine dokumentierte Heuristik, keine trainierte FSRS-Implementierung.

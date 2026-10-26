@@ -19,7 +19,7 @@ struct AboLifeApp: App {
     }
 
     var body: some Scene {
-        Window("AboLife", id: AppNavigationCoordinator.mainWindowID) {
+        Window("AboLife Kalender", id: AppNavigationCoordinator.mainWindowID) {
             AppRouter()
                 .environment(\.appDatabase, appDatabase)
                 .environmentObject(telegramCoordinator)
@@ -41,7 +41,7 @@ struct AboLifeApp: App {
         .defaultSize(width: 700, height: 720)
         .windowResizability(.contentMinSize)
 
-        MenuBarExtra("AboLife", systemImage: "sparkles") {
+        MenuBarExtra("AboLife Kalender", systemImage: "calendar") {
             MenuBarQuickPanelView(database: appDatabase)
                 .environmentObject(telegramCoordinator)
                 .environmentObject(navigationCoordinator)

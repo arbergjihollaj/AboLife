@@ -288,6 +288,13 @@ enum DatabaseMigrationPlan {
             }
         }
 
+        migrator.registerMigration("v12_calendar_workspace") { db in
+            try db.create(table: "calendar_workspace") { table in
+                table.column("id", .text).primaryKey()
+                table.column("payload", .blob).notNull()
+            }
+        }
+
         return migrator
     }
 }

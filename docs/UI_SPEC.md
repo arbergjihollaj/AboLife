@@ -302,3 +302,11 @@ Detailseiten zeigen Historie, Listen, Bearbeitung und tiefergehende Charts.
 - Die bestehende Einstellungsansicht öffnet in einer nativen SwiftUI-`Settings`-Scene über ⌘, oder das macOS-App-Menü „AboLife → Einstellungen …“.
 - Die Seitenleiste enthält keinen Einstellungsbutton. Das Einstellungsfenster ist ausschließlich über ⌘, und das macOS-App-Menü erreichbar. Die aktuell geöffnete Hauptseite bleibt dabei erhalten.
 - Das Einstellungsfenster ist separat schließbar und in der Größe veränderbar. Es verwendet dieselbe Datenbank und denselben Telegram-Koordinator wie die App.
+
+### Kalender-Version 0.2
+
+Ein einzelner Eintrag „Kalender“ führt zu Woche, Lernthemen und Stundenplan. „Termin“ öffnet ein Formular mit Art, Ort, Beginn/Ende und optionaler Wochenserie. „Planungszeiten“ enthält Verfügbarkeit, Tagesgrenze, Pausen und pro Richtung einzutragende Wege. Rückfahrten bleiben offen, bis sie bewusst gesetzt werden. Die ursprünglichen App-Farben und Karten bleiben erhalten.
+
+Der Stundenplan-Import bietet eine Vorschau, behält lokale Änderungen standardmäßig bei und deaktiviert fehlende Einträge nur nach Bestätigung eines vollständigen Imports. Bei Warnungen sind Löschungen gesperrt. Ein neuer erfolgreicher Import wird automatisch als aktuelle Quelle ausgewählt.
+
+Lernvorschläge nennen Thema, Uhrzeit, Ort und Begründung. Sie können fixiert, verschoben, ausgelassen oder bewertet werden. Fixierte Konflikte sind sichtbar. Unplatzierbare Themen zeigen einen Grund; der Planer füllt keine gesperrten Zeiten auf. Vergangene unbeantwortete Vorschläge gelten als verpasst, nicht als gelernt.

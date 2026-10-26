@@ -2,6 +2,7 @@ import SwiftUI
 
 enum AppSection: String, CaseIterable, Identifiable {
     case dashboard
+    case calendar
     case nutrition
     case training
     case weight
@@ -23,6 +24,8 @@ enum AppSection: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .calendar:
+            return "Kalender"
         case .dashboard:
             return "Dashboard"
         case .nutrition:
@@ -44,6 +47,8 @@ enum AppSection: String, CaseIterable, Identifiable {
 
     var systemImage: String {
         switch self {
+        case .calendar:
+            return "calendar"
         case .dashboard:
             return "gauge.with.dots.needle.67percent"
         case .nutrition:
@@ -79,6 +84,7 @@ struct AppRouter: View {
 
                     List {
                         sidebarButton(.dashboard)
+                        sidebarButton(.calendar)
 
                         healthCategory
 
@@ -89,7 +95,7 @@ struct AppRouter: View {
                             }
                         }
 
-                        ForEach(AppSection.allCases.filter { $0 != .dashboard && !$0.isHealthSection }) { section in
+                        ForEach(AppSection.allCases.filter { $0 != .dashboard && $0 != .calendar && !$0.isHealthSection }) { section in
                             sidebarButton(section)
                         }
                     }
@@ -102,10 +108,12 @@ struct AppRouter: View {
                 }
                 .padding(18)
             }
-            .navigationSplitViewColumnWidth(min: 210, ideal: 230)
+            .navigationSplitViewColumnWidth(min: 240, ideal: 250)
         } detail: {
             Group {
                 switch navigation.selectedSection ?? .dashboard {
+                case .calendar:
+                    CalendarPlannerView(database: appDatabase)
                 case .dashboard:
                     DashboardView(store: DashboardStore(database: appDatabase))
                 case .nutrition:
@@ -238,7 +246,7 @@ struct AppRouter: View {
                     }
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("AboLife")
+                    Text("AboLife 0.2")
                         .font(.system(size: 18, weight: .semibold, design: .rounded))
                         .foregroundStyle(AboLifeColors.primaryText)
                     Text("Daily cockpit")

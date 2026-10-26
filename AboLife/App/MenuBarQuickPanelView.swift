@@ -109,7 +109,7 @@ struct MenuBarQuickPanelView: View {
             .help("Hauptfenster öffnen")
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("AboLife")
+                Text("AboLife 0.2")
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .foregroundStyle(AboLifeColors.primaryText)
                 Text(Date.now.formatted(date: .abbreviated, time: .omitted))
