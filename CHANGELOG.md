@@ -7,4 +7,3 @@
 - Fixieren, Verschieben, Auslassen und bewertete Wiederholungen mit tatsächlicher Dauer. Transparente Heuristik passt Intervalle und Dauer an Rückmeldungen an.
 - Separate App-Kennung und Datenkopie schützen den gesicherten Stand 0.1. Kalenderdaten sind in SQLite-, JSON- und mehrteiligen CSV-Sicherungen enthalten.
 - 224 Tests erfolgreich, einschließlich der bestehenden 195 Tests.
-
