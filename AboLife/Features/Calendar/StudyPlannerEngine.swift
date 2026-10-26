@@ -14,6 +14,22 @@ struct StudyPlanResult {
     var unplaced: [String: String]
 }
 
+struct PlannerJourney: Identifiable, Equatable {
+    var start: Date
+    var end: Date
+    var from: String
+    var to: String
+    var estimatedReturn: Bool
+    var id: String { "journey/\(from)/\(to)/\(start.timeIntervalSince1970)/\(end.timeIntervalSince1970)" }
+    var interval: DateInterval { DateInterval(start: start, end: end) }
+    var title: String {
+        if to == "home" { return "Rückfahrt nach Hause" }
+        if to == "university" { return from == "home" ? "Hinfahrt zur Uni" : "Weiterfahrt zur Uni" }
+        if to == "gym" { return from == "home" ? "Hinfahrt zum Training" : "Weiterfahrt zum Training" }
+        return "Fahrt nach \(PlannerDate.locationName(to))"
+    }
+}
+
 enum StudyPlannerEngine {
     static func overlaps(_ a: DateInterval, _ b: DateInterval) -> Bool {
         a.start < b.end && b.start < a.end
@@ -28,14 +44,16 @@ enum StudyPlannerEngine {
         }
     }
 
-    static func availability(events: [PlannerEvent], preferences p: PlannerPreferences, horizon: DateInterval) -> (windows: [StudyFreeWindow], issues: [PlannerIssue]) {
+    static func availability(events: [PlannerEvent], preferences p: PlannerPreferences, horizon: DateInterval) -> (windows: [StudyFreeWindow], issues: [PlannerIssue], journeys: [PlannerJourney]) {
         let calendar = p.calendar
         let expanded: [PlannerOccurrence] = events.flatMap { event in event.occurrences(in: horizon) }
         let occurrences: [PlannerOccurrence] = expanded.sorted { (a: PlannerOccurrence, b: PlannerOccurrence) in
-            if a.start == b.start { return a.id < b.id }; return a.start < b.start
+            if a.start == b.start { return a.id < b.id }
+            return a.start < b.start
         }
         var windows: [StudyFreeWindow] = []
         var issues: [PlannerIssue] = []
+        var journeys: [PlannerJourney] = []
         var day = calendar.startOfDay(for: horizon.start)
         while day < horizon.end {
             defer { day = calendar.date(byAdding: .day, value: 1, to: day)! }
@@ -44,7 +62,7 @@ enum StudyPlannerEngine {
             let allowedStart = PlannerDate.atMinute(p.dayStartMinute, on: day, calendar: calendar)
             let allowedEnd = PlannerDate.atMinute(p.dayEndMinute, on: day, calendar: calendar)
             let canLearn = p.weekdays.contains(calendar.component(.weekday, from: day)) && allowedEnd > allowedStart
-            let dayLabel = day.formatted(.dateTime.day().month())
+            let dayLabel = day.formatted(.dateTime.locale(Locale(identifier: "de_DE")).day().month())
             var cursor = day
             var location = "home"
             var previousTitle: String?
@@ -53,66 +71,55 @@ enum StudyPlannerEngine {
                 let b = min(end, allowedEnd, horizon.end)
                 if canLearn && b > a { windows.append(StudyFreeWindow(interval: DateInterval(start: a, end: b), location: place)) }
             }
+            func addJourney(_ start: Date, _ end: Date, from: String, to: String) {
+                guard from != to, end > start, end > horizon.start, start < horizon.end else { return }
+                journeys.append(PlannerJourney(start: start, end: end, from: from, to: to, estimatedReturn: p.returnIsEstimated(from: from, to: to)))
+            }
             for event in dayEvents {
                 if let previousTitle, event.start < cursor {
                     issues.append(PlannerIssue(message: "\(dayLabel): \(previousTitle) und \(event.title) überschneiden sich."))
                 }
                 if event.start >= cursor {
-                    if p.learningLocations.contains(location) {
-                        if let travel = p.travel(from: location, to: event.location) {
-                            let departure = event.start.addingTimeInterval(-Double(travel) * 60)
-                            if departure < cursor { issues.append(PlannerIssue(message: "\(dayLabel): Zu wenig Fahrtzeit vor „\(event.title)“.")) }
+                    if location == event.location {
+                        // One stay at the same place, even during long breaks or when
+                        // campus learning is disabled. Never add an automatic home detour.
+                        if p.learningLocations.contains(location) { addWindow(cursor, event.start, place: location) }
+                    } else if let travel = p.travel(from: location, to: event.location) {
+                        let duration = Double(travel) * 60
+                        let departure = event.start.addingTimeInterval(-duration)
+                        if previousTitle != nil && departure < cursor {
+                            issues.append(PlannerIssue(message: "\(dayLabel): Zu wenig Fahrtzeit. Zu wenig Zeit für den Ortswechsel vor „\(event.title)“."))
+                        } else if p.learningLocations.contains(location) {
                             addWindow(cursor, departure, place: location)
+                            addJourney(departure, event.start, from: location, to: event.location)
+                        } else if p.learningLocations.contains(event.location) {
+                            // Travel directly to campus and use the remaining break there.
+                            let arrival = cursor.addingTimeInterval(duration)
+                            addJourney(cursor, arrival, from: location, to: event.location)
+                            addWindow(arrival, event.start, place: event.location)
                         } else {
-                            issues.append(PlannerIssue(message: "\(dayLabel): Fahrtzeit \(PlannerDate.locationName(location)) → \(PlannerDate.locationName(event.location)) fehlt. Diese Lücke bleibt frei."))
+                            addJourney(departure, event.start, from: location, to: event.location)
                         }
                     } else {
-                        // From a non-study location, compare known paths through home and
-                        // directly to the next study location. Never invent a connection.
-                        var candidates: [StudyFreeWindow] = []
-                        var knownPath = false
-                        var feasiblePath = false
-                        if let home = p.travel(from: location, to: "home"), let outbound = p.travel(from: "home", to: event.location) {
-                            knownPath = true
-                            let a = cursor.addingTimeInterval(Double(home) * 60)
-                            let b = event.start.addingTimeInterval(-Double(outbound) * 60)
-                            if b >= a {
-                                feasiblePath = true
-                                candidates.append(StudyFreeWindow(interval: DateInterval(start: a, end: b), location: "home"))
-                            }
-                        }
-                        if let direct = p.travel(from: location, to: event.location) {
-                            knownPath = true
-                            let arrival = cursor.addingTimeInterval(Double(direct) * 60)
-                            if arrival <= event.start {
-                                feasiblePath = true
-                                if p.learningLocations.contains(event.location) {
-                                    candidates.append(StudyFreeWindow(interval: DateInterval(start: arrival, end: event.start), location: event.location))
-                                }
-                            }
-                        }
-                        func usefulDuration(_ window: StudyFreeWindow) -> TimeInterval {
-                            max(0, min(window.interval.end, allowedEnd).timeIntervalSince(max(window.interval.start, allowedStart)))
-                        }
-                        if let best = candidates.sorted(by: { usefulDuration($0) == usefulDuration($1) ? $0.location < $1.location : usefulDuration($0) > usefulDuration($1) }).first {
-                            addWindow(best.interval.start, best.interval.end, place: best.location)
-                        } else if knownPath && !feasiblePath {
-                            issues.append(PlannerIssue(message: "\(dayLabel): Zu wenig Zeit für den Ortswechsel vor „\(event.title)“."))
-                        } else if !knownPath {
-                            issues.append(PlannerIssue(message: "\(dayLabel): Rückweg oder Anschlussfahrt nach \(PlannerDate.locationName(location)) fehlt. Diese Lücke bleibt frei."))
-                        }
+                        issues.append(PlannerIssue(message: "\(dayLabel): Fahrtzeit \(PlannerDate.locationName(location)) → \(PlannerDate.locationName(event.location)) fehlt. Diese Lücke bleibt frei."))
                     }
                 }
                 // Overlapping fixed events remain visible conflicts; block their union.
                 if event.end >= cursor { cursor = event.end; location = event.location; previousTitle = event.title }
             }
-            if let home = p.travel(from: location, to: "home") {
-                addWindow(cursor.addingTimeInterval(Double(home) * 60), nextDay, place: "home")
-            } else {
-                issues.append(PlannerIssue(message: "\(dayLabel): Rückfahrt von \(PlannerDate.locationName(location)) fehlt. Danach wird noch kein Lernen geplant."))
+            if cursor < nextDay {
+                if let home = p.travel(from: location, to: "home") {
+                    let arrival = cursor.addingTimeInterval(Double(home) * 60)
+                    addJourney(cursor, arrival, from: location, to: "home")
+                    addWindow(arrival, nextDay, place: "home")
+                } else {
+                    issues.append(PlannerIssue(message: "\(dayLabel): Rückfahrt von \(PlannerDate.locationName(location)) fehlt. Danach wird noch kein Lernen geplant."))
+                }
             }
         }
-        return (windows, Array(Set(issues.map(\.message))).sorted().map { PlannerIssue(message: $0) })
+        // The displayed journeys and the planner use exactly the same reservations.
+        for journey in journeys { windows = subtract(journey.interval, from: windows) }
+        return (windows, Array(Set(issues.map(\.message))).sorted().map { PlannerIssue(message: $0) }, journeys)
     }
 
     static func plan(_ workspace: CalendarWorkspace, now: Date, days: Int = 14) -> StudyPlanResult {

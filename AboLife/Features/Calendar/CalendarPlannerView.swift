@@ -22,6 +22,11 @@ struct CalendarPlannerView: View {
     private var weekEnd: Date { calendar.date(byAdding: .day, value: 7, to: weekStart)! }
     private var occurrences: [PlannerOccurrence] { store.workspace.events.flatMap { $0.occurrences(in: DateInterval(start: weekStart, end: weekEnd)) } }
     private var selectedEvents: [PlannerOccurrence] { occurrences.filter { calendar.isDate($0.start, inSameDayAs: selectedDay) || ($0.start < calendar.startOfDay(for: selectedDay) && $0.end > calendar.startOfDay(for: selectedDay)) }.sorted { $0.start < $1.start } }
+    private var selectedJourneys: [PlannerJourney] {
+        let day = calendar.startOfDay(for: selectedDay)
+        let horizon = DateInterval(start: day, end: calendar.date(byAdding: .day, value: 1, to: day)!)
+        return StudyPlannerEngine.availability(events: store.workspace.events, preferences: store.workspace.preferences, horizon: horizon).journeys
+    }
     private var selectedSessions: [StudySession] { store.workspace.sessions.filter { calendar.isDate($0.start, inSameDayAs: selectedDay) } }
 
     var body: some View {
@@ -126,7 +131,7 @@ struct CalendarPlannerView: View {
                 Spacer()
                 Button("Lernthema hinzufügen") { addTopic() }.buttonStyle(.bordered)
             }
-            if selectedEvents.isEmpty && selectedSessions.isEmpty {
+            if selectedEvents.isEmpty && selectedSessions.isEmpty && selectedJourneys.isEmpty {
                 AboLifeCard {
                     VStack(alignment: .leading, spacing: 8) {
                         Label("Dein Tag ist noch frei", systemImage: "calendar").font(AboLifeTypography.cardTitle).foregroundStyle(AboLifeColors.primaryText)
@@ -136,14 +141,27 @@ struct CalendarPlannerView: View {
                 }
             }
             // One chronological agenda for fixed events and learning.
-            let times = Array(Set(selectedEvents.map(\.start) + selectedSessions.map(\.start))).sorted()
+            let times = Array(Set(selectedEvents.map(\.start) + selectedSessions.map(\.start) + selectedJourneys.map(\.start))).sorted()
             ForEach(times, id: \.self) { time in
+                ForEach(selectedJourneys.filter { $0.start == time }) { journey in journeyRow(journey) }
                 ForEach(selectedEvents.filter { $0.start == time }) { occurrence in eventRow(occurrence) }
                 ForEach(selectedSessions.filter { $0.start == time }) { session in sessionRow(session) }
             }
-            Text("Blau: feste Termine · Grün: Lernen. Fahrtzeiten und Pausen werden bei Vorschlägen freigehalten.")
+            Text("Blau: feste Termine · Grün: Lernen. Fahrten werden automatisch berechnet. In Uni-Pausen bleibst du vor Ort.")
                 .font(AboLifeTypography.micro).foregroundStyle(AboLifeColors.secondaryText)
         }
+    }
+    private func journeyRow(_ journey: PlannerJourney) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            timeLabel(journey.start, journey.end)
+            Image(systemName: "arrow.triangle.turn.up.right.diamond").foregroundStyle(AboLifeColors.secondaryText)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(journey.title).font(AboLifeTypography.body).foregroundStyle(AboLifeColors.primaryText)
+                Text("Automatisch · \(Int(journey.end.timeIntervalSince(journey.start) / 60)) Min.\(journey.estimatedReturn ? " · Rückweg wie Hinfahrt" : "")")
+                    .font(AboLifeTypography.micro).foregroundStyle(AboLifeColors.secondaryText)
+            }
+            Spacer()
+        }.padding(.horizontal, 16).padding(.vertical, 8)
     }
     private func eventRow(_ occurrence: PlannerOccurrence) -> some View {
         AboLifeCard {

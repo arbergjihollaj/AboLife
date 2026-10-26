@@ -143,12 +143,20 @@ struct PlannerPreferences: Codable, Equatable {
     var minimumBlockMinutes = 25
     var breakMinutes = 10
     var timeZoneID = TimeZone.current.identifier
-    // Return journeys and direct campus/gym transfers require explicit setup.
+    // Optional for backwards compatibility with saved 0.2 workspaces.
+    // Unless explicitly disabled, a missing return duration follows the outbound route.
+    var assumeSymmetricReturn: Bool?
+    var usesSymmetricReturn: Bool { assumeSymmetricReturn != false }
     var travelMinutes: [String: Int] = ["home>university": 60, "home>gym": 15]
     var learningLocations: Set<String> = ["home", "university"]
     func travel(from: String, to: String) -> Int? {
         if from == to { return 0 }
-        return travelMinutes[from + ">" + to]
+        if let explicit = travelMinutes[from + ">" + to] { return explicit }
+        if to == "home" && usesSymmetricReturn { return travelMinutes["home>" + from] }
+        return nil
+    }
+    func returnIsEstimated(from: String, to: String) -> Bool {
+        from != to && to == "home" && travelMinutes[from + ">" + to] == nil && usesSymmetricReturn && travelMinutes["home>" + from] != nil
     }
     var calendar: Calendar {
         var value = Calendar(identifier: .gregorian)

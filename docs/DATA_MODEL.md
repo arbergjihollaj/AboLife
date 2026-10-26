@@ -338,3 +338,7 @@ Termine haben eine stabile UUID, Kategorie, Start/Ende, Ort und Zeitzone; Wochen
 Lernthemen speichern Fach, Titel, geschätzte Dauer, nächste Fälligkeit, optionales Prüfungsdatum, Intervall, Schwierigkeitsfaktor und die letzten fünf tatsächlichen Dauern. Sitzungen speichern geplanten bzw. bestätigten Zeitraum, Status, Fixierung, Bewertung, tatsächliche Dauer und Bewertungszeitpunkt. Auslassen ist keine erfolgreiche Wiederholung. Bewertete Einheiten und Termine bleiben von Änderungen der Zeitplanung unterscheidbar.
 
 SQLite-Sicherungen enthalten den gesamten Workspace. JSON-Exporte erhalten optional `calendarWorkspace`; ältere Exporte ohne dieses Feld bleiben lesbar. Beim mehrteiligen CSV-Backup liegt zusätzlich `calendar_workspace.json` mit der vollständigen Kalender- und Lernhistorie bei. Für den Kalender ist weiterhin kein automatischer Import in Version 0.1 vorgesehen.
+
+### Fahrten ab 0.2.1
+
+`PlannerJourney` ist ein berechneter, nicht persistierter Fahrtblock mit Beginn, Ende, Ausgangs-/Zielort und Kennzeichnung einer angenommenen Rückfahrtdauer. `availability` liefert diese Blöcke gemeinsam mit den freien Lernfenstern. `PlannerPreferences.assumeSymmetricReturn` ist optional: fehlend oder true übernimmt nur für einen fehlenden Rückweg nach Hause die bekannte Hinfahrtdauer; false lässt ihn offen. Eine explizite Rückfahrtdauer hat Vorrang. Das optionale Feld hält vorhandene 0.2-Workspaces lesbar; das SQLite-Schema bleibt gleich.

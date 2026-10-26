@@ -188,7 +188,9 @@ struct PlannerPreferencesEditor: View {
                     }
                     GroupBox("Fahrtzeiten pro Richtung") {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Hinfahrt Uni: 60 Min. und Training: 15 Min. sind vorbelegt. Bitte Rückwege und direkte Verbindungen bestätigen. Fehlende Wege werden nicht geraten.").font(.caption).foregroundStyle(.secondary)
+                            Text("Hinfahrt vor dem ersten Termin, Rückfahrt nach dem letzten. In Uni-Pausen bleibst du vor Ort. Direkte Wege zwischen Uni und Training bitte separat eintragen.").font(.caption).foregroundStyle(.secondary)
+                            Toggle("Rückfahrt zunächst wie Hinfahrt berechnen", isOn: Binding(get: { preferences.usesSymmetricReturn }, set: { preferences.assumeSymmetricReturn = $0 }))
+                            Text("Gilt nur ohne eigene Rückfahrtdauer. Automatisch übernommene Zeiten sind als „wie Hinfahrt“ gekennzeichnet.").font(.caption).foregroundStyle(.secondary)
                             ForEach(routeKeys, id: \.self) { key in routeRow(key) }
                             Divider()
                             Text("Weitere Verbindung").font(.caption.weight(.semibold))
@@ -229,7 +231,10 @@ struct PlannerPreferencesEditor: View {
             Spacer()
             if let minutes = preferences.travelMinutes[key] {
                 Stepper("\(minutes) Min.", value: Binding(get: { preferences.travelMinutes[key] ?? 0 }, set: { preferences.travelMinutes[key] = $0 }), in: 0...300, step: 5).frame(width: 130)
-                Button { preferences.travelMinutes.removeValue(forKey: key) } label: { Image(systemName: "minus.circle") }.help("Weg als unbekannt markieren")
+                Button { preferences.travelMinutes.removeValue(forKey: key) } label: { Image(systemName: "minus.circle") }.help("Eigene Dauer entfernen")
+            } else if parts.count == 2, let minutes = preferences.travel(from: parts[0], to: parts[1]) {
+                Text("\(minutes) Min. · wie Hinfahrt").font(.caption).foregroundStyle(.secondary)
+                Button("Anpassen") { preferences.travelMinutes[key] = minutes }
             } else {
                 Text("Noch offen").font(.caption).foregroundStyle(AboLifeColors.habits)
                 Button("Eintragen") { preferences.travelMinutes[key] = key.contains("university") ? 60 : 15 }
