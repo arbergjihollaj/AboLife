@@ -108,17 +108,18 @@ final class CalendarPlannerStore: ObservableObject {
     @discardableResult
     func review(_ id: String, rating: StudyRating, actualMinutes: Int) -> Bool {
         guard (5...180).contains(actualMinutes) else { errorMessage = "Die tatsächliche Lerndauer muss zwischen 5 und 180 Minuten liegen."; return false }
+        let reviewedAt = now()
         return change { workspace in
             guard let index = workspace.sessions.firstIndex(where: { $0.id == id }), workspace.sessions[index].status == .planned,
                   let t = workspace.topics.firstIndex(where: { $0.id == workspace.sessions[index].topicID }) else { return }
             workspace.sessions[index].status = .completed
             workspace.sessions[index].rating = rating
             workspace.sessions[index].actualMinutes = actualMinutes
-            workspace.sessions[index].reviewedAt = now()
+            workspace.sessions[index].reviewedAt = reviewedAt
             workspace.sessions[index].reason = "Von dir bewertet; die nächste Wiederholung wurde neu geplant."
-            workspace.sessions[index].end = now()
-            workspace.sessions[index].start = now().addingTimeInterval(-Double(actualMinutes) * 60)
-            StudyReviewPolicy.apply(rating, to: &workspace.topics[t], at: now(), actualMinutes: actualMinutes, calendar: workspace.preferences.calendar)
+            workspace.sessions[index].end = reviewedAt
+            workspace.sessions[index].start = reviewedAt.addingTimeInterval(-Double(actualMinutes) * 60)
+            StudyReviewPolicy.apply(rating, to: &workspace.topics[t], at: reviewedAt, actualMinutes: actualMinutes, calendar: workspace.preferences.calendar)
         }
     }
     @discardableResult

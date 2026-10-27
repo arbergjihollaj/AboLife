@@ -458,3 +458,59 @@ extension CalendarPlannerTests {
         XCTAssertTrue(pinned.issues.contains { $0.message.contains("Fixierter/laufender") })
     }
 }
+
+extension CalendarPlannerTests {
+    func testOutboundJourneyToNextHorizonDayReservesPreviousEvening() {
+        var w = CalendarWorkspace(); w.preferences = preferences(); w.preferences.dayStartMinute = 22 * 60; w.preferences.dayEndMinute = 1439
+        w.events = [event("Nachttermin", "2026-11-09 00:15", "2026-11-09 00:45")]
+        var t = topic(minutes: 90); t.nextReview = date("2026-11-08 22:00"); w.topics = [t]
+        let result = StudyPlannerEngine.plan(w, now: now)
+        XCTAssertTrue(result.sessions.isEmpty)
+        XCTAssertNotNil(result.unplaced[t.id])
+        let horizon = DateInterval(start: date("2026-11-08 00:00"), end: date("2026-11-09 00:00"))
+        let availability = StudyPlannerEngine.availability(events: w.events, preferences: w.preferences, horizon: horizon)
+        XCTAssertEqual(availability.journeys.first?.start, date("2026-11-08 23:15"))
+        XCTAssertFalse(availability.windows.contains { $0.interval.contains(date("2026-11-08 23:20")) })
+    }
+    func testReturnJourneyFromPreviousDayReservesStartOfRequestedDay() {
+        var p = preferences(); p.dayStartMinute = 0; p.travelMinutes["university>home"] = 60
+        let events = [event("Spättermin", "2026-10-25 22:30", "2026-10-25 23:45")]
+        let result = StudyPlannerEngine.availability(events: events, preferences: p, horizon: day)
+        XCTAssertEqual(result.journeys.first?.end, date("2026-10-26 00:45"))
+        XCTAssertFalse(result.windows.contains { $0.interval.contains(date("2026-10-26 00:15")) })
+        XCTAssertEqual(result.windows.first?.interval.start, date("2026-10-26 00:45"))
+    }
+    @MainActor
+    func testManualMoveRejectsJourneyToAppointmentOutsideSelectedDay() throws {
+        let db = try AppDatabase.makeTemporary(); var w = CalendarWorkspace(); w.preferences = preferences()
+        w.preferences.dayStartMinute = 22 * 60; w.preferences.dayEndMinute = 1439
+        w.events = [event("Nachttermin", "2026-11-09 00:15", "2026-11-09 00:45")]
+        var t = topic(minutes: 90); t.nextReview = date("2026-11-07 22:00"); w.topics = [t]
+        let existing = StudySession(topicID: t.id, start: date("2026-11-07 22:00"), end: date("2026-11-07 23:30"))
+        w.sessions = [existing]; try CalendarRepository(database: db).save(w)
+        let store = CalendarPlannerStore(database: db, now: { self.now })
+        XCTAssertFalse(store.moveSession(existing.id, start: date("2026-11-08 22:00")))
+        XCTAssertEqual(store.workspace.sessions.first?.start, existing.start)
+    }
+}
+
+extension CalendarPlannerTests {
+    func testMalformedICSPropertyNameProducesWarningWithoutCrashing() throws {
+        let malformed = sampleICS.replacingOccurrences(of: "UID:lecture-1", with: "UID:lecture-1\r\n:oops\r\n;VALUE=TEXT:broken")
+        let draft = try ICSImporter.parse(data: ics(malformed), sourceID: "test", sourceName: "Beispiel")
+        XCTAssertEqual(draft.events.count, 1)
+        XCTAssertTrue(draft.warnings.contains { $0.contains("unlesbare Kalenderfelder") })
+    }
+    @MainActor
+    func testReviewUsesOneTimestampForDurationAndFeedbackEvenWhenClockAdvances() throws {
+        let db = try AppDatabase.makeTemporary(); var tick = now
+        let store = CalendarPlannerStore(database: db, now: { tick = tick.addingTimeInterval(0.125); return tick })
+        XCTAssertTrue(store.saveTopic(topic()))
+        let id = try XCTUnwrap(store.workspace.sessions.first?.id)
+        XCTAssertTrue(store.review(id, rating: .good, actualMinutes: 25))
+        let completed = try XCTUnwrap(store.workspace.sessions.first { $0.id == id })
+        XCTAssertEqual(completed.minutes, 25)
+        XCTAssertEqual(completed.end.timeIntervalSince(completed.start), 1500)
+        XCTAssertEqual(completed.reviewedAt, completed.end)
+    }
+}

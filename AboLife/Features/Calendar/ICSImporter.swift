@@ -23,13 +23,14 @@ enum ICSImporter {
     }
     private static func property(_ line: String) -> Property? {
         guard let colon = line.firstIndex(of: ":") else { return nil }
-        let parts = line[..<colon].split(separator: ";").map(String.init)
+        let parts = line[..<colon].split(separator: ";", omittingEmptySubsequences: false).map(String.init)
+        guard let name = parts.first, !name.isEmpty else { return nil }
         var parameters: [String: String] = [:]
         for part in parts.dropFirst() {
             let pair = part.split(separator: "=", maxSplits: 1).map(String.init)
             if pair.count == 2 { parameters[pair[0].uppercased()] = pair[1].trimmingCharacters(in: CharacterSet(charactersIn: "\"")) }
         }
-        return Property(name: parts[0].uppercased(), parameters: parameters, value: String(line[line.index(after: colon)...]))
+        return Property(name: name.uppercased(), parameters: parameters, value: String(line[line.index(after: colon)...]))
     }
     private static func text(_ raw: String) -> String {
         var result = "", escaping = false
@@ -75,7 +76,7 @@ enum ICSImporter {
             if (line.hasPrefix(" ") || line.hasPrefix("\t")), !lines.isEmpty { lines[lines.count - 1] += line.dropFirst() }
             else { lines.append(line) }
         }
-        var groups: [[Property]] = [], current: [Property]?, nestedDepth = 0
+        var groups: [[Property]] = [], current: [Property]?, nestedDepth = 0, malformedProperties = 0
         for line in lines {
             let upper = line.uppercased()
             if upper == "BEGIN:VEVENT" { current = []; nestedDepth = 0 }
@@ -83,10 +84,13 @@ enum ICSImporter {
             else if current != nil {
                 if upper.hasPrefix("BEGIN:") { nestedDepth += 1 }
                 else if upper.hasPrefix("END:") { nestedDepth -= 1 }
-                else if nestedDepth == 0, let value = property(line) { current!.append(value) }
+                else if nestedDepth == 0 {
+                    if let value = property(line) { current!.append(value) }
+                    else if !line.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { malformedProperties += 1 }
+                }
             }
         }
-        var warnings: [String] = []
+        var warnings: [String] = malformedProperties > 0 ? ["\(malformedProperties) unlesbare Kalenderfelder wurden ignoriert. Bitte die Vorschau prüfen."] : []
         var unsupportedUIDs: Set<String> = []
         for group in groups where group.contains(where: { $0.name == "RECURRENCE-ID" }) {
             if let uid = group.first(where: { $0.name == "UID" })?.value { unsupportedUIDs.insert(uid) }

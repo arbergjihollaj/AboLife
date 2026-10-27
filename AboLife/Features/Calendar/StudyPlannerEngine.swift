@@ -46,7 +46,11 @@ enum StudyPlannerEngine {
 
     static func availability(events: [PlannerEvent], preferences p: PlannerPreferences, horizon: DateInterval) -> (windows: [StudyFreeWindow], issues: [PlannerIssue], journeys: [PlannerJourney]) {
         let calendar = p.calendar
-        let expanded: [PlannerOccurrence] = events.flatMap { event in event.occurrences(in: horizon) }
+        // A neighboring appointment can have a journey crossing this boundary.
+        let paddedStart = calendar.date(byAdding: .day, value: -1, to: calendar.startOfDay(for: horizon.start))!
+        let paddedEnd = calendar.date(byAdding: .day, value: 1, to: horizon.end)!
+        let expandedHorizon = DateInterval(start: paddedStart, end: paddedEnd)
+        let expanded: [PlannerOccurrence] = events.flatMap { event in event.occurrences(in: expandedHorizon) }
         let occurrences: [PlannerOccurrence] = expanded.sorted { (a: PlannerOccurrence, b: PlannerOccurrence) in
             if a.start == b.start { return a.id < b.id }
             return a.start < b.start
@@ -54,8 +58,8 @@ enum StudyPlannerEngine {
         var windows: [StudyFreeWindow] = []
         var issues: [PlannerIssue] = []
         var journeys: [PlannerJourney] = []
-        var day = calendar.startOfDay(for: horizon.start)
-        while day < horizon.end {
+        var day = paddedStart
+        while day < paddedEnd {
             defer { day = calendar.date(byAdding: .day, value: 1, to: day)! }
             let nextDay = calendar.date(byAdding: .day, value: 1, to: day)!
             let dayEvents = occurrences.filter { $0.start < nextDay && $0.end > day }
@@ -67,6 +71,9 @@ enum StudyPlannerEngine {
             var cursor = day
             var location = "home"
             var previousTitle: String?
+            func reportIssue(_ message: String) {
+                if day < horizon.end && nextDay > horizon.start { issues.append(PlannerIssue(message: message)) }
+            }
             func addWindow(_ start: Date, _ end: Date, place: String) {
                 let a = max(start, allowedStart, horizon.start)
                 let b = min(end, allowedEnd, horizon.end)
@@ -78,7 +85,7 @@ enum StudyPlannerEngine {
             }
             for event in dayEvents {
                 if let previousTitle, event.start < cursor {
-                    issues.append(PlannerIssue(message: "\(dayLabel): \(previousTitle) und \(event.title) überschneiden sich."))
+                    reportIssue("\(dayLabel): \(previousTitle) und \(event.title) überschneiden sich.")
                 }
                 if event.start >= cursor {
                     var missingHomeRoute = false
@@ -94,11 +101,11 @@ enum StudyPlannerEngine {
                                 cursor = arrivalHome
                                 location = "home"
                             } else {
-                                issues.append(PlannerIssue(message: "\(dayLabel): Nach der Uni reicht die Zeit nicht für den Heimweg und die anschließende Hinfahrt zu „\(event.title)“. Eine direkte Weiterfahrt ist nur mit bekannter passender Fahrtzeit möglich."))
+                                reportIssue("\(dayLabel): Nach der Uni reicht die Zeit nicht für den Heimweg und die anschließende Hinfahrt zu „\(event.title)“. Eine direkte Weiterfahrt ist nur mit bekannter passender Fahrtzeit möglich.")
                             }
                         } else {
                             missingHomeRoute = true
-                            issues.append(PlannerIssue(message: "\(dayLabel): Für den Heimweg nach der Uni und den späteren Termin „\(event.title)“ fehlt die Rückfahrt oder die Hinfahrt von Zuhause. Diese Lücke bleibt frei."))
+                            reportIssue("\(dayLabel): Für den Heimweg nach der Uni und den späteren Termin „\(event.title)“ fehlt die Rückfahrt oder die Hinfahrt von Zuhause. Diese Lücke bleibt frei.")
                         }
                     }
                     if missingHomeRoute {
@@ -111,7 +118,7 @@ enum StudyPlannerEngine {
                         let duration = Double(travel) * 60
                         let departure = event.start.addingTimeInterval(-duration)
                         if previousTitle != nil && departure < cursor {
-                            issues.append(PlannerIssue(message: "\(dayLabel): Zu wenig Fahrtzeit. Zu wenig Zeit für den Ortswechsel vor „\(event.title)“."))
+                            reportIssue("\(dayLabel): Zu wenig Fahrtzeit. Zu wenig Zeit für den Ortswechsel vor „\(event.title)“.")
                         } else if p.learningLocations.contains(location) {
                             addWindow(cursor, departure, place: location)
                             addJourney(departure, event.start, from: location, to: event.location)
@@ -124,7 +131,7 @@ enum StudyPlannerEngine {
                             addJourney(departure, event.start, from: location, to: event.location)
                         }
                     } else {
-                        issues.append(PlannerIssue(message: "\(dayLabel): Fahrtzeit \(PlannerDate.locationName(location)) → \(PlannerDate.locationName(event.location)) fehlt. Diese Lücke bleibt frei."))
+                        reportIssue("\(dayLabel): Fahrtzeit \(PlannerDate.locationName(location)) → \(PlannerDate.locationName(event.location)) fehlt. Diese Lücke bleibt frei.")
                     }
                 }
                 // Overlapping fixed events remain visible conflicts; block their union.
@@ -136,7 +143,7 @@ enum StudyPlannerEngine {
                     addJourney(cursor, arrival, from: location, to: "home")
                     addWindow(arrival, nextDay, place: "home")
                 } else {
-                    issues.append(PlannerIssue(message: "\(dayLabel): Rückfahrt von \(PlannerDate.locationName(location)) fehlt. Danach wird noch kein Lernen geplant."))
+                    reportIssue("\(dayLabel): Rückfahrt von \(PlannerDate.locationName(location)) fehlt. Danach wird noch kein Lernen geplant.")
                 }
             }
         }
