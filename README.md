@@ -1,4 +1,4 @@
-# AboLife Kalender 0.2.1
+# AboLife Kalender 0.2.2
 
 Lokale macOS-App für Alltag, Gesundheit, Finanzen und jetzt einen eigenen Kalender mit Lernplanung. Die Kalender-Version läuft als getrennte App neben dem gesicherten Stand 0.1. Die vorhandenen Menüs, Farben und Gesundheitsbereiche bleiben erhalten.
 
@@ -7,7 +7,7 @@ Lokale macOS-App für Alltag, Gesundheit, Finanzen und jetzt einen eigenen Kalen
 1. Öffne die App „AboLife Kalender“ und den Bereich **Kalender**.
 2. Stelle **Planungszeiten** und deine tatsächlichen Hin-/Rückwege ein.
 3. Erfasse Uni, Training und andere Termine oder importiere einen lokalen ICS-Stundenplan mit Vorschau.
-Die Tagesansicht berechnet Hin- und Rückfahrten automatisch. In Uni-Pausen bleibst du vor Ort; fehlende Rückfahrtdauern werden als Annahme aus der Hinfahrt übernommen und können separat angepasst werden.
+Die Tagesansicht berechnet Hin- und Rückfahrten automatisch. Nach dem letzten Uni-Termin geht es zuerst nach Hause, vor einem späteren Training von Zuhause wieder los. In Uni-Pausen bleibst du vor Ort; fehlende Rückfahrtdauern werden als Annahme aus der Hinfahrt übernommen und können separat angepasst werden.
 
 4. Lege Lernthemen an. Bewerte erledigte Wiederholungen, damit Intervalle und geschätzte Dauer angepasst werden.
 
@@ -22,7 +22,7 @@ Die [Anleitung](docs/CALENDAR_GUIDE.md) erklärt Importgrenzen, Zeitplanung und 
 
 ## Entwickeln und prüfen
 
-Öffne `AboLife.xcodeproj`, verwende das Schema `AboLife` und das Ziel „My Mac“. Der Zweig `codex/calendar-v0.2` enthält die Erweiterung. `xcodebuild test -project AboLife.xcodeproj -scheme AboLife -destination 'platform=macOS'` führt die Tests aus. Aktuell: **231 Tests erfolgreich**, einschließlich 195 bestehender Tests und 36 Kalender-/Datenschutz-/Backup-Prüfungen. Release-Build wird ebenfalls geprüft.
+Öffne `AboLife.xcodeproj`, verwende das Schema `AboLife` und das Ziel „My Mac“. Der Zweig `codex/calendar-v0.2` enthält die Erweiterung. `xcodebuild test -project AboLife.xcodeproj -scheme AboLife -destination 'platform=macOS'` führt die Tests aus. Aktuell: **235 Tests erfolgreich**, einschließlich 195 bestehender Tests und 40 Kalender-/Datenschutz-/Backup-Prüfungen. Release-Build wird ebenfalls geprüft.
 
 ## Vorhandene Bereiche
 

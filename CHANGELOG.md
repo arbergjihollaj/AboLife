@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.2.2 — 27.10.2026
+
+- 235 Tests erfolgreich, zusätzlich mit dem eingetragenen Uni-Stundenplan und Fußballtraining geprüft.
+
+- Nach dem letzten Uni-Termin zuerst nach Hause; spätere Trainingsfahrten beginnen von Zuhause. Uni-Pausen bleiben auf dem Campus.
+- Zu knappe Heimwege erzeugen einen Hinweis; eine direkte Weiterfahrt benötigt eine bekannte passende Dauer.
+- Lernvorschläge berücksichtigen den tatsächlichen Lernort nach dem Heimweg. Fixierte oder laufende Konflikte bleiben sichtbar.
+
 ## 0.2.1 — 26.10.2026
 
 - 231 Tests erfolgreich; Wege zusätzlich mit dem vorhandenen persönlichen Stundenplan geprüft.

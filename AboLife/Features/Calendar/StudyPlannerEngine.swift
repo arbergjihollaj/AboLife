@@ -59,6 +59,7 @@ enum StudyPlannerEngine {
             defer { day = calendar.date(byAdding: .day, value: 1, to: day)! }
             let nextDay = calendar.date(byAdding: .day, value: 1, to: day)!
             let dayEvents = occurrences.filter { $0.start < nextDay && $0.end > day }
+            let lastCampusEnd = dayEvents.filter { $0.location == "university" }.map(\.end).max()
             let allowedStart = PlannerDate.atMinute(p.dayStartMinute, on: day, calendar: calendar)
             let allowedEnd = PlannerDate.atMinute(p.dayEndMinute, on: day, calendar: calendar)
             let canLearn = p.weekdays.contains(calendar.component(.weekday, from: day)) && allowedEnd > allowedStart
@@ -80,7 +81,29 @@ enum StudyPlannerEngine {
                     issues.append(PlannerIssue(message: "\(dayLabel): \(previousTitle) und \(event.title) überschneiden sich."))
                 }
                 if event.start >= cursor {
-                    if location == event.location {
+                    var missingHomeRoute = false
+                    // University breaks form one campus stay. Once the last campus
+                    // appointment ends, go home before any later out-of-home activity.
+                    if location == "university", event.location != "university", event.location != "home",
+                       let lastCampusEnd, cursor >= lastCampusEnd {
+                        if let home = p.travel(from: location, to: "home"), let outbound = p.travel(from: "home", to: event.location) {
+                            let arrivalHome = cursor.addingTimeInterval(Double(home) * 60)
+                            let leaveHome = event.start.addingTimeInterval(-Double(outbound) * 60)
+                            if arrivalHome <= leaveHome {
+                                addJourney(cursor, arrivalHome, from: location, to: "home")
+                                cursor = arrivalHome
+                                location = "home"
+                            } else {
+                                issues.append(PlannerIssue(message: "\(dayLabel): Nach der Uni reicht die Zeit nicht für den Heimweg und die anschließende Hinfahrt zu „\(event.title)“. Eine direkte Weiterfahrt ist nur mit bekannter passender Fahrtzeit möglich."))
+                            }
+                        } else {
+                            missingHomeRoute = true
+                            issues.append(PlannerIssue(message: "\(dayLabel): Für den Heimweg nach der Uni und den späteren Termin „\(event.title)“ fehlt die Rückfahrt oder die Hinfahrt von Zuhause. Diese Lücke bleibt frei."))
+                        }
+                    }
+                    if missingHomeRoute {
+                        // No guessed duration or campus study after a requested return.
+                    } else if location == event.location {
                         // One stay at the same place, even during long breaks or when
                         // campus learning is disabled. Never add an automatic home detour.
                         if p.learningLocations.contains(location) { addWindow(cursor, event.start, place: location) }
@@ -145,7 +168,7 @@ enum StudyPlannerEngine {
                 retained.append(session)
                 guard session.status != .skipped, session.end > start, session.start < end else { continue }
                 if session.end > now {
-                    let valid = windows.contains { $0.interval.start <= session.start && $0.interval.end >= session.end }
+                    let valid = windows.contains { $0.location == session.location && $0.interval.start <= session.start && $0.interval.end >= session.end }
                     if !valid {
                         issues.append(PlannerIssue(message: "Fixierter/laufender Lernblock am \(session.start.formatted(date: .abbreviated, time: .shortened)) hat einen Termin-, Wege- oder Verfügbarkeitskonflikt. Bitte selbst auflösen."))
                     }
@@ -166,7 +189,7 @@ enum StudyPlannerEngine {
                   !placed.contains(topic.id), session.start >= topic.nextReview,
                   topic.examDate.map({ session.end <= $0 }) ?? true,
                   session.minutes == max(p.minimumBlockMinutes, topic.estimatedMinutes),
-                  windows.contains(where: { $0.interval.start <= session.start && $0.interval.end >= session.end }),
+                  windows.contains(where: { $0.location == session.location && $0.interval.start <= session.start && $0.interval.end >= session.end }),
                   used[PlannerDate.dayKey(session.start, calendar: calendar), default: 0] + session.minutes <= p.dailyLimitMinutes else { continue }
             retained.append(session); placed.insert(topic.id); consume(session)
         }

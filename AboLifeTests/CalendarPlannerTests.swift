@@ -63,17 +63,17 @@ final class CalendarPlannerTests: XCTestCase {
         XCTAssertTrue(result.windows.isEmpty)
         XCTAssertTrue(result.issues.contains { $0.message.contains("Rückfahrt") })
     }
-    func testDirectCampusGymTransferAllowsCampusLearningWithoutDoubleCommute() {
-        var p = preferences(); p.travelMinutes["university>gym"] = 30; p.travelMinutes["gym>home"] = 15
+    func testUniversityDayEndsAtHomeBeforeLaterTrainingEvenWithKnownDirectRoute() {
+        var p = preferences(); p.travelMinutes["university>gym"] = 30; p.travelMinutes["gym>home"] = 15; p.travelMinutes["university>home"] = 60
         let events = [event("Uni", "2026-10-26 09:00", "2026-10-26 12:00"), event("Sport", "2026-10-26 18:00", "2026-10-26 19:00", place: "gym")]
         let result = StudyPlannerEngine.availability(events: events, preferences: p, horizon: day)
         XCTAssertTrue(result.issues.isEmpty)
-        XCTAssertEqual(result.windows.first?.location, "university")
-        XCTAssertEqual(result.windows.first?.interval, DateInterval(start: date("2026-10-26 12:00"), end: date("2026-10-26 17:30")))
+        XCTAssertEqual(result.windows.first?.location, "home")
+        XCTAssertEqual(result.windows.first?.interval, DateInterval(start: date("2026-10-26 13:00"), end: date("2026-10-26 17:45")))
         XCTAssertEqual(result.windows.last?.interval.start, date("2026-10-26 19:15"))
     }
     func testImpossibleFixedTransferIsReported() {
-        var p = preferences(); p.travelMinutes["university>gym"] = 30; p.travelMinutes["gym>home"] = 15
+        var p = preferences(); p.travelMinutes["university>gym"] = 30; p.travelMinutes["gym>home"] = 15; p.travelMinutes["university>home"] = 60
         let events = [event("Uni", "2026-10-26 09:00", "2026-10-26 17:55"), event("Sport", "2026-10-26 18:00", "2026-10-26 19:00", place: "gym")]
         let result = StudyPlannerEngine.availability(events: events, preferences: p, horizon: day)
         XCTAssertTrue(result.issues.contains { $0.message.contains("Zu wenig Fahrtzeit") })
@@ -251,7 +251,7 @@ extension CalendarPlannerTests {
         let values = [event("Uni", "2026-10-26 09:00", "2026-10-26 12:00"), event("Gym", "2026-10-26 18:00", "2026-10-26 19:00", place: "gym")]
         let result = StudyPlannerEngine.availability(events: values, preferences: p, horizon: day)
         XCTAssertFalse(result.windows.contains { $0.interval.contains(date("2026-10-26 14:00")) })
-        XCTAssertTrue(result.issues.contains { $0.message.contains("Fahrtzeit Uni") })
+        XCTAssertTrue(result.issues.contains { $0.message.contains("Rückfahrt") })
     }
     @MainActor
     func testCancelledOccurrencePersistsAndDoesNotCancelWholeSeries() throws {
@@ -364,25 +364,29 @@ extension CalendarPlannerTests {
         XCTAssertNil(p.travel(from: "university", to: "home"))
         XCTAssertNil(p.travel(from: "university", to: "gym"))
     }
-    func testFootballAfterUniversityUsesDirectRouteWithoutIntermediateReturn() {
+    func testFootballAfterUniversityStartsFromHomeWithInferredReturnDuration() {
         var p = preferences(); p.assumeSymmetricReturn = true; p.travelMinutes["university>gym"] = 30
         let events = [event("Uni", "2026-10-26 09:00", "2026-10-26 12:00"), event("Fußball", "2026-10-26 18:00", "2026-10-26 19:30", place: "gym")]
         let result = StudyPlannerEngine.availability(events: events, preferences: p, horizon: day)
         XCTAssertTrue(result.issues.isEmpty)
-        XCTAssertEqual(result.journeys.count, 3)
+        XCTAssertEqual(result.journeys.count, 4)
         XCTAssertEqual(result.journeys[1].from, "university")
-        XCTAssertEqual(result.journeys[1].to, "gym")
-        XCTAssertEqual(result.journeys[1].start, date("2026-10-26 17:30"))
+        XCTAssertEqual(result.journeys[1].to, "home")
+        XCTAssertEqual(result.journeys[1].start, date("2026-10-26 12:00"))
+        XCTAssertEqual(result.journeys[2].from, "home")
+        XCTAssertEqual(result.journeys[2].to, "gym")
+        XCTAssertEqual(result.journeys[2].start, date("2026-10-26 17:45"))
         XCTAssertEqual(result.journeys.last?.start, date("2026-10-26 19:30"))
-        XCTAssertFalse(result.journeys.contains { $0.to == "home" && $0.start < date("2026-10-26 19:30") })
     }
-    func testUnknownDirectRouteNeverSubstitutesTwoKnownHomeJourneys() {
+    func testPreferredHomeRouteDoesNotRequireDirectCampusToTrainingDuration() {
         var p = preferences(); p.assumeSymmetricReturn = true; p.learningLocations.remove("university")
         let events = [event("Uni", "2026-10-26 09:00", "2026-10-26 12:00"), event("Fußball", "2026-10-26 14:00", "2026-10-26 15:00", place: "gym")]
         let result = StudyPlannerEngine.availability(events: events, preferences: p, horizon: day)
-        XCTAssertTrue(result.issues.contains { $0.message.contains("Fahrtzeit Uni") })
-        XCTAssertEqual(result.journeys.count, 2)
-        XCTAssertFalse(result.journeys.contains { $0.to == "home" && $0.start < date("2026-10-26 15:00") })
+        XCTAssertTrue(result.issues.isEmpty)
+        XCTAssertEqual(result.journeys.count, 4)
+        XCTAssertEqual(result.journeys[1].to, "home")
+        XCTAssertEqual(result.journeys[2].from, "home")
+        XCTAssertTrue(result.windows.contains { $0.location == "home" && $0.interval.contains(date("2026-10-26 13:30")) })
     }
     func testJourneysOutsideLearningHoursAndOnNonLearningDayRemainVisible() {
         var p = preferences(); p.assumeSymmetricReturn = true; p.weekdays = [3]
@@ -404,5 +408,53 @@ extension CalendarPlannerTests {
         let db = try AppDatabase.makeTemporary(); var workspace = CalendarWorkspace(); workspace.events = events; workspace.preferences = p
         try CalendarRepository(database: db).save(workspace)
         XCTAssertEqual(try CalendarRepository(database: db).load().events.count, 2)
+    }
+}
+
+extension CalendarPlannerTests {
+    func testThursdayTrainingReturnsHomeAfterLastUniversityAndLeavesFromHomeLater() {
+        var p = preferences(); p.assumeSymmetricReturn = true
+        let events = [event("Uni", "2026-10-29 08:00", "2026-10-29 09:30"), event("Fußball", "2026-10-29 19:00", "2026-10-29 21:30", place: "gym")]
+        let horizon = DateInterval(start: date("2026-10-29 00:00"), end: date("2026-10-30 00:00"))
+        let result = StudyPlannerEngine.availability(events: events, preferences: p, horizon: horizon)
+        XCTAssertTrue(result.issues.isEmpty)
+        XCTAssertEqual(result.journeys.count, 4)
+        XCTAssertEqual(result.journeys[1].interval, DateInterval(start: date("2026-10-29 09:30"), end: date("2026-10-29 10:30")))
+        XCTAssertEqual(result.journeys[2].interval, DateInterval(start: date("2026-10-29 18:45"), end: date("2026-10-29 19:00")))
+        XCTAssertEqual(result.journeys.last?.end, date("2026-10-29 21:45"))
+        XCTAssertTrue(result.windows.contains { $0.location == "home" && $0.interval == DateInterval(start: date("2026-10-29 10:30"), end: date("2026-10-29 18:45")) })
+        XCTAssertFalse(result.windows.contains { $0.location == "university" })
+    }
+    func testShortGapReportsImpossibleHomeReturnAndUsesOnlyFeasibleKnownDirectRoute() {
+        var p = preferences(); p.assumeSymmetricReturn = true; p.travelMinutes["university>gym"] = 10
+        let events = [event("Uni", "2026-10-26 09:00", "2026-10-26 17:30"), event("Fußball", "2026-10-26 18:00", "2026-10-26 19:00", place: "gym")]
+        let result = StudyPlannerEngine.availability(events: events, preferences: p, horizon: day)
+        XCTAssertTrue(result.issues.contains { $0.message.contains("Heimweg") })
+        XCTAssertEqual(result.journeys[1].from, "university")
+        XCTAssertEqual(result.journeys[1].to, "gym")
+        XCTAssertEqual(result.journeys[1].start, date("2026-10-26 17:50"))
+        XCTAssertFalse(result.journeys.contains { $0.to == "home" && $0.start < date("2026-10-26 19:00") })
+    }
+    func testTrainingBetweenCampusAppointmentsDoesNotEndTheUniversityDayEarly() {
+        var p = preferences(); p.assumeSymmetricReturn = true; p.travelMinutes["university>gym"] = 15; p.travelMinutes["gym>university"] = 15
+        let events = [event("Uni", "2026-10-26 09:00", "2026-10-26 12:00"), event("Sport", "2026-10-26 14:00", "2026-10-26 15:00", place: "gym"), event("Uni spät", "2026-10-26 16:00", "2026-10-26 17:00")]
+        let result = StudyPlannerEngine.availability(events: events, preferences: p, horizon: day)
+        XCTAssertTrue(result.issues.isEmpty)
+        XCTAssertEqual(result.journeys.count, 4)
+        XCTAssertFalse(result.journeys.contains { $0.to == "home" && $0.start < date("2026-10-26 17:00") })
+    }
+    func testOldCampusSuggestionMovesHomeAfterUniversityReturnWithoutChangingPinnedHistory() {
+        var w = CalendarWorkspace(); w.preferences = preferences(); w.preferences.assumeSymmetricReturn = true
+        w.events = [event("Uni", "2026-10-26 09:00", "2026-10-26 12:00"), event("Sport", "2026-10-26 18:00", "2026-10-26 19:00", place: "gym")]
+        var t = topic(); t.nextReview = date("2026-10-26 13:30"); w.topics = [t]
+        let old = StudySession(topicID: t.id, start: date("2026-10-26 13:30"), end: date("2026-10-26 13:55"), location: "university")
+        w.sessions = [old]
+        let result = StudyPlannerEngine.plan(w, now: now)
+        XCTAssertEqual(result.sessions.first?.location, "home")
+        XCTAssertFalse(result.sessions.contains { $0.location == "university" })
+        w.sessions[0].pinned = true
+        let pinned = StudyPlannerEngine.plan(w, now: now)
+        XCTAssertEqual(pinned.sessions.first?.location, "university")
+        XCTAssertTrue(pinned.issues.contains { $0.message.contains("Fixierter/laufender") })
     }
 }

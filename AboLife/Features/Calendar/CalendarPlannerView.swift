@@ -147,7 +147,7 @@ struct CalendarPlannerView: View {
                 ForEach(selectedEvents.filter { $0.start == time }) { occurrence in eventRow(occurrence) }
                 ForEach(selectedSessions.filter { $0.start == time }) { session in sessionRow(session) }
             }
-            Text("Blau: feste Termine · Grün: Lernen. Fahrten werden automatisch berechnet. In Uni-Pausen bleibst du vor Ort.")
+            Text("Blau: feste Termine · Grün: Lernen. Nach der Uni zuerst nach Hause. In Uni-Pausen bleibst du vor Ort.")
                 .font(AboLifeTypography.micro).foregroundStyle(AboLifeColors.secondaryText)
         }
     }

@@ -312,3 +312,5 @@ Der Stundenplan-Import bietet eine Vorschau, behält lokale Änderungen standard
 Lernvorschläge nennen Thema, Uhrzeit, Ort und Begründung. Sie können fixiert, verschoben, ausgelassen oder bewertet werden. Fixierte Konflikte sind sichtbar. Unplatzierbare Themen zeigen einen Grund; der Planer füllt keine gesperrten Zeiten auf. Vergangene unbeantwortete Vorschläge gelten als verpasst, nicht als gelernt.
 
 Ab 0.2.1 stehen automatisch abgeleitete Hin-/Rück-/Weiterfahrten chronologisch zwischen den festen Terminen. „Rückweg wie Hinfahrt“ macht die angenommene Dauer sichtbar. Keine automatischen Heimfahrten in Uni-Pausen. „Planungszeiten“ enthält den Schalter für symmetrische Rückwege und weiterhin individuelle Dauern.
+
+Ab 0.2.2 folgt nach dem letzten Uni-Termin zuerst die Heimfahrt. Ein späteres Training beginnt mit einer eigenen Hinfahrt von Zuhause. Die Oberfläche erklärt diese Regel in „Planungszeiten“. Wenn die Wege zeitlich nicht passen, erscheint ein Hinweis statt einer unmöglichen Heimfahrt. Uni-Pausen bleiben weiterhin auf dem Campus.

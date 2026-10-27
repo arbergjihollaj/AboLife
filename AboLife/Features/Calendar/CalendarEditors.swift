@@ -188,7 +188,7 @@ struct PlannerPreferencesEditor: View {
                     }
                     GroupBox("Fahrtzeiten pro Richtung") {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Hinfahrt vor dem ersten Termin, Rückfahrt nach dem letzten. In Uni-Pausen bleibst du vor Ort. Direkte Wege zwischen Uni und Training bitte separat eintragen.").font(.caption).foregroundStyle(.secondary)
+                            Text("Nach dem letzten Uni-Termin zuerst nach Hause, vor einem späteren Training von Zuhause losfahren. Uni-Pausen bleiben vor Ort. Wenn der Heimweg zeitlich nicht passt, erscheint ein Hinweis.").font(.caption).foregroundStyle(.secondary)
                             Toggle("Rückfahrt zunächst wie Hinfahrt berechnen", isOn: Binding(get: { preferences.usesSymmetricReturn }, set: { preferences.assumeSymmetricReturn = $0 }))
                             Text("Gilt nur ohne eigene Rückfahrtdauer. Automatisch übernommene Zeiten sind als „wie Hinfahrt“ gekennzeichnet.").font(.caption).foregroundStyle(.secondary)
                             ForEach(routeKeys, id: \.self) { key in routeRow(key) }
