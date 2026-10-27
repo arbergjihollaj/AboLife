@@ -7,3 +7,15 @@ telegram.local.json
 
 work/
 outputs/
+
+# Local build output, editor state and personal data
+DerivedData/
+build/
+**/xcuserdata/
+*.xcuserstate
+*.xcresult/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.app/

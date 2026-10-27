@@ -1,12 +1,12 @@
 # AboLife 0.2 – Kalender und adaptive Lernplanung
 
-Stand: 26. Oktober 2026 · Status: UMGESETZT und lokal geprüft · Modus: persönliches Projekt
+Stand: 26. Oktober 2026 · Status: ursprünglicher freigegebener Entwurf; Umsetzung fortgeschrieben · Modus: persönliches Projekt
 
 ## Ziel und vereinbarte Richtung
 
 AboLife soll einen eigenen lokalen Kalender bekommen. Der Nutzer hat manuelle Eingabe mit Stundenplan-Import gewählt. Uni, Training, Fahrtzeiten und persönliche Lernzeiten bestimmen, wann Lernblöcke möglich sind. Wiederholungen sollen zusätzlich berücksichtigen, was gelernt wurde und wie gut es noch abrufbar ist. Ändert sich der Kalender, werden noch nicht begonnene Lernvorschläge neu geplant.
 
-Die bisherige Version muss jederzeit weiter nutzbar bleiben. Der freigegebene Umfang ist als getrennte Version umgesetzt. Die Anleitung und die aktuelle Regel stehen in `CALENDAR_GUIDE.md`. Ein echter persönlicher Stundenplan wurde noch nicht eingetragen.
+Die bisherige Version muss jederzeit weiter nutzbar bleiben. Der freigegebene Umfang ist als getrennte Version umgesetzt. Die Anleitung und die aktuelle Regel stehen in `CALENDAR_GUIDE.md`. Der persönliche Stundenplan und das Fußballtraining wurden inzwischen lokal eingetragen und geprüft.
 
 ## Gesicherte Ausgangsversion 0.1
 
@@ -135,4 +135,10 @@ Nächste konkrete Nutzeraktion: den Stundenplan bereitstellen. Trainings- und We
 
 ## Prüfung des Entwurfs
 
-In zwei unabhängigen Prüfrunden wurden drei Punkte präzisiert: Konflikte mit fixierten Lernblöcken, Identität und Grenzen des Wiederimports sowie unbekannte und unmögliche Fahrtverbindungen. Ergebnis der zweiten Runde: PASS, 9/10. Die anschließende Umsetzung wurde mit 224 automatisierten Tests, einem Release-Build und Prüfungen der nativen Oberfläche abgesichert. Eine Erprobung mit dem persönlichen Stundenplan steht noch aus.
+In zwei unabhängigen Prüfrunden wurden drei Punkte präzisiert: Konflikte mit fixierten Lernblöcken, Identität und Grenzen des Wiederimports sowie unbekannte und unmögliche Fahrtverbindungen. Ergebnis der zweiten Runde: PASS, 9/10. Die anschließende Umsetzung wurde mit 224 automatisierten Tests, einem Release-Build und Prüfungen der nativen Oberfläche abgesichert. Der persönliche Stundenplan und das Fußballtraining wurden anschließend lokal geprüft.
+
+## Fortschreibung zur GitHub-Veröffentlichung (27. Oktober 2026)
+
+Dieser Entwurf dokumentiert die ursprüngliche Freigabe. Die späteren Nutzerwünsche haben die Wege-Regeln präzisiert: Rückfahrten dürfen zunächst die Hinfahrtdauer als sichtbare, abschaltbare Annahme verwenden. Nach dem letzten Uni-Termin wird vor einem späteren Training zuerst der Heimweg eingeplant, sofern beide Wege zeitlich passen. Uni-Pausen bleiben auf dem Campus. Nicht passende Verbindungen erhalten einen Hinweis. Die aktuelle Bedienung steht in `CALENDAR_GUIDE.md`.
+
+Die erste Semesterwoche des eingetragenen Stundenplans und das Fußballtraining wurden lokal geprüft. Diese persönlichen Daten gehören nicht zu den veröffentlichten Screenshots. Die GitHub-Bilder stammen aus einer eigenen Demo-Instanz. Für Release 0.2.3 wurden zusätzlich Import-Fehler, Bewertungszeitstempel und Fahrtreservierungen über die Grenzen eines Planungszeitraums abgesichert. Der dokumentierte Prüfstand umfasst 240 erfolgreiche Tests.
