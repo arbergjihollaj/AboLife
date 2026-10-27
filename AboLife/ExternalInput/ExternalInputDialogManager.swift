@@ -1,17 +1,16 @@
 import Foundation
 
 final class ExternalInputDialogManager {
+    private struct ConfirmationRecord {
+        let createdAt: Date
+        let result: ExternalInputResult
+    }
+
     private struct BarcodeMealDraft: Equatable {
         let product: FoodProductLookupResult
         let grams: Double
-
-        var calories: Int {
-            Int(((product.caloriesPer100g ?? 0) * grams / 100).rounded())
-        }
-
-        var protein: Double {
-            (product.proteinPer100g ?? 0) * grams / 100
-        }
+        let calories: Int
+        let protein: Double
     }
 
     private enum Step: Equatable {
@@ -19,7 +18,8 @@ final class ExternalInputDialogManager {
         case waitingForWeight
         case waitingForExpenseAmount
         case waitingForExpenseTitle(amount: Double)
-        case confirmingExpense(amount: Double, title: String)
+        case confirmingExpense(FinanceExpenseDraft)
+        case choosingExpenseCategory(FinanceExpenseDraft)
         case waitingForMealName
         case waitingForMealCalories(name: String)
         case waitingForMealProtein(name: String, calories: Int)
@@ -32,6 +32,7 @@ final class ExternalInputDialogManager {
     }
 
     private var sessions: [String: Step] = [:]
+    private var confirmations: [String: ConfirmationRecord] = [:]
     private let service: ExternalInputService
     private let parser: ExternalInputParser
 
@@ -56,41 +57,79 @@ final class ExternalInputDialogManager {
     private func handleAction(_ action: ExternalInputAction.Kind, sessionID: String) -> ExternalInputResult {
         switch action {
         case let .startFlow(flow):
+            confirmations[sessionID] = nil
             return start(flow, sessionID: sessionID)
         case let .selectTemplate(id):
             sessions[sessionID] = Step.none
-            return service.execute(.mealTemplate(date: Date(), templateId: id))
+            return service.execute(.mealTemplate(date: Date(), templateId: id), sessionID: sessionID)
         case let .selectHabit(name):
             sessions[sessionID] = Step.none
-            return service.execute(.habitCompleted(date: Date(), habitName: name))
+            return service.execute(.habitCompleted(date: Date(), habitName: name), sessionID: sessionID)
+        case let .selectExpenseCategory(name):
+            return selectExpenseCategory(name, sessionID: sessionID)
+        case .changeExpenseCategory:
+            switch sessions[sessionID] ?? .none {
+            case let .confirmingExpense(draft):
+                sessions[sessionID] = .choosingExpenseCategory(draft)
+                return .needsClarification(message: "Welche Kategorie passt besser?", options: FinanceExpenseInputService.categoryActions())
+            default:
+                return .failure(message: "Es gibt gerade keine Ausgabe, deren Kategorie geändert werden kann.", reason: "no_expense_draft")
+            }
         case let .selectBarcodeAmount(grams):
             return prepareBarcodeConfirmation(grams: grams, sessionID: sessionID)
         case .enterBarcodeAmountManually:
             switch sessions[sessionID] ?? .none {
             case let .waitingForBarcodeAmount(product, packageGrams):
                 sessions[sessionID] = .waitingForBarcodeManualAmount(product: product, packageGrams: packageGrams)
-                return .needsClarification(message: "Bitte Menge in Gramm senden, z. B. 55", options: cancelAction)
+                return .needsClarification(message: "Wie viele Gramm waren es? Zum Beispiel 80 g.", options: cancelAction)
             default:
-                return .failure(message: "Es gibt gerade kein Barcode-Produkt für eine manuelle Menge.", reason: "no_barcode_product")
+                return .failure(message: "Aktuell wartet kein Barcode-Produkt auf eine Mengenangabe.", reason: "no_barcode_product")
             }
+        case let .undo(receiptID):
+            sessions[sessionID] = Step.none
+            confirmations[sessionID] = nil
+            return service.undo(receiptID: receiptID, sessionID: sessionID)
         case .confirm:
             return confirm(sessionID: sessionID)
         case .cancel:
             sessions[sessionID] = Step.none
+            confirmations[sessionID] = nil
             return .success(message: "Abgebrochen.", affectedModule: .menu)
         }
     }
 
     private func handleText(_ text: String, sessionID: String) -> ExternalInputResult {
-        if case .cancel = parser.parse(text) {
+        let parsedIntent = parser.parse(text)
+        if case .cancel = parsedIntent {
             sessions[sessionID] = Step.none
+            confirmations[sessionID] = nil
             return .success(message: "Abgebrochen.", affectedModule: .menu)
+        }
+        if case .start = parsedIntent {
+            sessions[sessionID] = Step.none
+            confirmations[sessionID] = nil
+            return service.execute(parsedIntent, sessionID: sessionID)
+        }
+        if case .help = parsedIntent {
+            sessions[sessionID] = Step.none
+            confirmations[sessionID] = nil
+            return service.execute(parsedIntent, sessionID: sessionID)
         }
 
         switch sessions[sessionID] ?? .none {
         case .none:
-            let intent = parser.parse(text)
-            let result = service.execute(intent)
+            let intent = parsedIntent
+            if case let .expense(date, amount, title, category) = intent {
+                let result = prepareExpense(date: date, amount: amount, title: title, category: category, sessionID: sessionID)
+                if case .needsClarification = result {
+                    return result
+                }
+                if case .failure = result {
+                    return .menu(message: "\(result.message) Was möchtest du eintragen?", actions: ExternalInputAction.mainMenu)
+                }
+                return result
+            }
+            let result = service.execute(intent, sessionID: sessionID)
             if case .failure = result {
                 return .menu(message: "\(result.message) Was möchtest du eintragen?", actions: ExternalInputAction.mainMenu)
             }
@@ -100,10 +139,10 @@ final class ExternalInputDialogManager {
                 return .needsClarification(message: "Bitte gib das Gewicht als Zahl ein, zum Beispiel 82,4.", options: cancelAction)
             }
             sessions[sessionID] = Step.none
-            return service.execute(.weight(date: Date(), weightKg: value))
+            return service.execute(.weight(date: Date(), weightKg: value), sessionID: sessionID)
         case .waitingForExpenseAmount:
             guard let amount = parser.parseNumber(text), amount > 0 else {
-                return .needsClarification(message: "Bitte gib einen gültigen Betrag ein, zum Beispiel 4,50.", options: cancelAction)
+                return .needsClarification(message: "Bitte gib einen gültigen Betrag ein, zum Beispiel 4,50 oder 12 EUR.", options: cancelAction)
             }
             sessions[sessionID] = .waitingForExpenseTitle(amount: amount)
             return .needsClarification(message: "Wofür war die Ausgabe?", options: cancelAction)
@@ -112,17 +151,17 @@ final class ExternalInputDialogManager {
             guard !title.isEmpty else {
                 return .needsClarification(message: "Bitte gib eine kurze Beschreibung ein.", options: cancelAction)
             }
-            sessions[sessionID] = .confirmingExpense(amount: amount, title: title)
-            return .needsClarification(
-                message: "Ausgabe speichern? \(ExternalInputFormatting.euro(amount)) - \(title)",
-                options: ExternalInputAction.confirmation
-            )
-        case let .confirmingExpense(amount, title):
+            return prepareExpense(date: Date(), amount: amount, title: title, category: nil, forceConfirmation: true, sessionID: sessionID)
+        case let .confirmingExpense(draft):
             if isConfirmation(text) {
-                sessions[sessionID] = Step.none
-                return service.execute(.expense(date: Date(), amount: amount, title: title, category: nil))
+                return executeConfirmed(
+                    .expense(date: draft.date, amount: draft.amount, title: draft.title, category: draft.category),
+                    sessionID: sessionID
+                )
             }
-            return .needsClarification(message: "Bitte bestätige mit Speichern oder brich ab.", options: ExternalInputAction.confirmation)
+            return .needsClarification(message: "Bitte bestätige mit Speichern, ändere die Kategorie oder brich ab.", options: FinanceExpenseInputService.confirmationActions(category: draft.category))
+        case .choosingExpenseCategory:
+            return .needsClarification(message: "Bitte wähle eine Kategorie aus der Liste.", options: FinanceExpenseInputService.categoryActions())
         case .waitingForMealName:
             let name = text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty else {
@@ -132,13 +171,13 @@ final class ExternalInputDialogManager {
             return .needsClarification(message: "Wie viele Kalorien?", options: cancelAction)
         case let .waitingForMealCalories(name):
             guard let calories = parser.parseNumber(text), calories >= 0 else {
-                return .needsClarification(message: "Bitte gib Kalorien als Zahl ein.", options: cancelAction)
+                return .needsClarification(message: "Bitte gib Kalorien als Zahl ein, zum Beispiel 650 oder 650 kcal.", options: cancelAction)
             }
             sessions[sessionID] = .waitingForMealProtein(name: name, calories: Int(calories.rounded()))
             return .needsClarification(message: "Wie viel Protein in Gramm?", options: cancelAction)
         case let .waitingForMealProtein(name, calories):
             guard let protein = parser.parseNumber(text), protein >= 0 else {
-                return .needsClarification(message: "Bitte gib Protein als Zahl ein.", options: cancelAction)
+                return .needsClarification(message: "Bitte gib Protein als Zahl ein, zum Beispiel 35 oder 35 g.", options: cancelAction)
             }
             sessions[sessionID] = .confirmingMeal(name: name, calories: calories, protein: protein)
             return .needsClarification(
@@ -147,15 +186,17 @@ final class ExternalInputDialogManager {
             )
         case let .confirmingMeal(name, calories, protein):
             if isConfirmation(text) {
-                sessions[sessionID] = Step.none
-                return service.execute(.meal(date: Date(), name: name, calories: calories, protein: protein, note: nil))
+                return executeConfirmed(
+                    .meal(date: Date(), name: name, calories: calories, protein: protein, note: nil),
+                    sessionID: sessionID
+                )
             }
             return .needsClarification(message: "Bitte bestätige mit Speichern oder brich ab.", options: ExternalInputAction.confirmation)
         case .waitingForTemplate:
             return .needsClarification(message: "Bitte wähle eine Vorlage aus der Liste.", options: templateActions())
         case .waitingForHabit:
-            let result = service.execute(.habitCompleted(date: Date(), habitName: text))
-            if case .success = result {
+            let result = service.execute(.habitCompleted(date: Date(), habitName: text), sessionID: sessionID)
+            if result.isSuccessfulSave {
                 sessions[sessionID] = Step.none
             }
             return result
@@ -172,14 +213,15 @@ final class ExternalInputDialogManager {
     }
 
     func beginBarcodeMeal(product: FoodProductLookupResult, sessionID: String = "local") -> ExternalInputResult {
-        guard product.caloriesPer100g != nil, product.proteinPer100g != nil else {
+        confirmations[sessionID] = nil
+        let requiredMissing = missingRequiredNutrition(in: product)
+        guard requiredMissing.isEmpty else {
             sessions[sessionID] = Step.none
             return .failure(
                 message: """
-                Produkt gefunden, aber Kalorien oder Protein pro 100 g fehlen.
-                \(product.name)
-                Barcode: \(product.barcode)
-                Bitte trage diese Mahlzeit manuell mit eigenen Nährwerten ein.
+                Produkt gefunden: \(product.name)
+                Kalorien oder Protein pro 100 g fehlen: \(requiredMissing.joined(separator: ", ")).
+                Ohne diese Angaben berechne ich keine Nährwerte. Bitte trage die Mahlzeit manuell ein.
                 """,
                 reason: "barcode_nutrition_missing"
             )
@@ -210,7 +252,7 @@ final class ExternalInputDialogManager {
             return .needsClarification(message: "Welche Vorlage möchtest du als Mahlzeit speichern?", options: actions)
         case .workout:
             sessions[sessionID] = Step.none
-            return service.execute(.workoutCompleted(date: Date(), note: nil))
+            return service.execute(.workoutCompleted(date: Date(), note: nil), sessionID: sessionID)
         case .habit:
             sessions[sessionID] = .waitingForHabit
             return .needsClarification(message: "Welchen Habit möchtest du erledigen?", options: habitActions())
@@ -219,17 +261,74 @@ final class ExternalInputDialogManager {
 
     private func confirm(sessionID: String) -> ExternalInputResult {
         switch sessions[sessionID] ?? .none {
-        case let .confirmingExpense(amount, title):
-            sessions[sessionID] = Step.none
-            return service.execute(.expense(date: Date(), amount: amount, title: title, category: nil))
+        case let .confirmingExpense(draft):
+            return executeConfirmed(
+                .expense(date: draft.date, amount: draft.amount, title: draft.title, category: draft.category),
+                sessionID: sessionID
+            )
         case let .confirmingMeal(name, calories, protein):
-            sessions[sessionID] = Step.none
-            return service.execute(.meal(date: Date(), name: name, calories: calories, protein: protein, note: nil))
+            return executeConfirmed(
+                .meal(date: Date(), name: name, calories: calories, protein: protein, note: nil),
+                sessionID: sessionID
+            )
         case let .confirmingBarcodeMeal(draft):
             return saveBarcodeMeal(draft, sessionID: sessionID)
         default:
+            if let result = recentConfirmation(sessionID: sessionID) {
+                return result
+            }
             return .failure(message: "Es gibt gerade nichts zu speichern.", reason: "nothing_to_confirm")
         }
+    }
+
+    private func prepareExpense(
+        date: Date,
+        amount: Double,
+        title: String,
+        category: String?,
+        forceConfirmation: Bool = false,
+        sessionID: String
+    ) -> ExternalInputResult {
+        guard amount.isFinite, amount > 0 else {
+            return .failure(message: "Bitte gib einen gültigen Betrag ein, zum Beispiel 4,50.", reason: "invalid_amount")
+        }
+        let input = FinanceExpenseInputService()
+        let draft = input.draft(date: date, amount: amount, title: title, category: category, explicitCategory: category != nil)
+        if forceConfirmation || draft.needsConfirmation {
+            sessions[sessionID] = .confirmingExpense(draft)
+            return .needsClarification(message: expenseConfirmationMessage(draft), options: FinanceExpenseInputService.confirmationActions(category: draft.category))
+        }
+        sessions[sessionID] = Step.none
+        return service.execute(
+            .expense(date: draft.date, amount: draft.amount, title: draft.title, category: draft.category),
+            sessionID: sessionID
+        )
+    }
+
+    private func selectExpenseCategory(_ category: String, sessionID: String) -> ExternalInputResult {
+        switch sessions[sessionID] ?? .none {
+        case let .confirmingExpense(draft), let .choosingExpenseCategory(draft):
+            let updated = FinanceExpenseDraft(
+                date: draft.date,
+                amount: draft.amount,
+                title: draft.title,
+                category: FinanceCategoryCatalog.normalized(category, kind: .expense),
+                note: draft.note,
+                needsConfirmation: false
+            )
+            sessions[sessionID] = .confirmingExpense(updated)
+            return .needsClarification(message: expenseConfirmationMessage(updated), options: FinanceExpenseInputService.confirmationActions(category: updated.category))
+        default:
+            return .failure(message: "Es gibt gerade keine Ausgabe für diese Kategorie.", reason: "no_expense_draft")
+        }
+    }
+
+    private func expenseConfirmationMessage(_ draft: FinanceExpenseDraft) -> String {
+        """
+        Ausgabe speichern?
+        \(ExternalInputFormatting.euro(draft.amount)) · \(draft.title)
+        Kategorie: \(draft.category)
+        """
     }
 
     private func prepareBarcodeConfirmation(grams: Double, sessionID: String) -> ExternalInputResult {
@@ -254,9 +353,22 @@ final class ExternalInputDialogManager {
 
     private func barcodeConfirmation(product: FoodProductLookupResult, grams: Double, sessionID: String) -> ExternalInputResult {
         guard grams.isFinite, grams > 0, grams <= 5_000 else {
-            return .needsClarification(message: "Bitte sende eine plausible Menge zwischen 1 und 5000 g.", options: cancelAction)
+            return .needsClarification(message: "Bitte wähle eine Menge zwischen 1 und 5000 g.", options: cancelAction)
         }
-        let draft = BarcodeMealDraft(product: product, grams: grams)
+        guard let caloriesPer100g = product.caloriesPer100g,
+              let proteinPer100g = product.proteinPer100g else {
+            sessions[sessionID] = Step.none
+            return .failure(
+                message: "Für dieses Produkt fehlen notwendige Nährwerte. Es wurde nichts gespeichert.",
+                reason: "barcode_nutrition_missing"
+            )
+        }
+        let draft = BarcodeMealDraft(
+            product: product,
+            grams: grams,
+            calories: Int((caloriesPer100g * grams / 100).rounded()),
+            protein: proteinPer100g * grams / 100
+        )
         sessions[sessionID] = .confirmingBarcodeMeal(draft)
         return .needsClarification(
             message: """
@@ -280,22 +392,42 @@ final class ExternalInputDialogManager {
                 calories: draft.calories,
                 protein: draft.protein,
                 note: note
-            )
+            ),
+            sessionID: sessionID
         )
-        guard case .success = result else { return result }
+        guard result.isSuccessfulSave else { return result }
         let status = service.nutritionDayStatus()
         let suffix = status.isEmpty ? "" : "\n\(status)"
-        return .success(
-            message: """
+        let response = result.replacingMessage(
+            """
             Gespeichert:
             \(draft.product.name)
             \(ExternalInputFormatting.decimal(draft.grams, maximumFractionDigits: 1)) g
             \(draft.calories) kcal
             \(ExternalInputFormatting.decimal(draft.protein, maximumFractionDigits: 1)) g Protein
             \(suffix)
-            """,
-            affectedModule: .nutrition
+            """
         )
+        confirmations[sessionID] = ConfirmationRecord(createdAt: Date(), result: response)
+        return response
+    }
+
+    private func executeConfirmed(_ intent: ExternalInputIntent, sessionID: String) -> ExternalInputResult {
+        sessions[sessionID] = Step.none
+        let result = service.execute(intent, sessionID: sessionID)
+        if result.isSuccessfulSave {
+            confirmations[sessionID] = ConfirmationRecord(createdAt: Date(), result: result)
+        }
+        return result
+    }
+
+    private func recentConfirmation(sessionID: String) -> ExternalInputResult? {
+        guard let confirmation = confirmations[sessionID] else { return nil }
+        guard Date().timeIntervalSince(confirmation.createdAt) <= 30 else {
+            confirmations[sessionID] = nil
+            return nil
+        }
+        return confirmation.result
     }
 
     private func parseBarcodeGrams(_ text: String, packageGrams: Double?) -> Double? {
@@ -324,14 +456,16 @@ final class ExternalInputDialogManager {
 
     private func productPreview(_ product: FoodProductLookupResult) -> String {
         let brandLine = product.brand.map { "\($0)\n" } ?? ""
+        let quantityLine = product.quantityText.map { "Packungsangabe: \($0)\n" } ?? ""
         return """
         Produkt erkannt:
         \(brandLine)\(product.name)
-        Barcode: \(product.barcode)
-        Quelle: Open Food Facts
+        \(quantityLine)Quelle: Open Food Facts
         Nährwerte pro 100 g:
-        * \(ExternalInputFormatting.decimal(product.caloriesPer100g ?? 0, maximumFractionDigits: 0)) kcal
-        * \(ExternalInputFormatting.decimal(product.proteinPer100g ?? 0, maximumFractionDigits: 1)) g Protein
+        • Kalorien: \(nutritionValue(product.caloriesPer100g, unit: "kcal", digits: 0))
+        • Protein: \(nutritionValue(product.proteinPer100g, unit: "g", digits: 1))
+        • Kohlenhydrate: \(nutritionValue(product.carbsPer100g, unit: "g", digits: 1))
+        • Fett: \(nutritionValue(product.fatPer100g, unit: "g", digits: 1))
         Wie viel hast du gegessen?
         """
     }
@@ -347,16 +481,28 @@ final class ExternalInputDialogManager {
                 )
             )
         }
-        actions.append(contentsOf: [50, 100, 150].map { grams in
+        actions.append(contentsOf: [100, 150, 250].map { grams in
             ExternalInputAction(
                 id: "barcode.amount.\(grams)",
                 label: "\(grams) g",
                 kind: .selectBarcodeAmount(grams: Double(grams))
             )
         })
-        actions.append(ExternalInputAction(id: "barcode.manual", label: "Manuell", kind: .enterBarcodeAmountManually))
+        actions.append(ExternalInputAction(id: "barcode.manual", label: "Eigene Grammzahl", kind: .enterBarcodeAmountManually))
         actions.append(contentsOf: cancelAction)
         return actions
+    }
+
+    private func missingRequiredNutrition(in product: FoodProductLookupResult) -> [String] {
+        var missing: [String] = []
+        if product.caloriesPer100g == nil { missing.append("Kalorien pro 100 g") }
+        if product.proteinPer100g == nil { missing.append("Protein pro 100 g") }
+        return missing
+    }
+
+    private func nutritionValue(_ value: Double?, unit: String, digits: Int) -> String {
+        guard let value else { return "nicht angegeben" }
+        return "\(ExternalInputFormatting.decimal(value, maximumFractionDigits: digits)) \(unit)"
     }
 
     private static func callbackNumber(_ value: Double) -> String {

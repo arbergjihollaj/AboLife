@@ -3,7 +3,7 @@ import GRDB
 
 struct DatabaseConfiguration {
     static let databaseFileName = "AboLife.sqlite"
-    static let applicationSupportFolderName = "AboLife"
+    static let applicationSupportFolderName = "AboLife-Calendar-Preview"
 
     static func makeConfiguration() -> Configuration {
         var configuration = Configuration()

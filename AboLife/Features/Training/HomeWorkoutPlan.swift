@@ -34,11 +34,33 @@ struct HomeWorkoutExercise: Identifiable, Equatable {
     let id: String
     let name: String
     let prescription: String
+    let suggestedSets: Int
+    let suggestedReps: Int?
+    let suggestedDurationSec: Int?
 
-    init(name: String, prescription: String) {
+    init(name: String, prescription: String, suggestedSets: Int = 3, suggestedReps: Int? = nil, suggestedDurationSec: Int? = nil) {
         self.id = "\(name)-\(prescription)"
         self.name = name
         self.prescription = prescription
+        self.suggestedSets = suggestedSets
+        self.suggestedReps = suggestedReps
+        self.suggestedDurationSec = suggestedDurationSec
+    }
+
+    func makeInput(sortOrder: Int, isCompleted: Bool = false) -> WorkoutExerciseInput {
+        let sets = (1...max(suggestedSets, 1)).map { setNumber in
+            WorkoutSetInput(
+                setNumber: setNumber,
+                reps: suggestedReps,
+                durationSec: suggestedDurationSec
+            )
+        }
+        return WorkoutExerciseInput(
+            exerciseName: name,
+            sortOrder: sortOrder,
+            isCompleted: isCompleted,
+            sets: sets
+        )
     }
 }
 
@@ -242,7 +264,36 @@ struct HomeWorkoutPlan: Equatable {
             workoutType: "Home Plan: \(scheduledWorkout.day.name)",
             durationMin: intensity.durationMinutes,
             status: "done",
+            workoutIntensity: intensity.rawValue,
             note: note
         )
+    }
+
+    func makeDetailedWorkoutSession(
+        for scheduledWorkout: ScheduledHomeWorkout,
+        intensity: HomeWorkoutIntensity,
+        exercises: [WorkoutExerciseInput],
+        note: String? = nil,
+        painReported: Bool = false,
+        occurredAt: Date = Date()
+    ) -> (session: WorkoutSessionRecord, exercises: [WorkoutExerciseInput]) {
+        let completedExerciseCount = exercises.filter { $0.isCompleted || !$0.sets.isEmpty }.count
+        var session = makeWorkoutSession(
+            for: scheduledWorkout,
+            intensity: intensity,
+            completedExerciseCount: completedExerciseCount,
+            occurredAt: occurredAt
+        )
+        session.painReported = painReported
+        if let note, !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            session.note = [session.note, note].compactMap { $0 }.joined(separator: " ")
+        }
+        return (session, exercises)
+    }
+
+    func makeExerciseInputs(for scheduledWorkout: ScheduledHomeWorkout, intensity: HomeWorkoutIntensity) -> [WorkoutExerciseInput] {
+        scheduledWorkout.day.exercises(for: intensity).enumerated().map { index, exercise in
+            exercise.makeInput(sortOrder: index)
+        }
     }
 }

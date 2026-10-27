@@ -12,6 +12,9 @@ final class SettingsStore: ObservableObject {
     @Published var targetWeightKg: Double = 0
     @Published var targetWeightLowerKg: Double = 0
     @Published var targetWeightUpperKg: Double = 0
+    @Published var morningReminderMinuteOfDay: Int = AppSettingsDefaults.morningReminderMinuteOfDay
+    @Published var trainingReminderMinuteOfDay: Int = AppSettingsDefaults.trainingReminderMinuteOfDay
+    @Published var eveningReminderMinuteOfDay: Int = AppSettingsDefaults.eveningReminderMinuteOfDay
     @Published private(set) var statusMessage: String?
     @Published private(set) var errorMessage: String?
     @Published private(set) var backupStatusMessage: String?
@@ -230,7 +233,10 @@ final class SettingsStore: ObservableObject {
         weekStartsOn: Int,
         targetWeightKg: Double?,
         targetWeightLowerKg: Double?,
-        targetWeightUpperKg: Double?
+        targetWeightUpperKg: Double?,
+        morningReminderMinuteOfDay: Int = AppSettingsDefaults.morningReminderMinuteOfDay,
+        trainingReminderMinuteOfDay: Int = AppSettingsDefaults.trainingReminderMinuteOfDay,
+        eveningReminderMinuteOfDay: Int = AppSettingsDefaults.eveningReminderMinuteOfDay
     ) -> AppSettingsRecord {
         AppSettingsValidation.normalized(
             AppSettingsRecord(
@@ -242,7 +248,10 @@ final class SettingsStore: ObservableObject {
                 weekStartsOn: weekStartsOn,
                 targetWeightKg: targetWeightKg,
                 targetWeightLowerKg: targetWeightLowerKg,
-                targetWeightUpperKg: targetWeightUpperKg
+                targetWeightUpperKg: targetWeightUpperKg,
+                morningReminderMinuteOfDay: morningReminderMinuteOfDay,
+                trainingReminderMinuteOfDay: trainingReminderMinuteOfDay,
+                eveningReminderMinuteOfDay: eveningReminderMinuteOfDay
             )
         )
     }
@@ -257,7 +266,10 @@ final class SettingsStore: ObservableObject {
             weekStartsOn: weekStartsOn,
             targetWeightKg: positiveWeightOrNil(targetWeightKg),
             targetWeightLowerKg: positiveWeightOrNil(targetWeightLowerKg),
-            targetWeightUpperKg: positiveWeightOrNil(targetWeightUpperKg)
+            targetWeightUpperKg: positiveWeightOrNil(targetWeightUpperKg),
+            morningReminderMinuteOfDay: morningReminderMinuteOfDay,
+            trainingReminderMinuteOfDay: trainingReminderMinuteOfDay,
+            eveningReminderMinuteOfDay: eveningReminderMinuteOfDay
         )
     }
 
@@ -272,6 +284,9 @@ final class SettingsStore: ObservableObject {
         targetWeightKg = normalized.targetWeightKg ?? 0
         targetWeightLowerKg = normalized.targetWeightLowerKg ?? 0
         targetWeightUpperKg = normalized.targetWeightUpperKg ?? 0
+        morningReminderMinuteOfDay = normalized.morningReminderMinuteOfDay
+        trainingReminderMinuteOfDay = normalized.trainingReminderMinuteOfDay
+        eveningReminderMinuteOfDay = normalized.eveningReminderMinuteOfDay
     }
 
     private func makeBackupService() -> BackupService? {
@@ -286,5 +301,12 @@ final class SettingsStore: ObservableObject {
 
     private func positiveWeightOrNil(_ value: Double) -> Double? {
         value > 0 ? value : nil
+    }
+}
+
+extension SettingsStore {
+    static func reminderTimeLabel(_ minuteOfDay: Int) -> String {
+        let normalized = (0..<24 * 60).contains(minuteOfDay) ? minuteOfDay : 0
+        return String(format: "%02d:%02d Uhr", normalized / 60, normalized % 60)
     }
 }

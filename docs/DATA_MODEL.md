@@ -326,3 +326,19 @@ Phase 7F ändert das Datenbankschema nicht. Stabilisiert wurden nur Berechnung u
 - Trainieren bleibt aus `workout_sessions` abgeleitet; alte `movement`-Daten bleiben historisch erhalten.
 - JSON- und CSV-Export enthalten `habit_entries` inklusive `value`, `target_value` und `unit`; abgeleitetes Trainieren ist über exportierte `workout_sessions` nachvollziehbar.
 - Settings-Zielwerte bleiben die Quelle für Kalorien, Protein, Wochen-Workouts, Budget und Wochenstart.
+
+## Version 0.2: lokaler Kalender und Lernplaner
+
+Migration `v12_calendar_workspace` liegt ausschließlich im getrennten Datenordner `AboLife-Calendar-Preview`. Die Originaldaten unter `AboLife` erhalten diese Migration nicht. Beim ersten Start wird mit einer nur lesend geöffneten alten Datenbank eine konsistente SQLite-Kopie angelegt, bevor neue Migrationen auf der Kopie laufen. Gleiche Pfade und symbolische Verweise auf die Originaldatenbank werden abgewiesen.
+
+`calendar_workspace` enthält einen Datensatz (`id = main`, `payload = BLOB`). Der JSON-Dokumentinhalt besteht aus primären Terminen, Themen, Wiederholungs- und Sitzungsverlauf, fixierten bzw. generierten Vorschlägen, Quellenkennungen und Planungspräferenzen. Schreibvorgänge ersetzen das Dokument atomar in einer GRDB-Transaktion. Für die persönliche lokale App gibt es einen schreibenden Kalender-Store; freie Zeitfenster werden berechnet und nicht gespeichert. Unlesbare Dokumente werden nicht durch einen leeren Stand überschrieben.
+
+Termine haben eine stabile UUID, Kategorie, Start/Ende, Ort und Zeitzone; Wochenserien können Wochentage, ein Enddatum oder COUNT sowie einzelne ausgenommene Tage enthalten. Importierte Termine besitzen zusätzlich Quelle und UID sowie eine Markierung für lokale Änderungen. Eine importierte Löschung wird als deaktivierter Datensatz behalten. Verschobene Serienvorkommen werden vorerst ausdrücklich zurückgewiesen, anstatt falsch angewendet.
+
+Lernthemen speichern Fach, Titel, geschätzte Dauer, nächste Fälligkeit, optionales Prüfungsdatum, Intervall, Schwierigkeitsfaktor und die letzten fünf tatsächlichen Dauern. Sitzungen speichern geplanten bzw. bestätigten Zeitraum, Status, Fixierung, Bewertung, tatsächliche Dauer und Bewertungszeitpunkt. Auslassen ist keine erfolgreiche Wiederholung. Bewertete Einheiten und Termine bleiben von Änderungen der Zeitplanung unterscheidbar.
+
+SQLite-Sicherungen enthalten den gesamten Workspace. JSON-Exporte erhalten optional `calendarWorkspace`; ältere Exporte ohne dieses Feld bleiben lesbar. Beim mehrteiligen CSV-Backup liegt zusätzlich `calendar_workspace.json` mit der vollständigen Kalender- und Lernhistorie bei. Für den Kalender ist weiterhin kein automatischer Import in Version 0.1 vorgesehen.
+
+### Fahrten ab 0.2.1
+
+`PlannerJourney` ist ein berechneter, nicht persistierter Fahrtblock mit Beginn, Ende, Ausgangs-/Zielort und Kennzeichnung einer angenommenen Rückfahrtdauer. `availability` liefert diese Blöcke gemeinsam mit den freien Lernfenstern. `PlannerPreferences.assumeSymmetricReturn` ist optional: fehlend oder true übernimmt nur für einen fehlenden Rückweg nach Hause die bekannte Hinfahrtdauer; false lässt ihn offen. Eine explizite Rückfahrtdauer hat Vorrang. Das optionale Feld hält vorhandene 0.2-Workspaces lesbar; das SQLite-Schema bleibt gleich.

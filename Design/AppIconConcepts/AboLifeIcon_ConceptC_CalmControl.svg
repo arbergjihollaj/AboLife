@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">AboLife Icon Concept C - Calm Control</title>
+  <desc id="desc">A clean control-center panel with a centered focus point and quiet orbit lines for balance.</desc>
+  <defs>
+    <linearGradient id="bg" x1="100" y1="78" x2="906" y2="936" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F8FAFB"/>
+      <stop offset="0.46" stop-color="#E8F0F1"/>
+      <stop offset="1" stop-color="#AEBFC5"/>
+    </linearGradient>
+    <radialGradient id="light" cx="32%" cy="20%" r="78%">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.88"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="314" y1="260" x2="710" y2="764" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#DCE8EA"/>
+    </linearGradient>
+    <linearGradient id="focus" x1="430" y1="398" x2="604" y2="618" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#335C67"/>
+      <stop offset="1" stop-color="#1E424B"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="30" stdDeviation="38" flood-color="#253D45" flood-opacity="0.24"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#FFFFFF" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="232" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="232" fill="url(#light)"/>
+  <g filter="url(#shadow)">
+    <rect x="278" y="228" width="468" height="568" rx="116" fill="url(#panel)" stroke="#FFFFFF" stroke-width="8"/>
+    <rect x="340" y="296" width="344" height="432" rx="86" fill="#F7FBFB" stroke="#C9D8DB" stroke-width="8"/>
+    <path d="M512 342 C607 342 684 418 684 512 C684 606 607 682 512 682 C417 682 340 606 340 512 C340 418 417 342 512 342Z" fill="none" stroke="#BFD0D3" stroke-width="22"/>
+    <path d="M512 388 C592 388 646 433 646 512 C646 591 592 636 512 636 C432 636 378 591 378 512 C378 433 432 388 512 388Z" fill="none" stroke="#7DA0A7" stroke-width="18" stroke-linecap="round" stroke-dasharray="235 86 122 92"/>
+    <circle cx="512" cy="512" r="86" fill="url(#focus)"/>
+    <circle cx="512" cy="512" r="38" fill="#F8FCFC"/>
+    <circle cx="512" cy="512" r="14" fill="#E0B75F"/>
+    <g fill="#335C67">
+      <circle cx="512" cy="300" r="14"/>
+      <circle cx="640" cy="382" r="14"/>
+      <circle cx="640" cy="642" r="14"/>
+      <circle cx="384" cy="642" r="14"/>
+      <circle cx="384" cy="382" r="14"/>
+    </g>
+  </g>
+  <path d="M364 236 C403 199 455 178 512 178 C569 178 621 199 660 236" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity="0.48"/>
+</svg>

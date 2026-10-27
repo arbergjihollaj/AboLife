@@ -1,3 +1,4 @@
+import Foundation
 import GRDB
 
 enum DatabaseMigrationPlan {
@@ -201,6 +202,96 @@ enum DatabaseMigrationPlan {
                 table.add(column: "target_weight_kg", .double)
                 table.add(column: "target_weight_lower_kg", .double)
                 table.add(column: "target_weight_upper_kg", .double)
+            }
+        }
+
+        migrator.registerMigration("v9_add_reminder_times_to_settings") { db in
+            try db.alter(table: "app_settings") { table in
+                table.add(column: "morning_reminder_minute_of_day", .integer)
+                    .notNull()
+                    .defaults(to: AppSettingsDefaults.morningReminderMinuteOfDay)
+                table.add(column: "training_reminder_minute_of_day", .integer)
+                    .notNull()
+                    .defaults(to: AppSettingsDefaults.trainingReminderMinuteOfDay)
+                table.add(column: "evening_reminder_minute_of_day", .integer)
+                    .notNull()
+                    .defaults(to: AppSettingsDefaults.eveningReminderMinuteOfDay)
+            }
+        }
+
+        migrator.registerMigration("v10_create_finance_categories") { db in
+            try db.create(table: "finance_categories") { table in
+                table.column("id", .text).primaryKey()
+                table.column("name", .text).notNull()
+                table.column("normalized_key", .text).notNull()
+                table.column("kind", .text).notNull().defaults(to: "expense")
+                table.column("is_default", .boolean).notNull().defaults(to: false)
+                table.column("is_active", .boolean).notNull().defaults(to: true)
+                table.column("sort_order", .integer).notNull().defaults(to: 0)
+                table.column("created_at", .datetime).notNull()
+                table.column("updated_at", .datetime).notNull()
+                table.uniqueKey(["kind", "normalized_key"])
+            }
+
+            let now = Date()
+            for (index, category) in FinanceCategoryCatalog.defaultExpenseCategories.enumerated() {
+                try FinanceCategoryRecord(
+                    name: category,
+                    kind: "expense",
+                    isDefault: true,
+                    isActive: true,
+                    sortOrder: index,
+                    createdAt: now,
+                    updatedAt: now
+                ).insert(db)
+            }
+        }
+
+        migrator.registerMigration("v11_create_workout_detail_tables") { db in
+            try db.alter(table: "workout_sessions") { table in
+                table.add(column: "workout_intensity", .text)
+                table.add(column: "pain_reported", .boolean)
+                    .notNull()
+                    .defaults(to: false)
+            }
+
+            try db.create(table: "workout_exercises") { table in
+                table.column("id", .text).primaryKey()
+                table.column("session_id", .text)
+                    .notNull()
+                    .indexed()
+                    .references("workout_sessions", onDelete: .cascade)
+                table.column("exercise_name", .text).notNull()
+                table.column("sort_order", .integer).notNull()
+                table.column("is_completed", .boolean).notNull().defaults(to: false)
+                table.column("note", .text)
+                table.column("pain_reported", .boolean).notNull().defaults(to: false)
+                table.column("created_at", .datetime).notNull()
+                table.column("updated_at", .datetime).notNull()
+            }
+
+            try db.create(table: "workout_sets") { table in
+                table.column("id", .text).primaryKey()
+                table.column("exercise_id", .text)
+                    .notNull()
+                    .indexed()
+                    .references("workout_exercises", onDelete: .cascade)
+                table.column("set_number", .integer).notNull()
+                table.column("reps", .integer)
+                table.column("weight_kg", .double)
+                table.column("duration_sec", .integer)
+                table.column("rpe", .double)
+                table.column("note", .text)
+                table.column("pain_reported", .boolean).notNull().defaults(to: false)
+                table.column("created_at", .datetime).notNull()
+                table.column("updated_at", .datetime).notNull()
+            }
+        }
+
+        migrator.registerMigration("v12_calendar_workspace") { db in
+            try db.create(table: "calendar_workspace") { table in
+                table.column("id", .text).primaryKey()
+                table.column("payload", .blob).notNull()
             }
         }
 

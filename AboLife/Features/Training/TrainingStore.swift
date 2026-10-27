@@ -18,6 +18,7 @@ final class TrainingViewModel: ObservableObject {
     @Published private(set) var nutritionStatus: NutritionTrainingStatus
     @Published private(set) var trainingStatistics: TrainingStatistics
     @Published private(set) var motivationCards: [MotivationCard]
+    @Published private(set) var exerciseProgressStatuses: [ExerciseProgressStatus]
 
     private let database: AppDatabase?
     private let calendar: Calendar
@@ -61,9 +62,16 @@ final class TrainingViewModel: ObservableObject {
             pullVolume: 0,
             legVolume: 0,
             strongestWeek: 0,
-            trainingRate: 0
+            trainingRate: 0,
+            averageSetsPerTraining: 0,
+            minimumWorkouts: 0,
+            normalWorkouts: 0,
+            strongWorkouts: 0,
+            pausedWorkouts: 0,
+            mostFrequentExercise: nil
         )
         self.motivationCards = []
+        self.exerciseProgressStatuses = []
         reload()
     }
 
@@ -198,6 +206,47 @@ final class TrainingViewModel: ObservableObject {
         isSavingPlanWorkout = false
     }
 
+    func makeDetailedHomeWorkoutExercises(intensity: HomeWorkoutIntensity) -> [WorkoutExerciseInput] {
+        homeWorkoutPlan.makeExerciseInputs(for: scheduledHomeWorkout, intensity: intensity)
+    }
+
+    func completeDetailedHomeWorkout(
+        intensity: HomeWorkoutIntensity,
+        exercises: [WorkoutExerciseInput],
+        note: String?,
+        painReported: Bool
+    ) {
+        isSavingPlanWorkout = true
+        completionMessage = nil
+
+        let detailed = homeWorkoutPlan.makeDetailedWorkoutSession(
+            for: scheduledHomeWorkout,
+            intensity: intensity,
+            exercises: exercises,
+            note: note,
+            painReported: painReported,
+            occurredAt: now()
+        )
+
+        guard let database else {
+            sessions.insert(detailed.session, at: 0)
+            completionMessage = "Workout mit Details gespeichert"
+            isSavingPlanWorkout = false
+            return
+        }
+
+        do {
+            try WorkoutRepository(database: database).insertDetailed(detailed.session, exercises: detailed.exercises)
+            completionMessage = "Workout mit Details gespeichert"
+            errorMessage = nil
+            reload()
+        } catch {
+            errorMessage = "Workout konnte nicht gespeichert werden."
+        }
+
+        isSavingPlanWorkout = false
+    }
+
     func clearCompletionMessage() {
         completionMessage = nil
     }
@@ -232,10 +281,14 @@ final class TrainingViewModel: ObservableObject {
             )
         }
 
+        let history = database.flatMap { try? WorkoutRepository(database: $0).fetchAllExerciseSummaries() } ?? []
+        exerciseProgressStatuses = makeExerciseProgressStatuses(from: history)
+
         recommendations = exerciseProgressions.map { progression in
-            progressionService.recommendation(
+            let results = exerciseResults(for: progression, history: history)
+            return progressionService.recommendation(
                 for: progression,
-                results: sampleResults(for: progression)
+                results: results.isEmpty ? sampleResults(for: progression) : results
             )
         }
 
@@ -276,8 +329,80 @@ final class TrainingViewModel: ObservableObject {
             pullVolume: pullVolume,
             legVolume: legVolume,
             strongestWeek: max(completed.count, weeklyWorkoutTarget),
-            trainingRate: Self.progress(current: Double(completed.count), target: Double(weeklyWorkoutTarget))
+            trainingRate: Self.progress(current: Double(completed.count), target: Double(weeklyWorkoutTarget)),
+            averageSetsPerTraining: averageSetsPerTraining(for: completed),
+            minimumWorkouts: completed.filter { $0.workoutIntensity == HomeWorkoutIntensity.minimum.rawValue }.count,
+            normalWorkouts: completed.filter { $0.workoutIntensity == HomeWorkoutIntensity.normal.rawValue }.count,
+            strongWorkouts: completed.filter { $0.workoutIntensity == HomeWorkoutIntensity.strong.rawValue }.count,
+            pausedWorkouts: sessions.filter { $0.status == "paused" }.count,
+            mostFrequentExercise: exerciseProgressStatuses.first?.exerciseName
         )
+    }
+
+    private func averageSetsPerTraining(for completed: [WorkoutSessionRecord]) -> Double {
+        guard let database, !completed.isEmpty else { return 0 }
+        let history = (try? WorkoutRepository(database: database).fetchAllExerciseSummaries(in: weekInterval)) ?? []
+        guard !history.isEmpty else { return 0 }
+        return Double(history.reduce(0) { $0 + $1.sets.count }) / Double(completed.count)
+    }
+
+    private func exerciseResults(for progression: ExerciseProgression, history: [WorkoutExerciseHistoryEntry]) -> [ExerciseSetResult] {
+        let target = WorkoutRepository.normalizedExerciseName(progression.exerciseName)
+        return history
+            .filter { WorkoutRepository.normalizedExerciseName($0.exercise.exerciseName).contains(target) || target.contains(WorkoutRepository.normalizedExerciseName($0.exercise.exerciseName)) }
+            .flatMap { entry in
+                entry.sets.enumerated().compactMap { index, set in
+                    set.reps.map {
+                        ExerciseSetResult(
+                            exerciseName: progression.exerciseName,
+                            reps: $0,
+                            setIndex: index,
+                            painReported: set.painReported || entry.exercise.painReported
+                        )
+                    }
+                }
+            }
+    }
+
+    private func makeExerciseProgressStatuses(from history: [WorkoutExerciseHistoryEntry]) -> [ExerciseProgressStatus] {
+        let grouped = Dictionary(grouping: history) {
+            WorkoutRepository.normalizedExerciseName($0.exercise.exerciseName)
+        }
+
+        return grouped.values.compactMap { entries -> ExerciseProgressStatus? in
+            let ordered = entries.sorted { $0.occurredAt > $1.occurredAt }
+            guard let latest = ordered.first else { return nil }
+            let totals = Array(ordered.prefix(4).map(\.totalReps))
+            let lastSets = latest.sets.compactMap(\.reps)
+            let best = entries.map(\.bestSetReps).max()
+            let recommendation: String
+            if latest.exercise.painReported || latest.sets.contains(where: \.painReported) {
+                recommendation = "Wenn sich etwas nicht gut anfühlt, ist die Minimum-Variante heute sinnvoll."
+            } else if totals.count < 2 {
+                recommendation = "Noch nicht genug Daten für einen Trend. Ruhig weiter sammeln."
+            } else if totals[0] > totals[1] {
+                recommendation = "Letztes Mal leicht verbessert. Heute stabil bleiben reicht völlig."
+            } else if let firstSet = latest.sets.compactMap(\.reps).first {
+                recommendation = "Heute könntest du versuchen, im ersten Satz \(firstSet + 1) Wiederholungen zu schaffen."
+            } else {
+                recommendation = "Stabil bleiben: gleiche Wiederholungen wie letztes Mal sind völlig okay."
+            }
+
+            return ExerciseProgressStatus(
+                id: latest.exercise.exerciseName,
+                exerciseName: latest.exercise.exerciseName,
+                lastSetsText: lastSets.isEmpty ? nil : lastSets.map(String.init).joined(separator: " / "),
+                bestSetReps: best == 0 ? nil : best,
+                recentTotalReps: totals,
+                recommendation: recommendation
+            )
+        }
+        .sorted { lhs, rhs in
+            if lhs.hasEnoughData != rhs.hasEnoughData {
+                return lhs.hasEnoughData && !rhs.hasEnoughData
+            }
+            return lhs.exerciseName < rhs.exerciseName
+        }
     }
 
     private func volume(for sessions: [WorkoutSessionRecord], matching keywords: [String]) -> Int {

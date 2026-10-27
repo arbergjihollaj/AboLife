@@ -35,14 +35,17 @@ Sidebar-Struktur:
 
 ```text
 Dashboard
-Ernährung
-Training
+Gesundheit
+├── Ernährung
+├── Training
+└── Gewicht
 Finanzen
 Gewohnheiten
+Statistiken
 Wochenreview
-Körperwerte
-Einstellungen
 ```
+
+„Gesundheit“ ist standardmäßig eingeklappt. Die drei Unterseiten öffnen innerhalb der bestehenden Hauptnavigation. Wird eine davon über eine Schnellaktion geöffnet, klappt die Gruppe automatisch auf. Bei eingeklappter Gruppe markiert die bestehende Auswahlfarbe den Gruppentitel, wenn eine Gesundheitsseite aktiv ist. Einstellungen bleiben ausschließlich über ⌘, und das App-Menü erreichbar.
 
 ## 4. Dashboard-Zonen
 
@@ -284,3 +287,30 @@ Detailseiten zeigen Historie, Listen, Bearbeitung und tiefergehende Charts.
 - Numeric Quick-Add-Eingaben werden stabil normalisiert, sodass keine NaN-/Inf-Werte in Ringe, Charts oder Persistenz gelangen.
 - Dashboard verwendet keine sichtbaren Mock-/Debug-Aktivitäten im Laufzeitpfad und nutzt dieselbe Tagesbudget-Logik wie Finanzen.
 - Settings zeigt Backup & Export mit SQLite, JSON und CSV für Numbers im bestehenden Glass-Stil.
+
+### Menüleisten-Popover
+
+- Das Popover ist 292 Punkte breit, die ausgeklappte Aktionsauswahl 280 Punkte. Nur der äußere Popover-Hintergrund verwendet ab macOS 26 natives Liquid Glass im dunklen App-Farbton; ältere Versionen nutzen die vorhandene materialbasierte Glasdarstellung. Vordergrundkarten, Diagramme, Beschriftungen und Buttons behalten die App-Palette. Die Karten besitzen eine dunkle Unterlage, damit der durchscheinende Desktop ihre Farben nicht verändert. Die ausgeklappte Aktionsauswahl behält den ursprünglichen dunklen Verlauf. Ein dunkles Farbschema sichert den Kontrast der hellen Beschriftungen.
+- „Tagesstatus“ zeigt ausschließlich den vorhandenen Kalorien-/Protein-Doppelring.
+- „Budget“ zeigt einen dezenten grauen Monatsbudget-Ring mit 8 Punkten Strichstärke. Der grüne Anteil mit runden Enden entspricht `dailyBudgetRemaining / monthlyBudget`; bei null verfügbarem Budget verschwindet er vollständig. In der Mitte steht das heute verfügbare Budget mit Centangabe und ruhiger Schriftgewichtung.
+- Tagesbudget und Ausgaben verwenden weiterhin `DashboardStore` und die gemeinsame Berechnung in `FinanceStore`. Nach dem Speichern einer Ausgabe aktualisiert sich der Ring aus diesen Daten. Bei ausgeschöpftem oder fehlendem Budget bleibt der Ring grau.
+- Ein einzelner „Quick Actions“-Button öffnet eine scrollbare Aktionsauswahl mit den bisherigen Eingaben, Trainings-/Habit-Aktionen und Telegram-Steuerung. Beim erneuten Öffnen des Menüleisten-Popovers ist sie eingeklappt.
+- Das M-Logo links oben öffnet beziehungsweise fokussiert das Hauptfenster über `AppNavigationCoordinator`. Die separaten Buttons „Hauptfenster“ und „Einstellungen“ entfallen.
+
+### Eigenes Einstellungsfenster
+
+- Die bestehende Einstellungsansicht öffnet in einer nativen SwiftUI-`Settings`-Scene über ⌘, oder das macOS-App-Menü „AboLife → Einstellungen …“.
+- Die Seitenleiste enthält keinen Einstellungsbutton. Das Einstellungsfenster ist ausschließlich über ⌘, und das macOS-App-Menü erreichbar. Die aktuell geöffnete Hauptseite bleibt dabei erhalten.
+- Das Einstellungsfenster ist separat schließbar und in der Größe veränderbar. Es verwendet dieselbe Datenbank und denselben Telegram-Koordinator wie die App.
+
+### Kalender-Version 0.2
+
+Ein einzelner Eintrag „Kalender“ führt zu Woche, Lernthemen und Stundenplan. „Termin“ öffnet ein Formular mit Art, Ort, Beginn/Ende und optionaler Wochenserie. „Planungszeiten“ enthält Verfügbarkeit, Tagesgrenze, Pausen und pro Richtung einzutragende Wege. Rückfahrten bleiben offen, bis sie bewusst gesetzt werden. Die ursprünglichen App-Farben und Karten bleiben erhalten.
+
+Der Stundenplan-Import bietet eine Vorschau, behält lokale Änderungen standardmäßig bei und deaktiviert fehlende Einträge nur nach Bestätigung eines vollständigen Imports. Bei Warnungen sind Löschungen gesperrt. Ein neuer erfolgreicher Import wird automatisch als aktuelle Quelle ausgewählt.
+
+Lernvorschläge nennen Thema, Uhrzeit, Ort und Begründung. Sie können fixiert, verschoben, ausgelassen oder bewertet werden. Fixierte Konflikte sind sichtbar. Unplatzierbare Themen zeigen einen Grund; der Planer füllt keine gesperrten Zeiten auf. Vergangene unbeantwortete Vorschläge gelten als verpasst, nicht als gelernt.
+
+Ab 0.2.1 stehen automatisch abgeleitete Hin-/Rück-/Weiterfahrten chronologisch zwischen den festen Terminen. „Rückweg wie Hinfahrt“ macht die angenommene Dauer sichtbar. Keine automatischen Heimfahrten in Uni-Pausen. „Planungszeiten“ enthält den Schalter für symmetrische Rückwege und weiterhin individuelle Dauern.
+
+Ab 0.2.2 folgt nach dem letzten Uni-Termin zuerst die Heimfahrt. Ein späteres Training beginnt mit einer eigenen Hinfahrt von Zuhause. Die Oberfläche erklärt diese Regel in „Planungszeiten“. Wenn die Wege zeitlich nicht passen, erscheint ein Hinweis statt einer unmöglichen Heimfahrt. Uni-Pausen bleiben weiterhin auf dem Campus.

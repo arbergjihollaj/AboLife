@@ -10,6 +10,7 @@ final class WeeklyReviewStore: ObservableObject {
     @Published private(set) var nutritionSummary = NutritionWeeklySummary.empty
     @Published private(set) var trainingSummary = WorkoutWeeklySummary.empty
     @Published private(set) var financeSummary = FinanceWeeklySummary.empty
+    @Published private(set) var previousFinanceSummary = FinanceWeeklySummary.empty
     @Published private(set) var financeMonthPlan: FinanceMonthPlan?
     @Published private(set) var habitSummary = HabitWeeklySummary.empty
     @Published private(set) var trends = WeeklyReviewTrends.empty(
@@ -91,6 +92,7 @@ final class WeeklyReviewStore: ObservableObject {
             nutritionSummary = .empty
             trainingSummary = .empty
             financeSummary = .empty
+            previousFinanceSummary = .empty
             financeMonthPlan = nil
             habitSummary = .empty
             trends = WeeklyReviewTrends.empty(for: weekInterval, calendar: calendar)
@@ -134,6 +136,11 @@ final class WeeklyReviewStore: ObservableObject {
                 calendar: calendar
             )
             financeSummary = try financeRepository.weeklySummary(in: interval)
+            let previousInterval = DateInterval(
+                start: calendar.date(byAdding: .day, value: -7, to: interval.start) ?? interval.start,
+                end: interval.start
+            )
+            previousFinanceSummary = try financeRepository.weeklySummary(in: previousInterval)
             financeMonthPlan = try financeRepository.monthPlan(
                 for: selectedDate,
                 monthlyBudget: settings.monthlyBudget,
@@ -211,21 +218,48 @@ final class WeeklyReviewStore: ObservableObject {
         TrainingStore.progress(current: Double(trainingSummary.completedWorkouts), target: Double(weeklyWorkoutTarget))
     }
 
+    var trainingReviewText: String {
+        if trainingSummary.completedWorkouts == 0 {
+            return "Diese Woche gab es noch kein gespeichertes Training."
+        }
+        let goal = "Diese Woche hast du \(trainingSummary.completedWorkouts) von \(weeklyWorkoutTarget) Trainings geschafft."
+        if let progress = trainingSummary.progressText {
+            return "\(goal) \(progress)"
+        }
+        if trainingSummary.minimumWorkouts > 0 {
+            return "\(goal) Du hast \(trainingSummary.minimumWorkouts)x Minimum trainiert statt komplett ausfallen zu lassen."
+        }
+        if let top = trainingSummary.topExerciseName {
+            return "\(goal) Häufigste Übung: \(top)."
+        }
+        return goal
+    }
+
     var financeProgress: Double {
         guard monthlyBudget > 0 else { return 0 }
         return min(max(financeSummary.spent / (monthlyBudget / 4.0), 0), 1)
     }
 
     var financeAnalysis: String {
-        guard let financeMonthPlan else {
-            return "\(financeSummary.entryCount) Ausgaben erfasst."
+        guard financeSummary.entryCount > 0 else {
+            return "Für diese Woche gibt es noch nicht genug Finanzdaten."
         }
-        let forecast = formatAmount(financeMonthPlan.forecastSpend)
-        let topCategory = financeSummary.topCategory ?? financeMonthPlan.categorySummaries.first?.category ?? "keine Top-Kategorie"
-        if financeMonthPlan.isForecastOverBudget {
-            return "Forecast \(forecast), Top: \(topCategory), über Budget."
+
+        let topCategory = financeSummary.topCategory
+            ?? financeMonthPlan?.categorySummaries.first?.category
+            ?? "keine klare Top-Kategorie"
+        let comparison: String
+        if previousFinanceSummary.entryCount == 0 {
+            comparison = "Für den Vergleich zur Vorwoche fehlen noch Daten."
+        } else if financeSummary.spent < previousFinanceSummary.spent {
+            comparison = "Deine Ausgaben lagen niedriger als letzte Woche."
+        } else if financeSummary.spent > previousFinanceSummary.spent {
+            comparison = "Deine Ausgaben lagen höher als letzte Woche."
+        } else {
+            comparison = "Deine Ausgaben lagen auf dem Niveau der Vorwoche."
         }
-        return "Forecast \(forecast), Top: \(topCategory), im Rahmen."
+
+        return "Diese Woche war \(topCategory) die größte Kategorie. \(comparison)"
     }
 
     func formatAmount(_ amount: Double, currency: String? = nil) -> String {

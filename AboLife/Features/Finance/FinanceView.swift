@@ -26,6 +26,7 @@ struct FinanceView: View {
                     budgetOverview
                     budgetDetails
                     plannerSection
+                    categoryManagementSection
                     categorySection
                     chartSection
                     weeklySection
@@ -135,6 +136,12 @@ struct FinanceView: View {
                 .font(AboLifeTypography.body)
                 .foregroundStyle(AboLifeColors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 8) {
+                financeStatusCapsule("Heute frei", store.formatAmount(store.dailyBudgetRemaining), AboLifeColors.finance)
+                financeStatusCapsule("Monat frei", store.formatAmount(store.remainingBudget), AboLifeColors.review)
+                financeStatusCapsule("Fixkosten offen", store.formatAmount(store.remainingFixedCosts), AboLifeColors.secondaryText)
+            }
         }
         .frame(maxWidth: 620, alignment: .leading)
     }
@@ -213,17 +220,7 @@ struct FinanceView: View {
                 }
 
                 ForEach(store.fixedCosts.prefix(4)) { fixedCost in
-                    compactListRow(
-                        title: "\(fixedCost.title) · Tag \(fixedCost.dueDay)",
-                        value: store.formatAmount(fixedCost.amount),
-                        systemImage: fixedCost.isActive ? "checkmark.circle" : "pause.circle",
-                        tint: fixedCost.isActive ? AboLifeColors.finance : AboLifeColors.secondaryText
-                    ) {
-                        store.deleteFixedCost(id: fixedCost.id)
-                    }
-                    .onTapGesture {
-                        store.toggleFixedCost(fixedCost)
-                    }
+                    fixedCostRow(fixedCost)
                 }
             }
 
@@ -263,15 +260,58 @@ struct FinanceView: View {
         }
     }
 
+    private var categoryManagementSection: some View {
+        AboLifeCard {
+            VStack(alignment: .leading, spacing: 13) {
+                HStack(alignment: .firstTextBaseline) {
+                    sectionHeader("Kategorien", systemImage: "tag")
+
+                    Spacer()
+
+                    AboLifeGlassCapsule {
+                        Text("\(activeCategoryNames.count) aktiv")
+                            .font(AboLifeTypography.micro)
+                            .foregroundStyle(AboLifeColors.finance)
+                            .monospacedDigit()
+                    }
+                }
+
+                Text("Aktive Vorschläge bleiben schlicht; ältere, unbekannte Kategorien aus Ausgaben bleiben darunter sichtbar.")
+                    .font(AboLifeTypography.caption)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                TagCloud(items: activeCategoryNames, tint: AboLifeColors.finance)
+
+                if !observedCategoryNames.isEmpty {
+                    VStack(alignment: .leading, spacing: 7) {
+                        Text("In deinen Daten gesehen")
+                            .font(AboLifeTypography.micro.weight(.semibold))
+                            .foregroundStyle(AboLifeColors.secondaryText)
+
+                        TagCloud(items: observedCategoryNames, tint: AboLifeColors.review)
+                    }
+                }
+            }
+        }
+    }
+
     private var categorySection: some View {
         AboLifeCard(isProminent: true) {
             VStack(alignment: .leading, spacing: 13) {
-                sectionHeader("Kategorien mit Auswertung", systemImage: "chart.pie")
+                HStack(alignment: .firstTextBaseline) {
+                    sectionHeader("Kategorie-Trends", systemImage: "chart.pie")
+                    Spacer()
+                    Text("aktueller Monat")
+                        .font(AboLifeTypography.micro)
+                        .foregroundStyle(AboLifeColors.secondaryText)
+                }
 
                 if store.categorySummaries.isEmpty {
-                    Text("Noch keine Kategorien im aktuellen Monat.")
-                        .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                    quietEmptyState(
+                        title: "Noch keine Kategorie-Trends.",
+                        message: "Sobald Ausgaben vorhanden sind, siehst du hier Anteile, Budgets und ruhige Hinweise."
+                    )
                 } else {
                     VStack(spacing: 10) {
                         ForEach(store.categorySummaries) { summary in
@@ -286,7 +326,13 @@ struct FinanceView: View {
     private var chartSection: some View {
         AboLifeCard(isProminent: true) {
             VStack(alignment: .leading, spacing: 13) {
-                sectionHeader("Einnahmen und Ausgaben", systemImage: "chart.bar.xaxis")
+                HStack(alignment: .firstTextBaseline) {
+                    sectionHeader("Monatsanalyse", systemImage: "chart.bar.xaxis")
+                    Spacer()
+                    Text(monthAnalysisHint)
+                        .font(AboLifeTypography.micro)
+                        .foregroundStyle(AboLifeColors.secondaryText)
+                }
 
                 HStack(alignment: .bottom, spacing: 18) {
                     financeBar(title: "Einnahmen", amount: store.monthlyIncome, maxAmount: max(store.monthlyIncome, store.monthlySpent, 1), tint: AboLifeColors.protein)
@@ -295,16 +341,32 @@ struct FinanceView: View {
                     financeBar(title: "Budget", amount: store.monthlyBudget, maxAmount: max(store.forecastSpend, store.monthlyBudget, 1), tint: AboLifeColors.secondaryText)
                 }
                 .frame(height: 190)
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 170), spacing: 10)], spacing: 10) {
+                    insightTile("Rest pro Tag", store.formatAmount(store.dailyBudgetRemaining), "Bis Monatsende verfügbar.", AboLifeColors.finance)
+                    insightTile("Aktive Ausgabentage", "\(activeExpenseDays)", activeExpenseDays == 0 ? "Noch wenig Daten." : "Tage mit Ausgaben.", AboLifeColors.review)
+                    insightTile("Größte Ausgabe", largestExpenseText, "Einzelner Ausreißer im Blick.", AboLifeColors.habits)
+                    insightTile("Teuerste Kategorie", topCategoryText, "Ruhig beobachten, nicht jagen.", AboLifeColors.finance)
+                }
             }
         }
     }
 
     private var weeklySection: some View {
         AboLifeCard {
-            HStack(spacing: 12) {
-                detailPill(title: "Woche", value: store.formatAmount(store.weeklySpent), systemImage: "calendar.badge.clock", tint: AboLifeColors.review)
-                detailPill(title: "Top Kategorie", value: store.weeklySummary.topCategory ?? "offen", systemImage: "tag", tint: AboLifeColors.finance)
-                detailPill(title: "Einträge", value: "\(store.weeklySummary.entryCount)", systemImage: "list.bullet", tint: AboLifeColors.habits)
+            VStack(alignment: .leading, spacing: 11) {
+                sectionHeader("Wochenblick", systemImage: "calendar.badge.clock")
+
+                HStack(spacing: 12) {
+                    detailPill(title: "Woche", value: store.formatAmount(store.weeklySpent), systemImage: "calendar.badge.clock", tint: AboLifeColors.review)
+                    detailPill(title: "Top Kategorie", value: store.weeklySummary.topCategory ?? "offen", systemImage: "tag", tint: AboLifeColors.finance)
+                    detailPill(title: "Einträge", value: "\(store.weeklySummary.entryCount)", systemImage: "list.bullet", tint: AboLifeColors.habits)
+                }
+
+                Text(weeklyFinanceSentence)
+                    .font(AboLifeTypography.caption)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -481,9 +543,16 @@ struct FinanceView: View {
     private func categoryRow(_ summary: FinanceCategorySummary) -> some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack {
-                Text(summary.category)
-                    .font(AboLifeTypography.body.weight(.semibold))
-                    .foregroundStyle(AboLifeColors.primaryText)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(summary.category)
+                        .font(AboLifeTypography.body.weight(.semibold))
+                        .foregroundStyle(AboLifeColors.primaryText)
+
+                    Text(categoryHint(for: summary))
+                        .font(AboLifeTypography.micro)
+                        .foregroundStyle(AboLifeColors.secondaryText)
+                }
+
                 Spacer()
                 Text(summary.budget.map { "\(store.formatAmount(summary.spent)) / \(store.formatAmount($0))" } ?? store.formatAmount(summary.spent))
                     .font(AboLifeTypography.caption.weight(.semibold))
@@ -519,8 +588,183 @@ struct FinanceView: View {
         .frame(maxWidth: .infinity)
     }
 
+    private func financeStatusCapsule(_ title: String, _ value: String, _ tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title)
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(AboLifeColors.secondaryText)
+            Text(value)
+                .font(AboLifeTypography.caption.weight(.semibold))
+                .foregroundStyle(tint)
+                .monospacedDigit()
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+    }
+
+    private func insightTile(_ title: String, _ value: String, _ detail: String, _ tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(AboLifeColors.secondaryText)
+            Text(value)
+                .font(AboLifeTypography.caption.weight(.semibold))
+                .foregroundStyle(AboLifeColors.primaryText)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+            Text(detail)
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(tint)
+                .lineLimit(2)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 78, alignment: .leading)
+        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func fixedCostRow(_ fixedCost: FinanceFixedCostRecord) -> some View {
+        HStack(spacing: 9) {
+            Image(systemName: fixedCost.isActive ? "checkmark.circle" : "pause.circle")
+                .foregroundStyle(fixedCost.isActive ? AboLifeColors.finance : AboLifeColors.secondaryText)
+                .frame(width: 18)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(fixedCost.title)
+                    .font(AboLifeTypography.caption.weight(.semibold))
+                    .foregroundStyle(AboLifeColors.primaryText)
+                    .lineLimit(1)
+                Text("\(fixedCost.category) · fällig Tag \(fixedCost.dueDay)")
+                    .font(AboLifeTypography.micro)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Text(store.formatAmount(fixedCost.amount))
+                .font(AboLifeTypography.micro.weight(.semibold))
+                .foregroundStyle(AboLifeColors.primaryText)
+                .monospacedDigit()
+
+            Button {
+                store.toggleFixedCost(fixedCost)
+            } label: {
+                Image(systemName: fixedCost.isActive ? "pause.circle" : "play.circle")
+            }
+            .buttonStyle(.borderless)
+            .help(fixedCost.isActive ? "Pausieren" : "Aktivieren")
+
+            Button(role: .destructive) {
+                store.deleteFixedCost(id: fixedCost.id)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.borderless)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+    }
+
+    private func quietEmptyState(title: String, message: String) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(AboLifeTypography.body.weight(.semibold))
+                .foregroundStyle(AboLifeColors.primaryText)
+            Text(message)
+                .font(AboLifeTypography.caption)
+                .foregroundStyle(AboLifeColors.secondaryText)
+        }
+        .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
+        .padding(12)
+        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func categoryHint(for summary: FinanceCategorySummary) -> String {
+        if summary.isOverBudget, let budget = summary.budget {
+            return "\(store.formatAmount(summary.spent - budget)) über geplantem Monatswert."
+        }
+        if let budget = summary.budget {
+            return "\(store.formatAmount(max(budget - summary.spent, 0))) Budgetpuffer."
+        }
+        let share = store.monthlySpent > 0 ? Int((summary.spent / store.monthlySpent * 100).rounded()) : 0
+        return "\(share)% der Monatsausgaben."
+    }
+
+    private var activeCategoryNames: [String] {
+        FinanceCategoryCatalog.expenseCategories
+    }
+
+    private var observedCategoryNames: [String] {
+        let values = Set(
+            store.entries.map(\.category)
+                + store.categoryBudgets.map(\.category)
+                + store.fixedCosts.map(\.category)
+                + store.categorySummaries.map(\.category)
+        )
+        return values
+            .map { FinanceCategoryCatalog.normalized($0, kind: .expense) }
+            .filter { !activeCategoryNames.contains($0) }
+            .sorted()
+    }
+
+    private var activeExpenseDays: Int {
+        Set(store.entries.filter { $0.amount >= 0 }.map { Calendar.current.startOfDay(for: $0.occurredAt) }).count
+    }
+
+    private var largestExpenseText: String {
+        guard let entry = store.entries.filter({ $0.amount >= 0 }).max(by: { $0.amount < $1.amount }) else {
+            return "noch offen"
+        }
+        return "\(entry.title) · \(store.formatAmount(entry.amount))"
+    }
+
+    private var topCategoryText: String {
+        store.categorySummaries.first?.category ?? "noch offen"
+    }
+
+    private var monthAnalysisHint: String {
+        store.entries.count >= 3 ? "Trend belastbarer" : "mehr Daten helfen"
+    }
+
+    private var weeklyFinanceSentence: String {
+        if store.weeklySummary.entryCount == 0 {
+            return "Für diese Woche gibt es noch keine Finanzdaten."
+        }
+        if let category = store.weeklySummary.topCategory {
+            return "Diese Woche war \(category) die größte Kategorie."
+        }
+        return "Diese Woche sind \(store.weeklySummary.entryCount) Finanz-Einträge vorhanden."
+    }
+
     private func decimal(_ text: String) -> Double {
         Double(text.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+    }
+}
+
+private struct TagCloud: View {
+    let items: [String]
+    let tint: Color
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 118), spacing: 8)], alignment: .leading, spacing: 8) {
+            ForEach(items, id: \.self) { item in
+                Text(item)
+                    .font(AboLifeTypography.micro.weight(.semibold))
+                    .foregroundStyle(AboLifeColors.primaryText)
+                    .lineLimit(1)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(tint.opacity(0.12), in: Capsule())
+                    .overlay {
+                        Capsule().strokeBorder(tint.opacity(0.16), lineWidth: 0.7)
+                    }
+            }
+        }
     }
 }
 

@@ -69,22 +69,22 @@ final class TelegramReminderScheduler: ObservableObject {
 
     private func processDueReminders(at date: Date) async {
         guard let chatId = configuration.allowedChatId else { return }
-        let hour = calendar.component(.hour, from: date)
-        let minute = calendar.component(.minute, from: date)
+        let minuteOfDay = calendar.component(.hour, from: date) * 60 + calendar.component(.minute, from: date)
+        let schedule = currentSchedule()
 
         do {
-            if hour == 9, minute == 0 {
+            if minuteOfDay == schedule.morningMinuteOfDay {
                 try await sendOnce(try dailySummaryService.morningSummary(for: date), chatId: chatId, date: date)
                 if let reminder = try reminderService.morningHabitReminder(for: date) {
                     try await sendOnce(reminder, chatId: chatId, date: date)
                 }
             }
 
-            if hour == 17, minute == 0, let reminder = try reminderService.trainingReminder(for: date) {
+            if minuteOfDay == schedule.trainingMinuteOfDay, let reminder = try reminderService.trainingReminder(for: date) {
                 try await sendOnce(reminder, chatId: chatId, date: date)
             }
 
-            if hour == 21, minute == 0, let reminder = try reminderService.eveningCheck(for: date) {
+            if minuteOfDay == schedule.eveningMinuteOfDay, let reminder = try reminderService.eveningCheck(for: date) {
                 try await sendOnce(reminder, chatId: chatId, date: date)
             }
         } catch {
@@ -92,12 +92,19 @@ final class TelegramReminderScheduler: ObservableObject {
         }
     }
 
+    private func currentSchedule() -> TelegramReminderSchedule {
+        guard let settings = try? SettingsRepository(database: dailySummaryService.database).loadSettings() else {
+            return TelegramReminderSchedule()
+        }
+        return TelegramReminderSchedule(settings: settings)
+    }
+
     private func sendOnce(_ message: TelegramReminderMessage, chatId: Int64, date: Date) async throws {
         let key = "\(DateIntervals.dayKey(for: date, calendar: calendar)).\(message.kind.rawValue)"
         guard !sentKeys.contains(key) else { return }
         try await client.send(TelegramResponse(chatId: chatId, text: message.text, keyboard: message.keyboard))
         sentKeys.insert(key)
-        sentLogs.insert(TelegramReminderLogEntry(kind: message.kind, sentAt: date, chatId: chatId, summary: message.text), at: 0)
+        sentLogs.insert(TelegramReminderLogEntry(kind: message.kind, sentAt: date, chatId: chatId, summary: "Reminder gesendet: \(message.kind.rawValue)"), at: 0)
         print("AboLife Telegram reminder sent: \(message.kind.rawValue)")
     }
 }

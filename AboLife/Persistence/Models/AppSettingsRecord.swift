@@ -15,6 +15,9 @@ struct AppSettingsRecord: Codable, FetchableRecord, PersistableRecord, Identifia
     var targetWeightKg: Double?
     var targetWeightLowerKg: Double?
     var targetWeightUpperKg: Double?
+    var morningReminderMinuteOfDay: Int
+    var trainingReminderMinuteOfDay: Int
+    var eveningReminderMinuteOfDay: Int
     var createdAt: Date
     var updatedAt: Date
 
@@ -29,6 +32,9 @@ struct AppSettingsRecord: Codable, FetchableRecord, PersistableRecord, Identifia
         targetWeightKg: Double? = nil,
         targetWeightLowerKg: Double? = nil,
         targetWeightUpperKg: Double? = nil,
+        morningReminderMinuteOfDay: Int = AppSettingsDefaults.morningReminderMinuteOfDay,
+        trainingReminderMinuteOfDay: Int = AppSettingsDefaults.trainingReminderMinuteOfDay,
+        eveningReminderMinuteOfDay: Int = AppSettingsDefaults.eveningReminderMinuteOfDay,
         createdAt: Date = Date(),
         updatedAt: Date = Date()
     ) {
@@ -42,6 +48,9 @@ struct AppSettingsRecord: Codable, FetchableRecord, PersistableRecord, Identifia
         self.targetWeightKg = targetWeightKg
         self.targetWeightLowerKg = targetWeightLowerKg
         self.targetWeightUpperKg = targetWeightUpperKg
+        self.morningReminderMinuteOfDay = morningReminderMinuteOfDay
+        self.trainingReminderMinuteOfDay = trainingReminderMinuteOfDay
+        self.eveningReminderMinuteOfDay = eveningReminderMinuteOfDay
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -57,6 +66,9 @@ struct AppSettingsRecord: Codable, FetchableRecord, PersistableRecord, Identifia
         case targetWeightKg = "target_weight_kg"
         case targetWeightLowerKg = "target_weight_lower_kg"
         case targetWeightUpperKg = "target_weight_upper_kg"
+        case morningReminderMinuteOfDay = "morning_reminder_minute_of_day"
+        case trainingReminderMinuteOfDay = "training_reminder_minute_of_day"
+        case eveningReminderMinuteOfDay = "evening_reminder_minute_of_day"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -69,6 +81,9 @@ enum AppSettingsDefaults {
     static let monthlyBudget: Double = 1200
     static let defaultCurrency = "EUR"
     static let weekStartsOn = 2
+    static let morningReminderMinuteOfDay = 9 * 60
+    static let trainingReminderMinuteOfDay = 17 * 60
+    static let eveningReminderMinuteOfDay = 21 * 60
 }
 
 enum AppSettingsValidation {
@@ -84,6 +99,9 @@ enum AppSettingsValidation {
             targetWeightKg: normalizedWeight(settings.targetWeightKg),
             targetWeightLowerKg: normalizedWeight(settings.targetWeightLowerKg),
             targetWeightUpperKg: normalizedWeight(settings.targetWeightUpperKg),
+            morningReminderMinuteOfDay: normalizedMinuteOfDay(settings.morningReminderMinuteOfDay, defaultValue: AppSettingsDefaults.morningReminderMinuteOfDay),
+            trainingReminderMinuteOfDay: normalizedMinuteOfDay(settings.trainingReminderMinuteOfDay, defaultValue: AppSettingsDefaults.trainingReminderMinuteOfDay),
+            eveningReminderMinuteOfDay: normalizedMinuteOfDay(settings.eveningReminderMinuteOfDay, defaultValue: AppSettingsDefaults.eveningReminderMinuteOfDay),
             createdAt: settings.createdAt,
             updatedAt: settings.updatedAt
         ).normalizedWeightCorridor()
@@ -96,6 +114,10 @@ enum AppSettingsValidation {
     private static func normalizedWeight(_ value: Double?) -> Double? {
         guard let value, value.isFinite, value >= 20, value <= 300 else { return nil }
         return (value * 10).rounded() / 10
+    }
+
+    private static func normalizedMinuteOfDay(_ value: Int, defaultValue: Int) -> Int {
+        (0..<24 * 60).contains(value) ? value : defaultValue
     }
 }
 

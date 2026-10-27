@@ -21,6 +21,7 @@ struct SettingsView: View {
                     financeCard
                     generalCard
                     telegramCard
+                    reminderCard
                     backupExportCard
                     actions
                 }
@@ -28,7 +29,7 @@ struct SettingsView: View {
                 .frame(maxWidth: 920, alignment: .leading)
             }
         }
-        .navigationTitle("")
+        .navigationTitle("Einstellungen")
         .onAppear {
             store.reload()
         }
@@ -154,6 +155,10 @@ struct SettingsView: View {
                     .foregroundStyle(AboLifeColors.secondaryText)
 
                 Label("Du kannst ein SQLite-Backup, einen JSON-Export oder ein CSV-Backup mit Offline-Report erstellen.", systemImage: "doc.text")
+                    .font(AboLifeTypography.caption)
+                    .foregroundStyle(AboLifeColors.secondaryText)
+
+                Label("Import/Restore ist vorbereitet als sichere Vorprüfung. Daten werden erst nach einem späteren Bestätigungsdialog übernommen.", systemImage: "arrow.down.doc")
                     .font(AboLifeTypography.caption)
                     .foregroundStyle(AboLifeColors.secondaryText)
             }
@@ -295,6 +300,28 @@ struct SettingsView: View {
         }
     }
 
+    private var reminderCard: some View {
+        settingsCard(title: "Reminder-Zeiten", systemImage: "bell.badge", tint: AboLifeColors.habits) {
+            reminderStepperRow(
+                title: "Morgen-Zusammenfassung",
+                value: $store.morningReminderMinuteOfDay
+            )
+            reminderStepperRow(
+                title: "Trainingserinnerung",
+                value: $store.trainingReminderMinuteOfDay
+            )
+            reminderStepperRow(
+                title: "Tagescheck am Abend",
+                value: $store.eveningReminderMinuteOfDay
+            )
+
+            Text("Gilt für Telegram-Reminder nach dem Speichern. Token und Chat-ID bleiben lokale Umgebungswerte.")
+                .font(AboLifeTypography.micro)
+                .foregroundStyle(AboLifeColors.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
     private var actions: some View {
         AboLifeCard {
             HStack(spacing: 12) {
@@ -397,6 +424,12 @@ struct SettingsView: View {
     private func weightStepperRow(title: String, value: Binding<Double>, unit: String) -> some View {
         Stepper(value: value, in: 0...300, step: 0.5) {
             valueRow(title: title, value: value.wrappedValue > 0 ? "\(String(format: "%.1f", value.wrappedValue)) \(unit)" : "nicht gesetzt")
+        }
+    }
+
+    private func reminderStepperRow(title: String, value: Binding<Int>) -> some View {
+        Stepper(value: value, in: 0...(24 * 60 - 15), step: 15) {
+            valueRow(title: title, value: SettingsStore.reminderTimeLabel(value.wrappedValue))
         }
     }
 

@@ -8,8 +8,10 @@ Phase 9C ist abgeschlossen: Ernährung hat lokale Favoriten und Mahlzeiten-Vorla
 Phase 9B ist abgeschlossen: External Input / Quick Input ist als lokale, testbare Architektur umgesetzt.
 Phase 10A ist vorbereitet: Telegram-Grundstruktur mit Buttons und Dialog-Mapping ist integriert, echter Bot-Token und Live-Test bleiben offen.
 Phase 10B ist als Live-Code umgesetzt: Telegram Long Polling kann kontrolliert gestartet/gestoppt werden, optionaler Auto-Start ist sicher konfigurierbar, echter Bot-Test mit lokalem Token ist noch manuell offen.
-Phase 10C ist umgesetzt: Telegram Daily Summary, Reminder-Scheduler, Reminder-Buttons und Telegram HTML Snapshot Export sind als entkoppelte Services integriert.
+Phase 10C ist umgesetzt: Telegram Daily Summary, Reminder-Scheduler, Reminder-Buttons, konfigurierbare Reminder-Zeiten und Telegram HTML Snapshot Export sind als entkoppelte Services integriert.
 Telegram Barcode Food Scan ist umgesetzt: Barcode-Fotos werden temporär verarbeitet, über Open Food Facts nachgeschlagen und erst nach Mengenwahl plus Bestätigung als Mahlzeit gespeichert.
+Die gemeinsame Tageslogik ist als kleine `TodaySnapshotService`-Schicht vorbereitet und wird von Dashboard und Telegram Daily Summary genutzt.
+Restore/Import ist als sichere Vorprüfung für JSON, SQLite und CSV vorbereitet; ein schreibender Restore-Flow bleibt bewusst offen.
 
 ## Erledigt
 - [x] Phase 0: Konzept und Spezifikation
@@ -35,7 +37,7 @@ Telegram Barcode Food Scan ist umgesetzt: Barcode-Fotos werden temporär verarbe
 - [x] Telegram Barcode Food Scan über Open Food Facts
 
 ## Aktuell
-- [ ] Nutzungsphase: Quick Input lokal gegen echte Alltagseingaben testen
+- [x] Nutzungsphase: Quick Input lokal gegen echte Alltagseingaben technisch testen und Parser robuster machen
 - [ ] Telegram Live-Test mit lokal gesetztem Bot-Token und erlaubter Chat-ID durchführen
 - [ ] Telegram Barcode Food Scan mit echtem Barcode-Foto live testen
 
@@ -83,7 +85,7 @@ Telegram Barcode Food Scan ist umgesetzt: Barcode-Fotos werden temporär verarbe
 - [x] Scheduler ist vom Telegram-Polling entkoppelt
 - [x] Reminder-Services enthalten die Businesslogik, Telegram routet nur Callbacks
 - [x] Versand-Logging im Scheduler ergänzt
-- [ ] Konfigurierbare Reminder-Zeiten
+- [x] Konfigurierbare Reminder-Zeiten
 
 ## Phase 10C — Telegram HTML Snapshot Export
 - [x] Telegram-Menüs enthalten den Button `📤 Export`.
@@ -115,13 +117,21 @@ Telegram Barcode Food Scan ist umgesetzt: Barcode-Fotos werden temporär verarbe
 - Backups enthalten aktuell keine Telegram-Konfiguration, weil der Token nicht in der App-Datenbank gespeichert wird.
 - Barcode-Scan benötigt Internetzugang für Open Food Facts. Produkte oder Nährwerte können dort fehlen, und das Foto muss lesbar sein.
 - Barcode-Fotos werden nur temporär lokal verarbeitet und danach bestmöglich gelöscht; der Telegram-Token wird nicht gespeichert, geloggt oder exportiert.
+- Manueller Live-Test:
+  1. Token und erlaubte Chat-ID nur lokal setzen, zum Beispiel über eine nicht versionierte Shell-Umgebung.
+  2. App starten und in Einstellungen prüfen, ob Telegram als verfügbar angezeigt wird.
+  3. Telegram starten, `/start` an den Bot senden und prüfen, ob nur die erlaubte Chat-ID Antworten erhält.
+  4. Alltagseingaben testen: `Gewicht 82,4`, `Ausgabe Döner 4,50€`, `Essen Skyr 250kcal 25g Protein`.
+  5. Für Barcode ein scharfes Foto eines echten EAN-Barcodes senden, Produktvorschau prüfen, Gramm bestätigen und erst danach speichern.
+  6. Nach dem Test prüfen, dass Token/Chat-ID nicht in Git-Diff, Exporten, Logs oder Screenshots enthalten sind.
 
 ## Offene technische Punkte
 - [ ] Manuellen Telegram-Live-Test mit echtem Token und erlaubter Chat-ID durchführen.
 - [ ] Barcode-Scan live mit echtem Telegram-Foto prüfen.
-- [ ] Optional lokale External-Input-Testfläche im Dashboard oder Dev-Bereich ergänzen.
+- [ ] Optional lokale External-Input-Testfläche im Dashboard oder Dev-Bereich ergänzen, falls nach echter Nutzung weitere Eingaben häufig unklar bleiben.
 - [ ] Prüfen, ob Quick Add mittelfristig intern auf `ExternalInputService` aufsetzen soll.
-- [ ] Import/Restore-Konzept für neue Tabellen prüfen, falls ein Restore-Flow ergänzt wird.
+- [x] Import/Restore-Konzept für neue Tabellen prüfen und sichere Vorprüfung ergänzen.
+- [ ] Schreibenden Restore-Flow mit Preview, Konflikterkennung und ausdrücklicher Nutzerbestätigung ergänzen.
 - [ ] Xcode-User-State-Dateien nicht als fachliche Projektänderung behandeln.
 - [ ] Prüfen, ob Favoriten/Vorlagen nach echter Nutzung sortiert, gesucht oder gruppiert werden sollten.
 
@@ -129,9 +139,9 @@ Telegram Barcode Food Scan ist umgesetzt: Barcode-Fotos werden temporär verarbe
 - [x] Interaktive HTML-Graph-Ansicht erstellen.
 - [x] Markdown-Audit-Report erstellen.
 - [ ] Zentrale Dateien aus dem Audit beobachten.
-- [ ] Mögliche `DailyState`-/`TodaySnapshot`-Schicht prüfen.
-- [ ] Doppelte Tageslogik vermeiden.
-- [ ] Export, Backup, Dashboard und Telegram auf gemeinsame Berechnungslogik prüfen.
+- [x] Mögliche `DailyState`-/`TodaySnapshot`-Schicht prüfen.
+- [x] Kleine `TodaySnapshotService`-Schicht für Dashboard und Telegram Daily Summary ergänzen.
+- [ ] Export, Backup, Menüleistenfenster und Statistiken weiter auf gemeinsame Tageslogik prüfen.
 
 ## Telegram Automatisierung
 - [x] Daily Morning Summary
@@ -139,7 +149,7 @@ Telegram Barcode Food Scan ist umgesetzt: Barcode-Fotos werden temporär verarbe
 - [x] Proteinshake-Erinnerungen
 - [x] Trainings-Erinnerungen
 - [x] Abendlicher Tagescheck
-- [ ] Konfigurierbare Reminder-Zeiten
+- [x] Konfigurierbare Reminder-Zeiten
 
 ## Finanzplaner Verbesserungen
 - [x] Monatliche Budgetplanung
@@ -155,7 +165,7 @@ Telegram Barcode Food Scan ist umgesetzt: Barcode-Fotos werden temporär verarbe
 
 ## Offene Sicherheits-/Konfigurationspunkte
 - [ ] Telegram-Token niemals in Git committen.
-- [ ] Keine privaten Telegram-Nachrichten unnötig loggen.
+- [x] Keine privaten Telegram-Nachrichten unnötig loggen: Scheduler speichert nur Reminder-Art, nicht den kompletten Nachrichtentext.
 - [ ] Keine Analytics ergänzen.
 - [ ] Keine geheimen lokalen Config-Dateien exportieren.
 - [ ] Fehlerberichte ohne sensible Inhalte halten.
