@@ -141,3 +141,7 @@ Die aktuelle Version ist eine persönliche Preview. Der Schwerpunkt liegt auf st
 - [Änderungen](CHANGELOG.md)
 - [Entwickeln und beitragen](CONTRIBUTING.md)
 - [Screenshots und Beispieldaten](docs/SCREENSHOTS.md)
+- [Produktspezifikation](docs/PRODUCT_SPEC.md), [MVP-Umfang](docs/MVP_SCOPE.md) und [Roadmap](docs/ROADMAP.md)
+- [UI-Spezifikation](docs/UI_SPEC.md) und [Projektregeln](docs/CODEX_RULES.md)
+- [Ursprünglicher Projektplan](plan/ABOLIFE_PROJECT_PLAN.md), [Kalender-Freigabe und Fortschreibung](docs/CALENDAR_0_2_PLAN.md) sowie [offene Aufgaben](TODO.md)
+- [Icon-Entwürfe](Design/AppIconConcepts/README.md) und [Datei-Graph-Audit vom Juni 2026](docs/AboLife_File_Node_Graph_Audit.md)

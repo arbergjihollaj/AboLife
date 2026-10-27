@@ -2,6 +2,8 @@
 
 # AboLife Architecture
 
+Die Abschnitte 1–11 halten den ursprünglichen Architekturentwurf und einzelne Entwicklungsphasen fest; die dortigen Ordnerbäume sind eine Zielstruktur. Den aktuellen Dateiaufbau zeigt das [README](../README.md). Die Kalender-Ergänzungen am Ende beschreiben den Stand der 0.2-Versionen.
+
 ## 1. Architekturziel
 
 AboLife soll eine saubere, aber nicht übertriebene Architektur haben. Die App ist ein persönliches Projekt, soll aber langfristig wartbar bleiben.
@@ -246,3 +248,5 @@ Die neue App trägt die Kennung `com.private.AboLife.calendarPreview`, Version 0
 Der MainActor-Store serialisiert Änderungen und speichert erst nach erfolgreicher Planung atomar. Relevante Eingaben planen sofort neu; eine Minute nach Ablauf aktualisiert auch die geöffnete Ansicht ihren Stand. Es gibt keinen externen KI-Dienst und keinen Hintergrundzugriff auf Apple Kalender. Offene Wege und Konflikte mit fixierten Blöcken werden angezeigt. Die erste Wiederholungsregel ist eine dokumentierte Heuristik, keine trainierte FSRS-Implementierung.
 
 Die Wegeplanung ab 0.2.2 unterscheidet Uni-Pausen vom Ende des Uni-Tages: Der letzte Campus-Termin bestimmt, ab wann vor einer weiteren auswärtigen Aktivität erst die bekannten Wege über Zuhause reserviert werden. Direkte Übergänge bei unzureichender Zeit werden als Konflikt der bevorzugten Heimroute angezeigt. Freie Fenster und beibehaltene Lernblöcke müssen zusätzlich zum Zeitraum auch zum Lernort passen.
+
+Der [Datei-Graph-Audit](AboLife_File_Node_Graph_Audit.md) und seine Diagramme sind eine historische Aufnahme vom 16. Juni 2026. Sie enthalten den später ergänzten Kalender noch nicht und ersetzen den aktuellen Dateiaufbau nicht.
