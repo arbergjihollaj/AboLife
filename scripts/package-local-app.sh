@@ -22,8 +22,9 @@ if [ -z "$ABOLIFE_BINARY" ]; then
   ABOLIFE_BINARY=$(find "$ABOLIFE_PROJECT_DIR/work/swift-build" -path '*/release/AboLife' -type f -print -quit)
 fi
 test -n "$ABOLIFE_BINARY"
-ABOLIFE_BUNDLE="$PWD/outputs/AboLife.app"
-mkdir -p "$ABOLIFE_BUNDLE/Contents/MacOS" "$ABOLIFE_BUNDLE/Contents/Resources"
+# Keep build bundles out of Spotlight; install one stable AboLife.app from the ZIP.
+ABOLIFE_BUNDLE="$PWD/work/app-build.noindex/AboLife.app"
+mkdir -p "$PWD/outputs" "$ABOLIFE_BUNDLE/Contents/MacOS" "$ABOLIFE_BUNDLE/Contents/Resources"
 cp "$ABOLIFE_BINARY" "$ABOLIFE_BUNDLE/Contents/MacOS/AboLife"
 xcrun actool AboLife/Assets.xcassets --compile "$ABOLIFE_BUNDLE/Contents/Resources" --platform macosx --minimum-deployment-target 14.0 --app-icon AppIcon --output-partial-info-plist "$PWD/work/icon-info.plist" > work/assets-build.log 2>&1
 python3 - "$ABOLIFE_BUNDLE" <<'PY'

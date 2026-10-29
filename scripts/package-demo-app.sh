@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-test -d outputs/AboLife.app || { echo 'Zuerst scripts/package-local-app.sh ausführen.' >&2; exit 1; }
-ABOLIFE_DEMO_BUNDLE="$PWD/outputs/AboLife-Demo.app"
+ABOLIFE_MAIN_BUNDLE="$PWD/work/app-build.noindex/AboLife.app"
+test -d "$ABOLIFE_MAIN_BUNDLE" || { echo 'Zuerst scripts/package-local-app.sh ausführen.' >&2; exit 1; }
+ABOLIFE_DEMO_BUNDLE="$PWD/work/app-build.noindex/AboLife-Demo.app"
 mkdir -p "$ABOLIFE_DEMO_BUNDLE"
-/usr/bin/ditto outputs/AboLife.app "$ABOLIFE_DEMO_BUNDLE"
+/usr/bin/ditto "$ABOLIFE_MAIN_BUNDLE" "$ABOLIFE_DEMO_BUNDLE"
 python3 - "$ABOLIFE_DEMO_BUNDLE/Contents/Info.plist" <<'PY'
 import plistlib,sys
 path=sys.argv[1]

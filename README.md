@@ -63,7 +63,7 @@ scripts/package-local-app.sh
 scripts/package-homelab.sh
 ```
 
-`check-native.sh` nutzt einen vorhandenen GRDB-Checkout. Alternativ `ABOLIFE_GRDB_CHECKOUT` explizit setzen; siehe [CONTRIBUTING.md](CONTRIBUTING.md). Die Haupt-App entsteht unter `outputs/AboLife.app`, die ZIP unter `outputs/AboLife-0.4-macOS.zip`. Builddateien und persönliche Daten gehören nicht in Git.
+`check-native.sh` nutzt einen vorhandenen GRDB-Checkout. Alternativ `ABOLIFE_GRDB_CHECKOUT` explizit setzen; siehe [CONTRIBUTING.md](CONTRIBUTING.md). Die Haupt-App entsteht intern unter `work/app-build.noindex/AboLife.app`, die ZIP unter `outputs/AboLife-0.4-macOS.zip`. Die ZIP entpacken und `AboLife.app` in den Programme-Ordner ziehen; bei Updates die bestehende App ersetzen. So bleibt eine einzige installierte Haupt-App ohne Versionsnummer im Namen. Builddateien und persönliche Daten gehören nicht in Git.
 
 ### Präsentation mit Demodaten
 
@@ -71,7 +71,7 @@ scripts/package-homelab.sh
 scripts/package-demo-app.sh
 ```
 
-Die daraus erzeugte `outputs/AboLife-Demo.app` besitzt eine eigene App-Kennung und legt ausschließlich fiktive Daten in einer temporären Datenbank an. Sie übernimmt keine persönlichen Daten. Die Screenshots in diesem README verwenden diesen Modus.
+Die daraus erzeugte `work/app-build.noindex/AboLife-Demo.app` besitzt eine eigene App-Kennung und legt ausschließlich fiktive Daten in einer temporären Datenbank an. Sie übernimmt keine persönlichen Daten. Die Screenshots in diesem README verwenden diesen Modus. Interne Build-Bundles liegen in einem `.noindex`-Ordner, damit sie nicht als weitere installierte Apps in Spotlight erscheinen.
 
 ### Privater mobiler Zugriff
 
