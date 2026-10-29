@@ -1,0 +1,640 @@
+{
+  "app_settings" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "calories_target",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "protein_target_g",
+      "required" : true,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "monthly_budget",
+      "required" : true,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "default_currency",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "week_starts_on",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "weekly_workout_target",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "target_weight_kg",
+      "required" : false,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "target_weight_lower_kg",
+      "required" : false,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "target_weight_upper_kg",
+      "required" : false,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "morning_reminder_minute_of_day",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "training_reminder_minute_of_day",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "evening_reminder_minute_of_day",
+      "required" : true,
+      "type" : "INTEGER"
+    }
+  ],
+  "body_metric_entries" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "occurred_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "weight_kg",
+      "required" : false,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "day_rating",
+      "required" : false,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "note",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ],
+  "finance_categories" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "name",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "normalized_key",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "kind",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "is_default",
+      "required" : true,
+      "type" : "BOOLEAN"
+    },
+    {
+      "name" : "is_active",
+      "required" : true,
+      "type" : "BOOLEAN"
+    },
+    {
+      "name" : "sort_order",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ],
+  "finance_category_budgets" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "month_key",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "category",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "budget_amount",
+      "required" : true,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "currency",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ],
+  "finance_entries" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "occurred_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "title",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "amount",
+      "required" : true,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "currency",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "category",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "note",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ],
+  "finance_fixed_costs" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "title",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "amount",
+      "required" : true,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "currency",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "category",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "due_day",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "is_active",
+      "required" : true,
+      "type" : "BOOLEAN"
+    },
+    {
+      "name" : "note",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ],
+  "finance_savings_goals" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "title",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "target_amount",
+      "required" : true,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "current_amount",
+      "required" : true,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "currency",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "target_date",
+      "required" : false,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "is_active",
+      "required" : true,
+      "type" : "BOOLEAN"
+    },
+    {
+      "name" : "note",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ],
+  "habit_entries" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "habit_key",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "date",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "is_completed",
+      "required" : true,
+      "type" : "BOOLEAN"
+    },
+    {
+      "name" : "note",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "value",
+      "required" : false,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "target_value",
+      "required" : false,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "unit",
+      "required" : false,
+      "type" : "TEXT"
+    }
+  ],
+  "news_state" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "payload",
+      "required" : true,
+      "type" : "TEXT"
+    }
+  ],
+  "weekly_reviews" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "week_start_date",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "wins_text",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "challenges_text",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "next_week_focus_text",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "rating",
+      "required" : false,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ],
+  "weight_entries" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "date",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "weight_kg",
+      "required" : true,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ],
+  "workout_exercises" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "session_id",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "exercise_name",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "sort_order",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "is_completed",
+      "required" : true,
+      "type" : "BOOLEAN"
+    },
+    {
+      "name" : "note",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "pain_reported",
+      "required" : true,
+      "type" : "BOOLEAN"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ],
+  "workout_sessions" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "occurred_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "workout_type",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "duration_min",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "status",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "note",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "workout_intensity",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "pain_reported",
+      "required" : true,
+      "type" : "BOOLEAN"
+    }
+  ],
+  "workout_sets" : [
+    {
+      "name" : "id",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "exercise_id",
+      "required" : true,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "set_number",
+      "required" : true,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "reps",
+      "required" : false,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "weight_kg",
+      "required" : false,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "duration_sec",
+      "required" : false,
+      "type" : "INTEGER"
+    },
+    {
+      "name" : "rpe",
+      "required" : false,
+      "type" : "DOUBLE"
+    },
+    {
+      "name" : "note",
+      "required" : false,
+      "type" : "TEXT"
+    },
+    {
+      "name" : "pain_reported",
+      "required" : true,
+      "type" : "BOOLEAN"
+    },
+    {
+      "name" : "created_at",
+      "required" : true,
+      "type" : "DATETIME"
+    },
+    {
+      "name" : "updated_at",
+      "required" : true,
+      "type" : "DATETIME"
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+import Foundation
+
+struct WeeklyTrendPoint: Identifiable, Equatable {
+    let date: Date
+    let weekdayLabel: String
+    let value: Double
+
+    var id: String {
+        DateIntervals.dayKey(for: date)
+    }
+}
+
+struct WeeklyReviewTrends: Equatable {
+    let spendingByDay: [WeeklyTrendPoint]
+    let trainingMinutesByDay: [WeeklyTrendPoint]
+    let habitCompletionByDay: [WeeklyTrendPoint]
+
+    var hasAnyData: Bool {
+            spendingByDay.containsData ||
+            trainingMinutesByDay.containsData ||
+            habitCompletionByDay.containsData
+    }
+
+    static func empty(for interval: DateInterval, calendar: Calendar = .current) -> WeeklyReviewTrends {
+        make(
+            interval: interval,
+            financeEntries: [],
+            workoutSessions: [],
+            habitEntries: [],
+            habitKeys: [],
+            calendar: calendar
+        )
+    }
+
+    static func make(
+        interval: DateInterval,
+        financeEntries: [FinanceEntryRecord],
+        workoutSessions: [WorkoutSessionRecord],
+        habitEntries: [HabitEntryRecord],
+        habitKeys: [String],
+        calendar: Calendar = .current
+    ) -> WeeklyReviewTrends {
+        let days = weekDays(in: interval, calendar: calendar)
+        let dayKeys = days.map { DateIntervals.dayKey(for: $0, calendar: calendar) }
+        let allowedHabitKeys = Set(habitKeys)
+
+        var spendingByKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, 0.0) })
+        var trainingMinutesByKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, 0.0) })
+        var habitProgressByDayAndKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, [String: Double]()) })
+        var trainingDoneByKey = Dictionary(uniqueKeysWithValues: dayKeys.map { ($0, false) })
+
+
+
+        for entry in financeEntries {
+            let key = DateIntervals.dayKey(for: entry.occurredAt, calendar: calendar)
+            spendingByKey[key, default: 0] += entry.amount
+        }
+
+        for session in workoutSessions where session.status == "done" {
+            let key = DateIntervals.dayKey(for: session.occurredAt, calendar: calendar)
+            trainingMinutesByKey[key, default: 0] += Double(session.durationMin)
+            trainingDoneByKey[key] = true
+        }
+
+        for entry in habitEntries where allowedHabitKeys.contains(entry.habitKey) && entry.habitKey != "training" {
+            habitProgressByDayAndKey[entry.date, default: [:]][entry.habitKey] = habitProgress(entry)
+        }
+
+        return WeeklyReviewTrends(
+            spendingByDay: points(days: days, valuesByKey: spendingByKey, calendar: calendar),
+            trainingMinutesByDay: points(days: days, valuesByKey: trainingMinutesByKey, calendar: calendar),
+            habitCompletionByDay: days.map { day in
+                let key = DateIntervals.dayKey(for: day, calendar: calendar)
+                let progressValues = habitKeys.map { habitKey -> Double in
+                    if habitKey == "training" {
+                        return trainingDoneByKey[key] == true ? 1 : 0
+                    }
+                    return habitProgressByDayAndKey[key]?[habitKey] ?? 0
+                }
+                let percent = habitKeys.isEmpty ? 0 : (progressValues.reduce(0, +) / Double(habitKeys.count)) * 100
+                return WeeklyTrendPoint(
+                    date: day,
+                    weekdayLabel: weekdayLabel(for: day),
+                    value: min(max(percent, 0), 100)
+                )
+            }
+        )
+    }
+
+    static func weekDays(in interval: DateInterval, calendar: Calendar = .current) -> [Date] {
+        (0..<7).compactMap { offset in
+            calendar.date(byAdding: .day, value: offset, to: calendar.startOfDay(for: interval.start))
+        }
+    }
+
+    private static func points(days: [Date], valuesByKey: [String: Double], calendar: Calendar) -> [WeeklyTrendPoint] {
+        days.map { day in
+            WeeklyTrendPoint(
+                date: day,
+                weekdayLabel: weekdayLabel(for: day),
+                value: valuesByKey[DateIntervals.dayKey(for: day, calendar: calendar)] ?? 0
+            )
+        }
+    }
+
+    private static func weekdayLabel(for date: Date) -> String {
+        weekdayFormatter.string(from: date)
+    }
+
+    private static func habitProgress(_ entry: HabitEntryRecord) -> Double {
+        if let value = entry.value, let targetValue = entry.targetValue, targetValue > 0 {
+            return min(max(value / targetValue, 0), 1)
+        }
+        return entry.isCompleted ? 1 : 0
+    }
+
+    private static let weekdayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "de_DE")
+        formatter.dateFormat = "E"
+        return formatter
+    }()
+}
+
+extension Array where Element == WeeklyTrendPoint {
+    var totalValue: Double {
+        reduce(0) { $0 + $1.value }
+    }
+
+    var averageValue: Double {
+        isEmpty ? 0 : totalValue / Double(count)
+    }
+
+    var containsData: Bool {
+        contains { $0.value > 0 }
+    }
+}

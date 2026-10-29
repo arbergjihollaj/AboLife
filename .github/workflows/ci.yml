@@ -1,0 +1,61 @@
+name: CI
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  web:
+    name: Web and publication checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: python3 scripts/check-publication.py
+      - run: node --test web/test/*.test.mjs
+  native:
+    name: macOS and shared Swift contract
+    runs-on: macos-15
+    env:
+      ABOLIFE_GRDB_CHECKOUT: ${{ github.workspace }}/work/dependencies/checkouts/GRDB.swift
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Resolve the pinned GRDB dependency
+        run: xcodebuild -resolvePackageDependencies -project AboLife.xcodeproj -scheme AboLife -clonedSourcePackagesDirPath work/dependencies
+      - run: scripts/check-native.sh
+      - name: Build native app with assets and verify signature
+        run: scripts/package-local-app.sh
+  container:
+    name: Linux Homelab image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: docker build -f web/Dockerfile.homelab -t abolife-ci .
+      - name: Check the runtime with synthetic credentials
+        run: |
+          docker run -d --name abolife-ci -e ABOLIFE_PASSWORD=ci-fixture-only-not-a-real-password abolife-ci
+          for attempt in $(seq 1 30); do
+            if docker exec abolife-ci node -e "fetch('http://127.0.0.1:3055/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"; then exit 0; fi
+            sleep 1
+          done
+          docker logs abolife-ci
+          exit 1

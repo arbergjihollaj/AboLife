@@ -1,0 +1,18 @@
+FROM swift:6.2-noble AS planner-build
+WORKDIR /build
+COPY AboLife/Features/Calendar/CalendarModels.swift AboLife/Features/Calendar/ModuleStudyPlanner.swift AboLife/Features/Calendar/StudyPlannerEngine.swift web/planner/main.swift ./
+RUN swiftc -O CalendarModels.swift ModuleStudyPlanner.swift StudyPlannerEngine.swift main.swift -o /build/abolife-planner
+FROM node:24-bookworm-slim AS node-runtime
+FROM swift:6.2-noble-slim
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+RUN node --version && groupadd --gid 10001 abolife && useradd --uid 10001 --gid abolife --create-home abolife
+WORKDIR /app
+COPY --from=planner-build /build/abolife-planner /usr/local/bin/abolife-planner
+COPY --chown=abolife:abolife web/package.json web/server.mjs web/state.mjs web/news.mjs web/planner.mjs web/backup.mjs web/schema.json ./
+COPY --chown=abolife:abolife web/public ./public
+RUN mkdir /app/data && chown abolife:abolife /app/data
+USER abolife
+ENV PORT=3055 ABOLIFE_HOST=0.0.0.0 ABOLIFE_DATA_DIR=/app/data ABOLIFE_PLANNER_BINARY=/usr/local/bin/abolife-planner TZ=Europe/Berlin
+EXPOSE 3055
+VOLUME ["/app/data"]
+CMD ["node", "server.mjs"]

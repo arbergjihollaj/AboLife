@@ -1,0 +1,29 @@
+services:
+  abolife:
+    build:
+      context: ..
+      dockerfile: web/Dockerfile.homelab
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3055:3055"
+    environment:
+      ABOLIFE_PASSWORD: ${ABOLIFE_PASSWORD:?Serverpasswort in .env setzen}
+      ABOLIFE_PUBLIC_URL: ${ABOLIFE_PUBLIC_URL:-http://localhost:3055}
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3055/healthz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - abolife-data:/app/data
+volumes:
+  abolife-data:

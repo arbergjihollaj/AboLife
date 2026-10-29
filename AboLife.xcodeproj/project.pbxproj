@@ -1,0 +1,645 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+        CA2400000000000000000001 /* ModuleStudyPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA2400000000000000000002 /* ModuleStudyPlanner.swift */; };
+		100000000000000000000101 /* AboLifeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000001 /* AboLifeApp.swift */; };
+		100000000000000000000102 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000002 /* AppRouter.swift */; };
+		100000000000000000000103 /* AboLifeColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000003 /* AboLifeColors.swift */; };
+		100000000000000000000104 /* AboLifeTypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000004 /* AboLifeTypography.swift */; };
+		100000000000000000000105 /* AboLifeCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000005 /* AboLifeCard.swift */; };
+		100000000000000000000106 /* ProgressViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000006 /* ProgressViews.swift */; };
+		100000000000000000000107 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000007 /* DashboardView.swift */; };
+		100000000000000000000108 /* DashboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000008 /* DashboardStore.swift */; };
+		100000000000000000000109 /* DashboardMockData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000009 /* DashboardMockData.swift */; };
+		100000000000000000000122 /* QuickAddPlaceholderSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000022 /* QuickAddPlaceholderSheet.swift */; };
+		100000000000000000000125 /* FloatingQuickAddBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000025 /* FloatingQuickAddBar.swift */; };
+		AB7D00000000000000000101 /* QuickAddPanels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7D00000000000000000001 /* QuickAddPanels.swift */; };
+		AB7D00000000000000000102 /* QuickAddComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7D00000000000000000002 /* QuickAddComponents.swift */; };
+		AB1600000000000000000101 /* TodaySnapshotService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1600000000000000000001 /* TodaySnapshotService.swift */; };
+		AB9C00000000000000000101 /* NutritionTemplateRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9C00000000000000000001 /* NutritionTemplateRecord.swift */; };
+		AB9C00000000000000000102 /* NutritionTemplateRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9C00000000000000000002 /* NutritionTemplateRepository.swift */; };
+		100000000000000000000111 /* TrainingPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000011 /* TrainingPlaceholderView.swift */; };
+		100000000000000000000129 /* TrainingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000029 /* TrainingView.swift */; };
+		100000000000000000000130 /* TrainingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000030 /* TrainingStore.swift */; };
+		AB0700000000000000000101 /* HomeWorkoutPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0700000000000000000001 /* HomeWorkoutPlan.swift */; };
+		AB0700000000000000000102 /* TrainingDoubleProgressRing.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0700000000000000000002 /* TrainingDoubleProgressRing.swift */; };
+		AB1000000000000000000101 /* TrainingDomainModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000000000000000000001 /* TrainingDomainModels.swift */; };
+		AB1000000000000000000102 /* TrainingProgressionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000000000000000000002 /* TrainingProgressionService.swift */; };
+		AB1000000000000000000103 /* BodyProgressService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000000000000000000003 /* BodyProgressService.swift */; };
+		AB1000000000000000000104 /* TrainingPlanSeeder.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1000000000000000000004 /* TrainingPlanSeeder.swift */; };
+		100000000000000000000112 /* FinancePlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000012 /* FinancePlaceholderView.swift */; };
+		100000000000000000000131 /* FinanceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000031 /* FinanceView.swift */; };
+		100000000000000000000132 /* FinanceStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000032 /* FinanceStore.swift */; };
+		100000000000000000000113 /* HabitsPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000013 /* HabitsPlaceholderView.swift */; };
+		100000000000000000000133 /* HabitsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000033 /* HabitsView.swift */; };
+		100000000000000000000134 /* HabitsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000034 /* HabitsStore.swift */; };
+		AB7C00000000000000000101 /* HabitDefinitions.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7C00000000000000000001 /* HabitDefinitions.swift */; };
+		100000000000000000000114 /* WeeklyReviewPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000014 /* WeeklyReviewPlaceholderView.swift */; };
+		100000000000000000000135 /* WeeklyReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000035 /* WeeklyReviewView.swift */; };
+		100000000000000000000136 /* WeeklyReviewStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000036 /* WeeklyReviewStore.swift */; };
+		AB7B00000000000000000101 /* WeeklyReviewTrends.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7B00000000000000000001 /* WeeklyReviewTrends.swift */; };
+		AB7B00000000000000000102 /* WeeklyTrendCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7B00000000000000000002 /* WeeklyTrendCard.swift */; };
+		AB9A00000000000000000101 /* WeightEntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9A00000000000000000001 /* WeightEntryRecord.swift */; };
+		AB1400000000000000000101 /* FinancePlanningRecords.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1400000000000000000001 /* FinancePlanningRecords.swift */; };
+		AB9A00000000000000000102 /* WeightRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9A00000000000000000002 /* WeightRepository.swift */; };
+		AB9A00000000000000000103 /* WeightView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9A00000000000000000003 /* WeightView.swift */; };
+		AB9A00000000000000000104 /* WeightStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9A00000000000000000004 /* WeightStore.swift */; };
+		AB9A00000000000000000105 /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9A00000000000000000005 /* StatisticsView.swift */; };
+		AB9A00000000000000000106 /* StatisticsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB9A00000000000000000006 /* StatisticsStore.swift */; };
+		AB1300000000000000000101 /* AppNavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1300000000000000000001 /* AppNavigationCoordinator.swift */; };
+		AB1300000000000000000102 /* MenuBarQuickPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1300000000000000000002 /* MenuBarQuickPanelView.swift */; };
+		100000000000000000000115 /* SettingsPlaceholderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000015 /* SettingsPlaceholderView.swift */; };
+		100000000000000000000137 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000037 /* SettingsView.swift */; };
+		100000000000000000000138 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000038 /* SettingsStore.swift */; };
+		100000000000000000000116 /* PlaceholderFeatureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000016 /* PlaceholderFeatureView.swift */; };
+		100000000000000000000117 /* CoreRingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000017 /* CoreRingView.swift */; };
+		100000000000000000000118 /* MiniTrendChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000018 /* MiniTrendChart.swift */; };
+		100000000000000000000119 /* BudgetProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000019 /* BudgetProgressBar.swift */; };
+		100000000000000000000120 /* PreviewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000020 /* PreviewData.swift */; };
+		100000000000000000000121 /* AboLifeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000021 /* AboLifeTests.swift */; };
+		100000000000000000000123 /* AboLifePremiumBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000023 /* AboLifePremiumBackground.swift */; };
+		100000000000000000000124 /* QuickAddAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000024 /* QuickAddAction.swift */; };
+		AB0F00000000000000000101 /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000001 /* AppDatabase.swift */; };
+		AB0F00000000000000000102 /* DatabaseConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000002 /* DatabaseConfiguration.swift */; };
+		AB0F00000000000000000103 /* DatabaseMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000003 /* DatabaseMigrator.swift */; };
+		AB0F00000000000000000104 /* NutritionEntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000004 /* NutritionEntryRecord.swift */; };
+		AB0F00000000000000000105 /* WorkoutSessionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000005 /* WorkoutSessionRecord.swift */; };
+		AB0F00000000000000000106 /* FinanceEntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000006 /* FinanceEntryRecord.swift */; };
+		AB0F00000000000000000107 /* HabitEntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000007 /* HabitEntryRecord.swift */; };
+		AB0F00000000000000000108 /* BodyMetricEntryRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000008 /* BodyMetricEntryRecord.swift */; };
+		AB0F00000000000000000109 /* AppSettingsRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000009 /* AppSettingsRecord.swift */; };
+		AB0F00000000000000000110 /* NutritionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000010 /* NutritionRepository.swift */; };
+		AB0F00000000000000000111 /* WorkoutRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000011 /* WorkoutRepository.swift */; };
+		AB0F00000000000000000112 /* FinanceRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000012 /* FinanceRepository.swift */; };
+		AB0F00000000000000000113 /* HabitRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000013 /* HabitRepository.swift */; };
+		AB0F00000000000000000114 /* SettingsRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000014 /* SettingsRepository.swift */; };
+		AB0F00000000000000000115 /* SeedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000015 /* SeedData.swift */; };
+		AB0F00000000000000000116 /* DateIntervals.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000016 /* DateIntervals.swift */; };
+		AB0F00000000000000000117 /* BodyMetricRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000017 /* BodyMetricRepository.swift */; };
+		AB0F00000000000000000118 /* WeeklyReviewRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000018 /* WeeklyReviewRecord.swift */; };
+		AB0F00000000000000000119 /* WeeklyReviewRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000019 /* WeeklyReviewRepository.swift */; };
+		AB0F00000000000000000120 /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0F00000000000000000020 /* BackupService.swift */; };
+		AB0F00000000000000000201 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = AB0F00000000000000000902 /* GRDB */; };
+		AB0F00000000000000000202 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = AB0F00000000000000000902 /* GRDB */; };
+		E2ABDE5154B9F757BE6B4704 /* CalendarRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5056FC7F6F4F6A3D6C4C46F7 /* CalendarRepository.swift */; };
+		34A1458803B639E765405B56 /* CalendarModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00C77973287D9414D4316F1C /* CalendarModels.swift */; };
+		BB190FBF0A191BCC13522B6B /* StudyPlannerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 532A0D307DB18B3EE0E07362 /* StudyPlannerEngine.swift */; };
+		6455F1E02BB95C0CA92D11F6 /* CalendarStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB51DEC8B664749DBBC0F5BD /* CalendarStore.swift */; };
+		357A143662D50CB6E1CCFD18 /* CalendarPlannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02797B8AF0E4F3B084EB469E /* CalendarPlannerView.swift */; };
+		3E5FE5C733C2F31F1B21DE56 /* CalendarEditors.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA14CEE10929142EB32110D /* CalendarEditors.swift */; };
+		3B3349A08B20F4475CA0BE04 /* ICSImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77552A635EF0EA6482761384 /* ICSImporter.swift */; };
+		DB471ACCD5038C06F4F3A339 /* CalendarPlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EEB97452232EADC7D3AF434 /* CalendarPlannerTests.swift */; };
+		AB0300000000000000000100 /* NewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0300000000000000000000; };
+		AB0300000000000000000101 /* SharedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0300000000000000000001; };
+		AB0300000000000000000199 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB0300000000000000000099; };
+		AB0300000000000000000150 /* SharedDataAndNewsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0300000000000000000050; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		100000000000000000000220 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 100000000000000000000300 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 100000000000000000000301;
+			remoteInfo = AboLife;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+        CA2400000000000000000002 /* ModuleStudyPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleStudyPlanner.swift; sourceTree = "<group>"; };
+		100000000000000000000001 /* AboLifeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifeApp.swift; sourceTree = "<group>"; };
+		100000000000000000000002 /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
+		100000000000000000000003 /* AboLifeColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifeColors.swift; sourceTree = "<group>"; };
+		100000000000000000000004 /* AboLifeTypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifeTypography.swift; sourceTree = "<group>"; };
+		100000000000000000000005 /* AboLifeCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifeCard.swift; sourceTree = "<group>"; };
+		100000000000000000000006 /* ProgressViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressViews.swift; sourceTree = "<group>"; };
+		100000000000000000000007 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		100000000000000000000008 /* DashboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardStore.swift; sourceTree = "<group>"; };
+		100000000000000000000009 /* DashboardMockData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardMockData.swift; sourceTree = "<group>"; };
+		100000000000000000000022 /* QuickAddPlaceholderSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddPlaceholderSheet.swift; sourceTree = "<group>"; };
+		100000000000000000000025 /* FloatingQuickAddBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingQuickAddBar.swift; sourceTree = "<group>"; };
+		AB7D00000000000000000001 /* QuickAddPanels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddPanels.swift; sourceTree = "<group>"; };
+		AB7D00000000000000000002 /* QuickAddComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddComponents.swift; sourceTree = "<group>"; };
+		AB9C00000000000000000001 /* NutritionTemplateRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionTemplateRecord.swift; sourceTree = "<group>"; };
+		AB9C00000000000000000002 /* NutritionTemplateRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionTemplateRepository.swift; sourceTree = "<group>"; };
+		100000000000000000000011 /* TrainingPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlaceholderView.swift; sourceTree = "<group>"; };
+		100000000000000000000029 /* TrainingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingView.swift; sourceTree = "<group>"; };
+		100000000000000000000030 /* TrainingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingStore.swift; sourceTree = "<group>"; };
+		AB0700000000000000000001 /* HomeWorkoutPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeWorkoutPlan.swift; sourceTree = "<group>"; };
+		AB0700000000000000000002 /* TrainingDoubleProgressRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingDoubleProgressRing.swift; sourceTree = "<group>"; };
+		AB1000000000000000000001 /* TrainingDomainModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingDomainModels.swift; sourceTree = "<group>"; };
+		AB1000000000000000000002 /* TrainingProgressionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingProgressionService.swift; sourceTree = "<group>"; };
+		AB1000000000000000000003 /* BodyProgressService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyProgressService.swift; sourceTree = "<group>"; };
+		AB1000000000000000000004 /* TrainingPlanSeeder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlanSeeder.swift; sourceTree = "<group>"; };
+		100000000000000000000012 /* FinancePlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinancePlaceholderView.swift; sourceTree = "<group>"; };
+		100000000000000000000031 /* FinanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceView.swift; sourceTree = "<group>"; };
+		100000000000000000000032 /* FinanceStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceStore.swift; sourceTree = "<group>"; };
+		100000000000000000000013 /* HabitsPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitsPlaceholderView.swift; sourceTree = "<group>"; };
+		100000000000000000000033 /* HabitsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitsView.swift; sourceTree = "<group>"; };
+		100000000000000000000034 /* HabitsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitsStore.swift; sourceTree = "<group>"; };
+		AB7C00000000000000000001 /* HabitDefinitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitDefinitions.swift; sourceTree = "<group>"; };
+		100000000000000000000014 /* WeeklyReviewPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyReviewPlaceholderView.swift; sourceTree = "<group>"; };
+		100000000000000000000035 /* WeeklyReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyReviewView.swift; sourceTree = "<group>"; };
+		100000000000000000000036 /* WeeklyReviewStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyReviewStore.swift; sourceTree = "<group>"; };
+		AB7B00000000000000000001 /* WeeklyReviewTrends.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyReviewTrends.swift; sourceTree = "<group>"; };
+		AB7B00000000000000000002 /* WeeklyTrendCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyTrendCard.swift; sourceTree = "<group>"; };
+		100000000000000000000015 /* SettingsPlaceholderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPlaceholderView.swift; sourceTree = "<group>"; };
+		100000000000000000000037 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		100000000000000000000038 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		100000000000000000000016 /* PlaceholderFeatureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceholderFeatureView.swift; sourceTree = "<group>"; };
+		100000000000000000000017 /* CoreRingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreRingView.swift; sourceTree = "<group>"; };
+		100000000000000000000018 /* MiniTrendChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniTrendChart.swift; sourceTree = "<group>"; };
+		100000000000000000000019 /* BudgetProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetProgressBar.swift; sourceTree = "<group>"; };
+		100000000000000000000020 /* PreviewData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewData.swift; sourceTree = "<group>"; };
+		100000000000000000000021 /* AboLifeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifeTests.swift; sourceTree = "<group>"; };
+		100000000000000000000023 /* AboLifePremiumBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifePremiumBackground.swift; sourceTree = "<group>"; };
+		100000000000000000000024 /* QuickAddAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAddAction.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000001 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000002 /* DatabaseConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseConfiguration.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000003 /* DatabaseMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseMigrator.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000004 /* NutritionEntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionEntryRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000005 /* WorkoutSessionRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000006 /* FinanceEntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceEntryRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000007 /* HabitEntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitEntryRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000008 /* BodyMetricEntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyMetricEntryRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000009 /* AppSettingsRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000010 /* NutritionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000011 /* WorkoutRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000012 /* FinanceRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinanceRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000013 /* HabitRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000014 /* SettingsRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000015 /* SeedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeedData.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000016 /* DateIntervals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateIntervals.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000017 /* BodyMetricRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyMetricRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000018 /* WeeklyReviewRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyReviewRecord.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000019 /* WeeklyReviewRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeeklyReviewRepository.swift; sourceTree = "<group>"; };
+		AB0F00000000000000000020 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
+		AB9A00000000000000000001 /* WeightEntryRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightEntryRecord.swift; sourceTree = "<group>"; };
+		AB1400000000000000000001 /* FinancePlanningRecords.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinancePlanningRecords.swift; sourceTree = "<group>"; };
+		AB9A00000000000000000002 /* WeightRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightRepository.swift; sourceTree = "<group>"; };
+		AB9A00000000000000000003 /* WeightView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightView.swift; sourceTree = "<group>"; };
+		AB9A00000000000000000004 /* WeightStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeightStore.swift; sourceTree = "<group>"; };
+		AB9A00000000000000000005 /* StatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
+		AB9A00000000000000000006 /* StatisticsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsStore.swift; sourceTree = "<group>"; };
+		AB1300000000000000000001 /* AppNavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNavigationCoordinator.swift; sourceTree = "<group>"; };
+		AB1300000000000000000002 /* MenuBarQuickPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarQuickPanelView.swift; sourceTree = "<group>"; };
+		AB1600000000000000000001 /* TodaySnapshotService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodaySnapshotService.swift; sourceTree = "<group>"; };
+		100000000000000000000201 /* AboLife.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AboLife.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		100000000000000000000202 /* AboLifeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AboLifeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5056FC7F6F4F6A3D6C4C46F7 /* CalendarRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarRepository.swift; sourceTree = "<group>"; };
+		00C77973287D9414D4316F1C /* CalendarModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarModels.swift; sourceTree = "<group>"; };
+		532A0D307DB18B3EE0E07362 /* StudyPlannerEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyPlannerEngine.swift; sourceTree = "<group>"; };
+		CB51DEC8B664749DBBC0F5BD /* CalendarStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarStore.swift; sourceTree = "<group>"; };
+		02797B8AF0E4F3B084EB469E /* CalendarPlannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPlannerView.swift; sourceTree = "<group>"; };
+		FEA14CEE10929142EB32110D /* CalendarEditors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarEditors.swift; sourceTree = "<group>"; };
+		77552A635EF0EA6482761384 /* ICSImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICSImporter.swift; sourceTree = "<group>"; };
+		2EEB97452232EADC7D3AF434 /* CalendarPlannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPlannerTests.swift; sourceTree = "<group>"; };
+		AB0300000000000000000000 /* NewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/News/NewsView.swift"; sourceTree = SOURCE_ROOT; };
+		AB0300000000000000000001 /* SharedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Sync/SharedDataService.swift"; sourceTree = SOURCE_ROOT; };
+		AB0300000000000000000099 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = AboLife/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		AB0300000000000000000050 /* SharedDataAndNewsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifeTests/SharedDataAndNewsTests.swift; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		100000000000000000000401 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (AB0F00000000000000000201 /* GRDB in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
+		100000000000000000000402 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (AB0F00000000000000000202 /* GRDB in Frameworks */); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		100000000000000000000500 = {
+			isa = PBXGroup;
+			children = (
+                AB0300000000000000000001 /* SharedDataService.swift */,
+                AB0300000000000000000000 /* NewsView.swift */,
+				100000000000000000000501 /* AboLife */,
+				100000000000000000000520 /* AboLifeTests */,
+				100000000000000000000590 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		100000000000000000000501 /* AboLife */ = {
+			isa = PBXGroup;
+			children = (
+				100000000000000000000502 /* App */,
+				100000000000000000000503 /* DesignSystem */,
+				AB0F00000000000000000501 /* Persistence */,
+				AB9B00000000000000000501 /* ExternalInput */,
+				AB9B00000000000000000502 /* Telegram */,
+				100000000000000000000504 /* Features */,
+				100000000000000000000505 /* Charts */,
+				100000000000000000000506 /* PreviewSupport */,
+			);
+			path = AboLife;
+			sourceTree = "<group>";
+		};
+		100000000000000000000502 /* App */ = {isa = PBXGroup; children = (100000000000000000000001 /* AboLifeApp.swift */, 100000000000000000000002 /* AppRouter.swift */, AB1300000000000000000001 /* AppNavigationCoordinator.swift */, AB1300000000000000000002 /* MenuBarQuickPanelView.swift */); path = App; sourceTree = "<group>"; };
+		100000000000000000000503 /* DesignSystem */ = {isa = PBXGroup; children = (100000000000000000000003 /* AboLifeColors.swift */, 100000000000000000000004 /* AboLifeTypography.swift */, 100000000000000000000005 /* AboLifeCard.swift */, 100000000000000000000006 /* ProgressViews.swift */, 100000000000000000000023 /* AboLifePremiumBackground.swift */); path = DesignSystem; sourceTree = "<group>"; };
+		100000000000000000000504 /* Features */ = {isa = PBXGroup; children = (CA1200000000000000000501 /* Calendar */, 100000000000000000000510 /* Dashboard */, 100000000000000000000511 /* Nutrition */, 100000000000000000000512 /* Training */, AB9A00000000000000000501 /* Weight */, 100000000000000000000513 /* Finance */, 100000000000000000000514 /* Habits */, AB9A00000000000000000502 /* Statistics */, 100000000000000000000515 /* Review */, 100000000000000000000516 /* Settings */, 100000000000000000000016 /* PlaceholderFeatureView.swift */); path = Features; sourceTree = "<group>"; };
+		100000000000000000000505 /* Charts */ = {isa = PBXGroup; children = (100000000000000000000017 /* CoreRingView.swift */, 100000000000000000000018 /* MiniTrendChart.swift */, 100000000000000000000019 /* BudgetProgressBar.swift */); path = Charts; sourceTree = "<group>"; };
+		100000000000000000000506 /* PreviewSupport */ = {isa = PBXGroup; children = (100000000000000000000020 /* PreviewData.swift */); path = PreviewSupport; sourceTree = "<group>"; };
+		100000000000000000000510 /* Dashboard */ = {isa = PBXGroup; children = (100000000000000000000007 /* DashboardView.swift */, 100000000000000000000008 /* DashboardStore.swift */, AB1600000000000000000001 /* TodaySnapshotService.swift */, 100000000000000000000009 /* DashboardMockData.swift */, 100000000000000000000022 /* QuickAddPlaceholderSheet.swift */, AB7D00000000000000000001 /* QuickAddPanels.swift */, AB7D00000000000000000002 /* QuickAddComponents.swift */, 100000000000000000000024 /* QuickAddAction.swift */, 100000000000000000000025 /* FloatingQuickAddBar.swift */); path = Dashboard; sourceTree = "<group>"; };
+		100000000000000000000512 /* Training */ = {isa = PBXGroup; children = (100000000000000000000011 /* TrainingPlaceholderView.swift */, 100000000000000000000029 /* TrainingView.swift */, 100000000000000000000030 /* TrainingStore.swift */, AB1000000000000000000001 /* TrainingDomainModels.swift */, AB1000000000000000000002 /* TrainingProgressionService.swift */, AB1000000000000000000003 /* BodyProgressService.swift */, AB1000000000000000000004 /* TrainingPlanSeeder.swift */, AB0700000000000000000001 /* HomeWorkoutPlan.swift */, AB0700000000000000000002 /* TrainingDoubleProgressRing.swift */); path = Training; sourceTree = "<group>"; };
+		100000000000000000000513 /* Finance */ = {isa = PBXGroup; children = (100000000000000000000012 /* FinancePlaceholderView.swift */, 100000000000000000000031 /* FinanceView.swift */, 100000000000000000000032 /* FinanceStore.swift */); path = Finance; sourceTree = "<group>"; };
+		100000000000000000000514 /* Habits */ = {isa = PBXGroup; children = (100000000000000000000013 /* HabitsPlaceholderView.swift */, 100000000000000000000033 /* HabitsView.swift */, 100000000000000000000034 /* HabitsStore.swift */, AB7C00000000000000000001 /* HabitDefinitions.swift */); path = Habits; sourceTree = "<group>"; };
+		100000000000000000000515 /* Review */ = {isa = PBXGroup; children = (100000000000000000000014 /* WeeklyReviewPlaceholderView.swift */, 100000000000000000000035 /* WeeklyReviewView.swift */, 100000000000000000000036 /* WeeklyReviewStore.swift */, AB7B00000000000000000001 /* WeeklyReviewTrends.swift */, AB7B00000000000000000002 /* WeeklyTrendCard.swift */); path = Review; sourceTree = "<group>"; };
+		100000000000000000000516 /* Settings */ = {isa = PBXGroup; children = (100000000000000000000015 /* SettingsPlaceholderView.swift */, 100000000000000000000037 /* SettingsView.swift */, 100000000000000000000038 /* SettingsStore.swift */); path = Settings; sourceTree = "<group>"; };
+		AB9A00000000000000000501 /* Weight */ = {isa = PBXGroup; children = (AB9A00000000000000000003 /* WeightView.swift */, AB9A00000000000000000004 /* WeightStore.swift */); path = Weight; sourceTree = "<group>"; };
+		AB9A00000000000000000502 /* Statistics */ = {isa = PBXGroup; children = (AB9A00000000000000000005 /* StatisticsView.swift */, AB9A00000000000000000006 /* StatisticsStore.swift */); path = Statistics; sourceTree = "<group>"; };
+		100000000000000000000520 /* AboLifeTests */ = {isa = PBXGroup; children = (100000000000000000000021 /* AboLifeTests.swift */, 2EEB97452232EADC7D3AF434 /* CalendarPlannerTests.swift */); path = AboLifeTests; sourceTree = "<group>"; };
+		100000000000000000000590 /* Products */ = {isa = PBXGroup; children = (100000000000000000000201 /* AboLife.app */, 100000000000000000000202 /* AboLifeTests.xctest */); name = Products; sourceTree = "<group>"; };
+		AB0F00000000000000000501 /* Persistence */ = {isa = PBXGroup; children = (AB0F00000000000000000001 /* AppDatabase.swift */, AB0F00000000000000000002 /* DatabaseConfiguration.swift */, AB0F00000000000000000016 /* DateIntervals.swift */, AB0F00000000000000000020 /* BackupService.swift */, AB0F00000000000000000502 /* Migrations */, AB0F00000000000000000503 /* Models */, AB0F00000000000000000504 /* Repositories */, AB0F00000000000000000505 /* Seed */); path = Persistence; sourceTree = "<group>"; };
+		AB0F00000000000000000502 /* Migrations */ = {isa = PBXGroup; children = (AB0F00000000000000000003 /* DatabaseMigrator.swift */); path = Migrations; sourceTree = "<group>"; };
+		AB0F00000000000000000503 /* Models */ = {isa = PBXGroup; children = (AB0F00000000000000000004 /* NutritionEntryRecord.swift */, AB9C00000000000000000001 /* NutritionTemplateRecord.swift */, AB0F00000000000000000005 /* WorkoutSessionRecord.swift */, AB0F00000000000000000006 /* FinanceEntryRecord.swift */, AB1400000000000000000001 /* FinancePlanningRecords.swift */, AB0F00000000000000000007 /* HabitEntryRecord.swift */, AB9A00000000000000000001 /* WeightEntryRecord.swift */, AB0F00000000000000000008 /* BodyMetricEntryRecord.swift */, AB0F00000000000000000009 /* AppSettingsRecord.swift */, AB0F00000000000000000018 /* WeeklyReviewRecord.swift */); path = Models; sourceTree = "<group>"; };
+		AB0F00000000000000000504 /* Repositories */ = {isa = PBXGroup; children = (AB0F00000000000000000010 /* NutritionRepository.swift */, AB9C00000000000000000002 /* NutritionTemplateRepository.swift */, AB0F00000000000000000011 /* WorkoutRepository.swift */, AB0F00000000000000000012 /* FinanceRepository.swift */, AB0F00000000000000000013 /* HabitRepository.swift */, AB9A00000000000000000002 /* WeightRepository.swift */, AB0F00000000000000000017 /* BodyMetricRepository.swift */, AB0F00000000000000000019 /* WeeklyReviewRepository.swift */, AB0F00000000000000000014 /* SettingsRepository.swift */); path = Repositories; sourceTree = "<group>"; };
+		AB0F00000000000000000505 /* Seed */ = {isa = PBXGroup; children = (AB0F00000000000000000015 /* SeedData.swift */); path = Seed; sourceTree = "<group>"; };
+		CA1200000000000000000501 /* Calendar */ = {isa = PBXGroup; children = (CA2400000000000000000002 /* ModuleStudyPlanner.swift */, 5056FC7F6F4F6A3D6C4C46F7 /* CalendarRepository.swift */, 00C77973287D9414D4316F1C /* CalendarModels.swift */, 532A0D307DB18B3EE0E07362 /* StudyPlannerEngine.swift */, CB51DEC8B664749DBBC0F5BD /* CalendarStore.swift */, 02797B8AF0E4F3B084EB469E /* CalendarPlannerView.swift */, FEA14CEE10929142EB32110D /* CalendarEditors.swift */, 77552A635EF0EA6482761384 /* ICSImporter.swift */); path = Calendar; sourceTree = "<group>"; };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		100000000000000000000301 /* AboLife */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 100000000000000000000701 /* Build configuration list for PBXNativeTarget "AboLife" */;
+			buildPhases = (100000000000000000000601 /* Sources */, 100000000000000000000401 /* Frameworks */, 100000000000000000000603 /* Resources */);
+			buildRules = ();
+			dependencies = ();
+			name = AboLife;
+			packageProductDependencies = (AB0F00000000000000000902 /* GRDB */);
+			productName = AboLife;
+			productReference = 100000000000000000000201 /* AboLife.app */;
+			productType = "com.apple.product-type.application";
+		};
+		100000000000000000000302 /* AboLifeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 100000000000000000000702 /* Build configuration list for PBXNativeTarget "AboLifeTests" */;
+			buildPhases = (100000000000000000000602 /* Sources */, 100000000000000000000402 /* Frameworks */, 100000000000000000000604 /* Resources */);
+			buildRules = ();
+			dependencies = (100000000000000000000221 /* PBXTargetDependency */);
+			name = AboLifeTests;
+			packageProductDependencies = (AB0F00000000000000000902 /* GRDB */);
+			productName = AboLifeTests;
+			productReference = 100000000000000000000202 /* AboLifeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		100000000000000000000300 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					100000000000000000000301 = {CreatedOnToolsVersion = 15.0;};
+					100000000000000000000302 = {CreatedOnToolsVersion = 15.0; TestTargetID = 100000000000000000000301;};
+				};
+			};
+			buildConfigurationList = 100000000000000000000700 /* Build configuration list for PBXProject "AboLife" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base);
+			mainGroup = 100000000000000000000500;
+			packageReferences = (AB0F00000000000000000901 /* XCRemoteSwiftPackageReference "GRDB.swift" */);
+			productRefGroup = 100000000000000000000590 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (100000000000000000000301 /* AboLife */, 100000000000000000000302 /* AboLifeTests */);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		100000000000000000000603 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (AB0300000000000000000199 /* Assets.xcassets in Resources */); runOnlyForDeploymentPostprocessing = 0; };
+		100000000000000000000604 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		100000000000000000000601 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+                AB0300000000000000000101 /* SharedDataService.swift in Sources */,
+                AB0300000000000000000100 /* NewsView.swift in Sources */,
+				100000000000000000000101 /* AboLifeApp.swift in Sources */,
+				3B3349A08B20F4475CA0BE04 /* ICSImporter.swift in Sources */,
+				3E5FE5C733C2F31F1B21DE56 /* CalendarEditors.swift in Sources */,
+				357A143662D50CB6E1CCFD18 /* CalendarPlannerView.swift in Sources */,
+				6455F1E02BB95C0CA92D11F6 /* CalendarStore.swift in Sources */,
+				BB190FBF0A191BCC13522B6B /* StudyPlannerEngine.swift in Sources */,
+                CA2400000000000000000001 /* ModuleStudyPlanner.swift in Sources */,
+				34A1458803B639E765405B56 /* CalendarModels.swift in Sources */,
+				E2ABDE5154B9F757BE6B4704 /* CalendarRepository.swift in Sources */,
+				100000000000000000000102 /* AppRouter.swift in Sources */,
+				100000000000000000000103 /* AboLifeColors.swift in Sources */,
+				100000000000000000000104 /* AboLifeTypography.swift in Sources */,
+				100000000000000000000105 /* AboLifeCard.swift in Sources */,
+				100000000000000000000106 /* ProgressViews.swift in Sources */,
+				100000000000000000000123 /* AboLifePremiumBackground.swift in Sources */,
+				100000000000000000000107 /* DashboardView.swift in Sources */,
+				100000000000000000000108 /* DashboardStore.swift in Sources */,
+				100000000000000000000109 /* DashboardMockData.swift in Sources */,
+				100000000000000000000122 /* QuickAddPlaceholderSheet.swift in Sources */,
+				AB7D00000000000000000101 /* QuickAddPanels.swift in Sources */,
+				AB7D00000000000000000102 /* QuickAddComponents.swift in Sources */,
+				100000000000000000000124 /* QuickAddAction.swift in Sources */,
+				100000000000000000000125 /* FloatingQuickAddBar.swift in Sources */,
+				AB1600000000000000000101 /* TodaySnapshotService.swift in Sources */,
+				AB9C00000000000000000101 /* NutritionTemplateRecord.swift in Sources */,
+				AB9C00000000000000000102 /* NutritionTemplateRepository.swift in Sources */,
+				100000000000000000000111 /* TrainingPlaceholderView.swift in Sources */,
+				100000000000000000000129 /* TrainingView.swift in Sources */,
+				100000000000000000000130 /* TrainingStore.swift in Sources */,
+				AB1000000000000000000101 /* TrainingDomainModels.swift in Sources */,
+				AB1000000000000000000102 /* TrainingProgressionService.swift in Sources */,
+				AB1000000000000000000103 /* BodyProgressService.swift in Sources */,
+				AB1000000000000000000104 /* TrainingPlanSeeder.swift in Sources */,
+				AB0700000000000000000101 /* HomeWorkoutPlan.swift in Sources */,
+				AB0700000000000000000102 /* TrainingDoubleProgressRing.swift in Sources */,
+				AB9A00000000000000000103 /* WeightView.swift in Sources */,
+				AB9A00000000000000000104 /* WeightStore.swift in Sources */,
+				100000000000000000000112 /* FinancePlaceholderView.swift in Sources */,
+				100000000000000000000131 /* FinanceView.swift in Sources */,
+				100000000000000000000132 /* FinanceStore.swift in Sources */,
+				100000000000000000000113 /* HabitsPlaceholderView.swift in Sources */,
+				100000000000000000000133 /* HabitsView.swift in Sources */,
+				100000000000000000000134 /* HabitsStore.swift in Sources */,
+				AB7C00000000000000000101 /* HabitDefinitions.swift in Sources */,
+				AB9A00000000000000000105 /* StatisticsView.swift in Sources */,
+				AB9A00000000000000000106 /* StatisticsStore.swift in Sources */,
+				100000000000000000000114 /* WeeklyReviewPlaceholderView.swift in Sources */,
+				100000000000000000000135 /* WeeklyReviewView.swift in Sources */,
+				100000000000000000000136 /* WeeklyReviewStore.swift in Sources */,
+				AB7B00000000000000000101 /* WeeklyReviewTrends.swift in Sources */,
+				AB7B00000000000000000102 /* WeeklyTrendCard.swift in Sources */,
+				100000000000000000000115 /* SettingsPlaceholderView.swift in Sources */,
+				100000000000000000000137 /* SettingsView.swift in Sources */,
+				100000000000000000000138 /* SettingsStore.swift in Sources */,
+				AB1300000000000000000101 /* AppNavigationCoordinator.swift in Sources */,
+				AB1300000000000000000102 /* MenuBarQuickPanelView.swift in Sources */,
+				100000000000000000000116 /* PlaceholderFeatureView.swift in Sources */,
+				100000000000000000000117 /* CoreRingView.swift in Sources */,
+				100000000000000000000118 /* MiniTrendChart.swift in Sources */,
+				100000000000000000000119 /* BudgetProgressBar.swift in Sources */,
+				100000000000000000000120 /* PreviewData.swift in Sources */,
+				AB0F00000000000000000101 /* AppDatabase.swift in Sources */,
+				AB0F00000000000000000102 /* DatabaseConfiguration.swift in Sources */,
+				AB0F00000000000000000103 /* DatabaseMigrator.swift in Sources */,
+				AB0F00000000000000000104 /* NutritionEntryRecord.swift in Sources */,
+				AB0F00000000000000000105 /* WorkoutSessionRecord.swift in Sources */,
+				AB0F00000000000000000106 /* FinanceEntryRecord.swift in Sources */,
+				AB1400000000000000000101 /* FinancePlanningRecords.swift in Sources */,
+				AB0F00000000000000000107 /* HabitEntryRecord.swift in Sources */,
+				AB9A00000000000000000101 /* WeightEntryRecord.swift in Sources */,
+				AB0F00000000000000000108 /* BodyMetricEntryRecord.swift in Sources */,
+				AB0F00000000000000000109 /* AppSettingsRecord.swift in Sources */,
+				AB0F00000000000000000110 /* NutritionRepository.swift in Sources */,
+				AB0F00000000000000000111 /* WorkoutRepository.swift in Sources */,
+				AB0F00000000000000000112 /* FinanceRepository.swift in Sources */,
+				AB0F00000000000000000113 /* HabitRepository.swift in Sources */,
+				AB9A00000000000000000102 /* WeightRepository.swift in Sources */,
+				AB0F00000000000000000116 /* DateIntervals.swift in Sources */,
+				AB0F00000000000000000117 /* BodyMetricRepository.swift in Sources */,
+				AB0F00000000000000000118 /* WeeklyReviewRecord.swift in Sources */,
+				AB0F00000000000000000119 /* WeeklyReviewRepository.swift in Sources */,
+				AB0F00000000000000000120 /* BackupService.swift in Sources */,
+				AB0F00000000000000000114 /* SettingsRepository.swift in Sources */,
+				AB0F00000000000000000115 /* SeedData.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		100000000000000000000602 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+                AB0300000000000000000150 /* SharedDataAndNewsTests.swift in Sources */,100000000000000000000121 /* AboLifeTests.swift in Sources */, DB471ACCD5038C06F4F3A339 /* CalendarPlannerTests.swift in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		100000000000000000000221 /* PBXTargetDependency */ = {isa = PBXTargetDependency; target = 100000000000000000000301 /* AboLife */; targetProxy = 100000000000000000000220 /* PBXContainerItemProxy */; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		100000000000000000000801 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)");
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		100000000000000000000802 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		100000000000000000000803 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+                ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_KEY_CFBundleDisplayName = "AboLife";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLife;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		100000000000000000000804 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+                ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_KEY_CFBundleDisplayName = "AboLife";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLife;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		100000000000000000000805 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+                ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", "@loader_path/../Frameworks");
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLifeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AboLife.app/Contents/MacOS/AboLife";
+			};
+			name = Debug;
+		};
+		100000000000000000000806 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+                ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", "@loader_path/../Frameworks");
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLifeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/AboLife.app/Contents/MacOS/AboLife";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		100000000000000000000700 /* Build configuration list for PBXProject "AboLife" */ = {isa = XCConfigurationList; buildConfigurations = (100000000000000000000801 /* Debug */, 100000000000000000000802 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		100000000000000000000701 /* Build configuration list for PBXNativeTarget "AboLife" */ = {isa = XCConfigurationList; buildConfigurations = (100000000000000000000803 /* Debug */, 100000000000000000000804 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		100000000000000000000702 /* Build configuration list for PBXNativeTarget "AboLifeTests" */ = {isa = XCConfigurationList; buildConfigurations = (100000000000000000000805 /* Debug */, 100000000000000000000806 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AB0F00000000000000000901 /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 7.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AB0F00000000000000000902 /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB0F00000000000000000901 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 100000000000000000000300 /* Project object */;
+}
