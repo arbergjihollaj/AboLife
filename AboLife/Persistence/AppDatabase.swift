@@ -36,10 +36,13 @@ final class AppDatabase {
 
     /// Prefer the latest preview, fall back to 0.1; copy only once into the stable main app.
     static func bootstrapMainCopyIfNeeded(destination: URL, previewURL: URL? = nil, legacyURL: URL? = nil) throws {
-        guard !FileManager.default.fileExists(atPath: destination.path) else { return }
         let support = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
         let preview = previewURL ?? support.appendingPathComponent("AboLife-Calendar-Preview/AboLife.sqlite")
         let legacy = legacyURL ?? support.appendingPathComponent("AboLife/AboLife.sqlite")
+        let target = destination.resolvingSymlinksInPath().standardizedFileURL
+        guard target != preview.resolvingSymlinksInPath().standardizedFileURL,
+              target != legacy.resolvingSymlinksInPath().standardizedFileURL else { throw CalendarDatabaseIsolationError.sharedDatabase }
+        guard !FileManager.default.fileExists(atPath: destination.path) else { return }
         let source = FileManager.default.fileExists(atPath: preview.path) ? preview : legacy
         try bootstrapCalendarCopyIfNeeded(destination: destination, legacyURL: source)
     }

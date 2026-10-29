@@ -66,6 +66,9 @@ final class CalendarPlannerTests: XCTestCase {
         XCTAssertEqual(try WeightRepository(database: main).latest()?.weightKg, 82)
         XCTAssertEqual(try WeightRepository(database: preview).latest()?.weightKg, 81)
         XCTAssertEqual(try WeightRepository(database: legacy).latest()?.weightKg, 79)
+        let alias = dir.appendingPathComponent("main-alias.sqlite")
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: previewURL)
+        XCTAssertThrowsError(try AppDatabase.bootstrapMainCopyIfNeeded(destination: alias, previewURL: previewURL, legacyURL: legacyURL))
     }
     func testMainVersionFallsBackToLegacyWhenNoPreviewExists() throws {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
