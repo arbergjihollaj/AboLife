@@ -135,3 +135,7 @@ Validierung: 240 Tests erfolgreich; Release-Build sowie native Ansichten geprüf
 - Sechs ungenutzte Platzhalter-Views entfernt, echte Schnellerfassung in QuickAddSheet umbenannt.
 - Design Lab, zwölf native Dashboard-Referenzbilder und überarbeitete Projektdokumentation.
 - Keine Datenbankmigration, keine neue KI-Anbindung und keine Änderung der fachlichen Budgetformeln.
+
+### Branding
+
+Das bisherige Bildlogo wurde durch das kleingeschriebene `a.` aus dem Design Lab ersetzt: App-Icon in allen macOS-Auflösungen, an die drei Designs angepasste Oberflächenmarke, Menüleiste, Web-Icon und Repository-Präsentation. Reproduzierbarer AppKit/CoreText-Assetgenerator; keine Änderung an Daten oder KI-Verbindung.

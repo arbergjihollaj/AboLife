@@ -45,3 +45,14 @@ Seit der ausdrücklichen Freigabe vom 6. November 2026 ersetzt die lokale Design
 Die bestehenden Motiontokens bleiben 120/180/350 ms mit Reduce-Motion-Unterstützung. Alle Designs öffnen denselben vorhandenen KI-Assistenten über einen beschrifteten Headerbutton. Verbindung, Kontextfreigaben, Streaming, Abbruch, Chatverlauf und Aktionsbestätigung werden nicht durch eine zweite KI-Implementierung ersetzt.
 
 Die lokale [Bildgalerie](docs/SCREENSHOTS.md) zeigt zwölf native Dashboard-Referenzen. Für die tatsächliche Fensterbedienung gelten die im [Redesign-Bericht](docs/REDESIGN_REPORT.md) benannten Prüfgrenzen.
+
+## Wortbildmarke a.
+
+Die freigegebene Wortbildmarke ist das kleingeschriebene `a.` aus dem Design Lab. Das feste macOS-/Web-Icon übernimmt den mintgrünen Kreis aus Spatial auf einer dunklen, abgerundeten Iconfläche. In der Oberfläche zeichnet `AboLifeBrandMark` dieselben Zeichen direkt: Kreis bei Spatial, gerundete Fläche bei Bento und Serifenschrift bei Fieldnotes. Die Menüleiste verwendet eine systemtypisch lesbare monochrome Textmarke.
+
+`scripts/render-brand-assets.swift` erzeugt alle zehn macOS-Iconauflösungen, die drei AppMark-Skalierungen, das Web-Icon und das Dokumentationsbild mit der vorhandenen macOS-Systemschrift. Quelle ist die Typografie des Prototyps, keine neue Illustration. Reproduzieren im Projektverzeichnis:
+
+```sh
+swiftc -module-cache-path work/cache scripts/render-brand-assets.swift -o work/render-brand-assets
+work/render-brand-assets
+```

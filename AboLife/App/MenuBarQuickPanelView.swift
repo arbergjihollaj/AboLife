@@ -16,7 +16,7 @@ struct MenuBarQuickPanelView: View {
                     openWindow(id: AppNavigationCoordinator.mainWindowID)
                     NSApp.activate(ignoringOtherApps: true)
                 } label: {
-                    Image("AppMark").resizable().frame(width: 28, height: 28)
+                    AboLifeBrandMark()
                 }.buttonStyle(.plain).accessibilityLabel("AboLife öffnen")
                 Spacer()
                 Text("AboLife").font(.headline)

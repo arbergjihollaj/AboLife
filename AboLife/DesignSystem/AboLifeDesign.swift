@@ -195,3 +195,41 @@ extension View {
         modifier(AboLifeDesignModifier(store: store))
     }
 }
+
+/// The lowercase a-dot mark from the approved prototypes, adapted to each presentation.
+struct AboLifeBrandMark: View {
+    @Environment(\.aboLifeStyle) private var style
+    @Environment(\.colorScheme) private var colorScheme
+    var size: CGFloat = 28
+
+    private var fill: Color {
+        style.design == .spatial && style.accent == .original
+            ? Color(red: 140 / 255, green: 245 / 255, blue: 212 / 255) : style.colors.action
+    }
+    private var ink: Color {
+        if style.design == .fieldnotes { return style.colors.action }
+        if (style.design == .spatial && style.accent == .original) || colorScheme == .dark {
+            return Color(red: 19 / 255, green: 44 / 255, blue: 43 / 255)
+        }
+        return .white
+    }
+
+    var body: some View {
+        Text("a.")
+            .font(
+                .system(
+                    size: size * 0.82, weight: .semibold,
+                    design: style.design == .fieldnotes ? .serif : .default)
+            )
+            .kerning(-size * 0.025)
+            .foregroundStyle(ink)
+            .frame(width: size, height: size)
+            .background {
+                if style.design == .spatial { Circle().fill(fill) }
+                if style.design == .bento {
+                    RoundedRectangle(cornerRadius: size * 0.3).fill(fill)
+                }
+            }
+            .accessibilityHidden(true)
+    }
+}

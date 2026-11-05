@@ -119,7 +119,7 @@ struct AppRouter: View {
 
     private var header: some View {
         HStack(spacing: 14) {
-            Image("AppMark").resizable().frame(width: 28, height: 28).accessibilityHidden(true)
+            AboLifeBrandMark()
             Text("AboLife").font(.system(size: 20, weight: .semibold))
             if style.design == .fieldnotes {
                 Text("Ein persönlicher Begleiter.").font(.callout).italic().foregroundStyle(.secondary)

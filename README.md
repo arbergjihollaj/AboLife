@@ -1,5 +1,7 @@
 # AboLife
 
+<img src="docs/images/abolife-logo.png" width="128" alt="AboLife · a. Logo">
+
 Ein persönlicher Alltagsbegleiter für macOS: Finanzen, Bewegung, Gewohnheiten, Kalender und Wochenreflexion an einem Ort. Lokale SQLite-Daten, optionaler privater Webabgleich und ein lokaler KI-Assistent über BonsaiBar.
 
 **macOS 14+ · SwiftUI · GRDB/SQLite · Version 0.4.1**

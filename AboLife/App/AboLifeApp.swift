@@ -53,7 +53,7 @@ struct AboLifeApp: App {
         .defaultSize(width: 700, height: 720)
         .windowResizability(.contentMinSize)
 
-        MenuBarExtra("AboLife", systemImage: "a.circle") {
+        MenuBarExtra {
             Group {
                 if session.failedToOpenDatabase {
                     DatabaseRecoveryView(session: session).frame(width: 320)
@@ -65,6 +65,10 @@ struct AboLifeApp: App {
             .aboLifeDesign(session.design)
             .aboLifeAppearance()
             .defaultAppStorage(session.preferences)
+        } label: {
+            Text("a.")
+                .font(.system(size: 17, weight: .semibold))
+                .accessibilityLabel("AboLife")
         }
         .menuBarExtraStyle(.window)
     }
