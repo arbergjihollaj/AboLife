@@ -370,3 +370,18 @@ Uni-Termine sind die primäre Quelle. `ModuleStudyPlanner` gruppiert Veranstaltu
 `StudyTopic.automaticTask` ist optional und enthält Modulkennung, Phase, Veranstaltungstag, erste/letzte Veranstaltung, frühesten/preferierten/spätesten Zeitpunkt sowie optional eine Verschiebung nach Auslassen. `planningDeadline` verwendet bei Modulphasen deren spätestes Ende und bei eigenen Themen weiterhin das Prüfungsdatum. Die automatische Zeitplanung ist über das optionale `PlannerPreferences.automaticModulePlanning` voreingestellt aktiv; alte Daten ohne dieses Feld bleiben lesbar. Das SQLite-Schema bleibt unverändert.
 
 Die generierten Themen und Sitzungen werden gemeinsam mit dem Workspace atomar gespeichert. Künftige flexible Blöcke werden neu verteilt. Abgeschlossene, laufende und fixierte Historie bleibt erhalten; entfallene Quellen werden bei Fixierungen als Konflikt angezeigt. Die bestätigten Dauern der letzten höchstens fünf abgeschlossenen Phasen desselben Moduls und derselben Phase bestimmen die spätere Schätzung. Eine erledigte Phase wird nicht erneut für dieselben Veranstaltungen angelegt. Reservierte IDs helfen, Metadaten nach einem älteren App-Decoder wiederherzustellen. Ältere App-Versionen sollten nicht parallel auf demselben Kalender-Datenordner laufen.
+
+## Lokale KI-Migration v14
+
+Additiv: `ai_action_receipts(id TEXT PRIMARY KEY, kind TEXT NOT NULL, confirmed_at DATETIME NOT NULL)` und `ai_saved_notes(id TEXT PRIMARY KEY, title TEXT NOT NULL, content TEXT NOT NULL, created_at DATETIME NOT NULL)`. Beide Tabellen bleiben außerhalb von SharedDocument.tableNames und der Web-Synchronisierung. Vor dem ersten Main-Upgrade entsteht eine konsistente nur lesend erzeugte Sicherung `Backups/AboLife-before-local-AI.sqlite`. Bestehende Tabellen, Kalenderdokumente und Einträge bleiben erhalten.
+
+KI-Gespräche liegen separat in `Application Support/AboLife-AI/Conversations.json` (0600, Ordner 0700); Demo getrennt in AboLife-AI-Demo mit temporärer Fach-Datenbank. Schlüssel liegen im Schlüsselbund, nicht in Chat- oder Syncdaten. Bestätigte Lernaufgaben/-blöcke verwenden vorhandene StudyTopic-/StudySession-Modelle; Reviews ergänzen bestehende Notizen statt sie zu ersetzen.
+
+
+## Qualitätsevolution vom 5. November 2026
+
+Keine neue Migration und keine Änderung persistierter Record-Schemata. GRDB bleibt die aktive Datenhaltung. Die `@Model`-Deklarationen im Trainings-Domainfile sind ohne ModelContainer nicht als separate Benutzerdatenbank verdrahtet; eine Entfernung oder SwiftData-Migration ist nicht Teil dieser Überarbeitung.
+
+Gewichtsstatistiken nutzen `summary(inLastDays:endingAt:calendar:)` mit halboffenen Kalenderintervallen, keine letzten N Messungen. `summary(days:)` bleibt als historische Messungsanzahl-API erhalten. Finanzanalysen vergangener Monate verwenden das Monatsende als Berechnungsstichtag; historische Budget-/Zielstände werden weiterhin nicht erfunden oder zusätzlich gespeichert.
+
+Darstellung liegt unter dem UserDefaults-Schlüssel `abolife.appearance`. Demo und Testsession verwenden eine eigene Suite; sie übernehmen keine persönlichen Syncpräferenzen. Geplante AI-Snapshots/Reviews/Feedback sind ausschließlich im Integrationsplan beschrieben und erzeugen noch keine Tabellen.

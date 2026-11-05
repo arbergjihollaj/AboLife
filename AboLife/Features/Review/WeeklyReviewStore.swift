@@ -28,6 +28,15 @@ final class WeeklyReviewStore: ObservableObject {
     private let calendar: Calendar
     private var weekStartsOn: Int
     private let habitKeys: [String]
+    private var savedDraft = ["", "", ""]
+
+    var hasUnsavedChanges: Bool {
+        [winsText, challengesText, nextWeekFocusText] != savedDraft
+    }
+
+    func dateMovingWeek(by offset: Int) -> Date {
+        calendar.date(byAdding: .day, value: offset * 7, to: selectedDate) ?? selectedDate
+    }
 
     init(
         database: AppDatabase?,
@@ -97,6 +106,7 @@ final class WeeklyReviewStore: ObservableObject {
             winsText = ""
             challengesText = ""
             nextWeekFocusText = ""
+            savedDraft = [winsText, challengesText, nextWeekFocusText]
             saveMessage = nil
             errorMessage = nil
             return
@@ -165,6 +175,7 @@ final class WeeklyReviewStore: ObservableObject {
                 nextWeekFocusText = ""
             }
 
+            savedDraft = [winsText, challengesText, nextWeekFocusText]
             saveMessage = nil
             errorMessage = nil
         } catch {
@@ -172,8 +183,9 @@ final class WeeklyReviewStore: ObservableObject {
         }
     }
 
-    func saveReview() {
-        guard let database else { return }
+    @discardableResult
+    func saveReview() -> Bool {
+        guard let database else { return false }
 
         do {
             _ = try WeeklyReviewRepository(database: database).upsert(
@@ -183,9 +195,12 @@ final class WeeklyReviewStore: ObservableObject {
                 nextWeekFocusText: nextWeekFocusText
             )
             saveMessage = "Gespeichert"
+            savedDraft = [winsText, challengesText, nextWeekFocusText]
             errorMessage = nil
+            return true
         } catch {
             errorMessage = "Wochenreview konnte nicht gespeichert werden."
+            return false
         }
     }
 

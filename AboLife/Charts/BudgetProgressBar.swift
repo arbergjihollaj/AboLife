@@ -3,9 +3,10 @@ import SwiftUI
 struct BudgetProgressBar: View {
     let spent: Double
     let budget: Double
+    var currency = "EUR"
 
     private var progress: Double {
-        guard budget > 0 else { return 0 }
+        guard budget.isFinite, spent.isFinite, budget > 0 else { return 0 }
         return min(max(spent / budget, 0), 1)
     }
 
@@ -22,16 +23,20 @@ struct BudgetProgressBar: View {
             )
 
             HStack {
-                Text("Ausgegeben")
+                Text(isOverBudget ? "Budget überschritten" : "Ausgegeben")
                     .foregroundStyle(AboLifeColors.secondaryText)
                 Spacer()
-                Text("\(Int(spent)) EUR / \(Int(budget)) EUR")
-                    .monospacedDigit()
-                    .foregroundStyle(isOverBudget ? AboLifeColors.habits.opacity(0.76) : AboLifeColors.secondaryText)
+                Text(
+                    "\(spent.formatted(.currency(code: currency).precision(.fractionLength(0)))) / \(budget.formatted(.currency(code: currency).precision(.fractionLength(0))))"
+                )
+                .monospacedDigit()
+                .foregroundStyle(isOverBudget ? AboLifeColors.habits.opacity(0.76) : AboLifeColors.secondaryText)
             }
             .font(AboLifeTypography.caption)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Budget \(Int(progress * 100)) Prozent ausgeschöpft")
+        .accessibilityValue(
+            "\(spent.formatted(.currency(code: currency))) von \(budget.formatted(.currency(code: currency)))")
     }
 }

@@ -1,16 +1,33 @@
 import Foundation
 
 final class StatisticsStore: ObservableObject {
+    @Published var selectedDate: Date {
+        didSet { if !calendar.isDate(selectedDate, equalTo: oldValue, toGranularity: .day) { reload() } }
+    }
     @Published private(set) var insights: [StatisticInsight] = []
     @Published private(set) var errorMessage: String?
 
     private let database: AppDatabase?
     private let calendar: Calendar
 
-    init(database: AppDatabase?, calendar: Calendar = .current) {
+    init(database: AppDatabase?, calendar: Calendar = .current, selectedDate: Date = Date()) {
         self.database = database
         self.calendar = calendar
+        self.selectedDate = selectedDate
         reload()
+    }
+
+    var periodDescription: String {
+        let week = DateIntervals.week(containing: selectedDate, calendar: calendar)
+        return
+            "Woche ab \(week.start.formatted(date: .abbreviated, time: .omitted)) · Monat \(selectedDate.formatted(.dateTime.month(.wide).year()))"
+    }
+
+    func moveMonth(by offset: Int) {
+        guard let start = calendar.dateInterval(of: .month, for: selectedDate)?.start,
+            let date = calendar.date(byAdding: .month, value: offset, to: start)
+        else { return }
+        selectedDate = date
     }
 
     func reload() {
@@ -22,10 +39,12 @@ final class StatisticsStore: ObservableObject {
 
         do {
             let settings = try SettingsRepository(database: database).fetchDefault() ?? SeedData.defaultSettings
-            let weekInterval = DateIntervals.week(weekStartsOn: settings.weekStartsOn, calendar: calendar)
+            let analysisDate = DateIntervals.analysisReference(forMonthContaining: selectedDate, calendar: calendar)
+            let weekInterval = DateIntervals.week(
+                containing: selectedDate, weekStartsOn: settings.weekStartsOn, calendar: calendar)
 
             let workoutSummary = try WorkoutRepository(database: database).weeklySummary(
-                forDate: Date(),
+                forDate: selectedDate,
                 weekStartsOn: settings.weekStartsOn,
                 calendar: calendar
             )
@@ -38,53 +57,58 @@ final class StatisticsStore: ObservableObject {
             let financeRepository = FinanceRepository(database: database)
             let financeWeekly = try financeRepository.weeklySummary(in: weekInterval)
             let financeMonthly = try financeRepository.monthlyAnalysis(
-                forDate: Date(),
+                forDate: analysisDate,
                 monthlyBudget: settings.monthlyBudget,
                 currency: settings.defaultCurrency,
                 calendar: calendar
             )
-            let weightSummary = try WeightRepository(database: database).summary(days: 30)
+            let weightSummary = try WeightRepository(database: database).summary(
+                inLastDays: 30, endingAt: selectedDate, calendar: calendar)
             let activeDays = try Self.activeDays(database: database, calendar: calendar)
 
-            insights = [
-                StatisticInsight(
-                    title: "Training diese Woche",
-                    value: "\(workoutSummary.completedWorkouts)",
-                    detail: trainingDetail(workoutSummary, target: settings.weeklyWorkoutTarget),
-                    systemImage: "figure.strengthtraining.traditional",
-                    tintRole: .training
-                ),
-                StatisticInsight(
-                    title: "Trainingsdetails",
-                    value: workoutSummary.totalSets > 0 ? "\(workoutSummary.totalSets)" : "-",
-                    detail: workoutSummary.totalSets > 0 ? "\(workoutSummary.totalReps) Wiederholungen, häufigste Übung: \(workoutSummary.topExerciseName ?? "noch offen")." : "Noch nicht genug Satzdaten für Übungstrends.",
-                    systemImage: "list.bullet.clipboard",
-                    tintRole: .training
-                ),
-                StatisticInsight(
-                    title: "Habit-Erfüllung",
-                    value: "\(Int((habitSummary.progress * 100).rounded()))%",
-                    detail: habitSummary.total == 0 ? "Noch keine Habits für diese Woche." : "\(habitSummary.completed) von \(habitSummary.total) möglichen Habit-Tagen erledigt.",
-                    systemImage: "checkmark.seal",
-                    tintRole: .habits
-                ),
-            ] + financeInsights(weekly: financeWeekly, monthly: financeMonthly) + [
-                weightInsight(weightSummary),
-                StatisticInsight(
-                    title: "Aktive Tage",
-                    value: "\(activeDays)",
-                    detail: activeDays == 0 ? "Noch keine lokalen Aktivitätstage." : "Tage mit Einträgen in AboLife.",
-                    systemImage: "calendar.badge.checkmark",
-                    tintRole: .review
-                )
-            ]
+            insights =
+                [
+                    StatisticInsight(
+                        title: "Training in der Woche",
+                        value: "\(workoutSummary.completedWorkouts)",
+                        detail: trainingDetail(workoutSummary, target: settings.weeklyWorkoutTarget),
+                        systemImage: "figure.strengthtraining.traditional",
+                        tintRole: .training
+                    ),
+                    StatisticInsight(
+                        title: "Trainingsdetails",
+                        value: workoutSummary.totalSets > 0 ? "\(workoutSummary.totalSets)" : "-",
+                        detail: workoutSummary.totalSets > 0
+                            ? "\(workoutSummary.totalReps) Wiederholungen, häufigste Übung: \(workoutSummary.topExerciseName ?? "noch offen")."
+                            : "Noch nicht genug Satzdaten für Übungstrends.",
+                        systemImage: "list.bullet.clipboard",
+                        tintRole: .training
+                    ),
+                    StatisticInsight(
+                        title: "Habit-Erfüllung",
+                        value: "\(Int((habitSummary.progress * 100).rounded()))%",
+                        detail: habitSummary.total == 0
+                            ? "Noch keine Habits für diese Woche."
+                            : "\(habitSummary.completed) von \(habitSummary.total) möglichen Habit-Tagen erledigt.",
+                        systemImage: "checkmark.seal",
+                        tintRole: .habits
+                    ),
+                ] + financeInsights(weekly: financeWeekly, monthly: financeMonthly) + [
+                    weightInsight(weightSummary),
+                    StatisticInsight(
+                        title: "Aktive Tage",
+                        value: "\(activeDays)",
+                        detail: activeDays == 0
+                            ? "Noch keine lokalen Aktivitätstage." : "Tage mit Einträgen in AboLife.",
+                        systemImage: "calendar.badge.checkmark",
+                        tintRole: .review
+                    ),
+                ]
             errorMessage = nil
         } catch {
             errorMessage = "Statistiken konnten nicht geladen werden."
         }
     }
-
-
 
     private func trainingDetail(_ summary: WorkoutWeeklySummary, target: Int) -> String {
         if summary.completedWorkouts == 0 {
@@ -109,32 +133,43 @@ final class StatisticsStore: ObservableObject {
             ]
         }
 
-        let previousText = monthly.previousMonthSpent.map {
-            "Vormonat \(Int($0.rounded())) \(monthly.currency)."
-        } ?? "Für den Vormonat fehlen noch Vergleichsdaten."
-        let trendText = monthly.trailingThreeMonthAverageSpent.map {
-            "3-Monats-Schnitt \(Int($0.rounded())) \(monthly.currency)."
-        } ?? "Für einen 3-Monats-Trend braucht es noch mehr Daten."
-        let savingsText = monthly.savingsRate.map {
-            "Sparquote \(Int(($0 * 100).rounded()))%."
-        } ?? "Eine Sparquote erscheint, sobald Einnahmen vorhanden sind."
+        let previousText =
+            monthly.previousMonthSpent.map {
+                "Vormonat \(Int($0.rounded())) \(monthly.currency)."
+            } ?? "Für den Vormonat fehlen noch Vergleichsdaten."
+        let trendText =
+            monthly.trailingThreeMonthAverageSpent.map {
+                "3-Monats-Schnitt \(Int($0.rounded())) \(monthly.currency)."
+            } ?? "Für einen 3-Monats-Trend braucht es noch mehr Daten."
+        let savingsText =
+            monthly.savingsRate.map {
+                "Sparquote \(Int(($0 * 100).rounded()))%."
+            } ?? "Eine Sparquote erscheint, sobald Einnahmen vorhanden sind."
         let topCategories = monthly.categoryTrends.prefix(3).map(\.category).joined(separator: ", ")
 
+        let isCurrent = calendar.isDate(selectedDate, equalTo: Date(), toGranularity: .month)
+        let projection =
+            isCurrent
+            ? "Prognose \(Int(monthly.projectedSpend.rounded())) \(monthly.currency)." : "Abgeschlossener Monat."
         return [
             StatisticInsight(
                 title: "Monatsausgaben",
                 value: "\(Int(monthly.spent.rounded())) \(monthly.currency)",
-                detail: "Ø \(Int(monthly.averageDailySpend.rounded())) \(monthly.currency)/Tag, Prognose \(Int(monthly.projectedSpend.rounded())) \(monthly.currency). \(previousText)",
+                detail:
+                    "Ø \(Int(monthly.averageDailySpend.rounded())) \(monthly.currency)/Tag. \(projection) \(previousText)",
                 systemImage: "eurosign.circle",
                 tintRole: .finance
             ),
             StatisticInsight(
                 title: "Finanztrend",
-                value: monthly.balance >= 0 ? "+\(Int(monthly.balance.rounded())) \(monthly.currency)" : "\(Int(monthly.balance.rounded())) \(monthly.currency)",
-                detail: "\(savingsText) \(trendText) Top-Kategorien: \(topCategories.isEmpty ? weekly.topCategory ?? "noch offen" : topCategories).",
+                value: monthly.balance >= 0
+                    ? "+\(Int(monthly.balance.rounded())) \(monthly.currency)"
+                    : "\(Int(monthly.balance.rounded())) \(monthly.currency)",
+                detail:
+                    "\(savingsText) \(trendText) Top-Kategorien: \(topCategories.isEmpty ? weekly.topCategory ?? "noch offen" : topCategories).",
                 systemImage: "chart.line.uptrend.xyaxis",
                 tintRole: .finance
-            )
+            ),
         ]
     }
 
@@ -159,12 +194,15 @@ final class StatisticsStore: ObservableObject {
             )
         }
 
-        let sevenAverage = Self.average(summary.entries.suffix(7).map(\.weightKg))
+        let weekStart = DateIntervals.dayKey(
+            for: DateIntervals.trailingDays(7, endingAt: selectedDate, calendar: calendar).start, calendar: calendar)
+        let sevenAverage = Self.average(summary.entries.filter { $0.date >= weekStart }.map(\.weightKg))
         let thirtyAverage = Self.average(summary.entries.map(\.weightKg))
         return StatisticInsight(
             title: "Gewichtstrend",
             value: WeightStore.formatWeight(latest.weightKg),
-            detail: "7-Tage-Schnitt \(sevenAverage.map(WeightStore.formatWeight) ?? "-"), 30-Tage-Schnitt \(thirtyAverage.map(WeightStore.formatWeight) ?? "-"). Veränderung: \(WeightStore.formatChange(change)).",
+            detail:
+                "7-Tage-Schnitt \(sevenAverage.map(WeightStore.formatWeight) ?? "-"), 30-Tage-Schnitt \(thirtyAverage.map(WeightStore.formatWeight) ?? "-"). Veränderung: \(WeightStore.formatChange(change)).",
             systemImage: "scalemass",
             tintRole: .review
         )
@@ -194,7 +232,7 @@ final class StatisticsStore: ObservableObject {
 }
 
 struct StatisticInsight: Identifiable, Equatable {
-    let id = UUID()
+    var id: String { title }
     let title: String
     let value: String
     let detail: String

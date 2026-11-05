@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct TrainingDoubleProgressRing: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let weeklyProgress: Double
     let dailyProgress: Double
     let checkedExercises: Int
@@ -12,22 +13,22 @@ struct TrainingDoubleProgressRing: View {
         VStack(spacing: 12) {
             ZStack {
                 ringTrack(lineWidth: 16, diameter: 176)
-                ringProgress(weeklyProgress, lineWidth: 16, diameter: 176, tint: AboLifeColors.training)
+                ringProgress(weeklyProgress, lineWidth: 16, diameter: 176, tint: designStyle.colors.training)
 
                 ringTrack(lineWidth: 10, diameter: 124)
-                ringProgress(dailyProgress, lineWidth: 10, diameter: 124, tint: AboLifeColors.review)
+                ringProgress(dailyProgress, lineWidth: 10, diameter: 124, tint: designStyle.colors.review)
 
                 VStack(spacing: 2) {
                     Text("\(checkedExercises) / \(totalExercises)")
-                        .font(.system(size: 30, weight: .semibold, design: .rounded))
-                        .foregroundStyle(AboLifeColors.primaryText)
+                        .font(.system(size: 30, weight: .semibold))
+                        .foregroundStyle(designStyle.colors.primaryText)
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.82)
 
                     Text("Übungen")
                         .font(AboLifeTypography.micro)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .foregroundStyle(designStyle.colors.secondaryText)
                 }
                 .frame(width: 92)
             }
@@ -35,7 +36,7 @@ struct TrainingDoubleProgressRing: View {
 
             Text("Woche: \(completedWorkouts) / \(weeklyWorkoutTarget) Workouts")
                 .font(AboLifeTypography.caption.weight(.semibold))
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
@@ -53,26 +54,18 @@ struct TrainingDoubleProgressRing: View {
 
     private func ringTrack(lineWidth: CGFloat, diameter: CGFloat) -> some View {
         Circle()
-            .stroke(AboLifeColors.quietFill, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+            .stroke(designStyle.colors.quietFill, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
             .frame(width: diameter, height: diameter)
     }
 
     private func ringProgress(_ progress: Double, lineWidth: CGFloat, diameter: CGFloat, tint: Color) -> some View {
         Circle()
             .trim(from: 0, to: min(max(progress, 0), 1))
-            .stroke(
-                AngularGradient(
-                    colors: [
-                        tint.opacity(0.62),
-                        tint,
-                        AboLifeColors.positive.opacity(0.72)
-                    ],
-                    center: .center
-                ),
-                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-            )
+            .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+            .opacity(progress > 0 ? 1 : 0)
             .rotationEffect(.degrees(-90))
             .frame(width: diameter, height: diameter)
+            .aboLifeMotion(value: progress)
     }
 }
 

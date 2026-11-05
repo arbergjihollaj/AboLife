@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <Scheme LastUpgradeVersion="2650" version="1.7">
    <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES" buildArchitectures="Automatic">
       <BuildActionEntries>
@@ -13,6 +13,9 @@
          <TestableReference skipped="NO" parallelizable="YES">
             <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="100000000000000000000302" BuildableName="AboLifeTests.xctest" BlueprintName="AboLifeTests" ReferencedContainer="container:AboLife.xcodeproj">
             </BuildableReference>
+         </TestableReference>
+         <TestableReference skipped="NO" parallelizable="NO">
+            <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="E70100000000000000000301" BuildableName="AboLifeUITests.xctest" BlueprintName="AboLifeUITests" ReferencedContainer="container:AboLife.xcodeproj" />
          </TestableReference>
       </Testables>
    </TestAction>

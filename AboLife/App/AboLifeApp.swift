@@ -6,49 +6,65 @@ struct AboLifeApp: App {
     @NSApplicationDelegateAdaptor(AboLifeAppDelegate.self) private var appDelegate
     @StateObject private var navigationCoordinator = AppNavigationCoordinator()
 
-    @StateObject private var sync: SharedSyncCoordinator
-
-    private let appDatabase: AppDatabase?
-
-    init() {
-        do {
-            let db = try AppDatabase.makeForApplication()
-            appDatabase = db
-            _sync = StateObject(wrappedValue: SharedSyncCoordinator(database: db))
-        } catch {
-            appDatabase = nil
-            _sync = StateObject(wrappedValue: SharedSyncCoordinator(database: nil))
-            assertionFailure("AboLife database could not be initialized: \(error)")
-        }
-    }
+    @StateObject private var session = AppSession()
 
     var body: some Scene {
         Window("AboLife", id: AppNavigationCoordinator.mainWindowID) {
-            AppRouter()
-                .environment(\.appDatabase, appDatabase)
-                .environmentObject(navigationCoordinator)
-                .environmentObject(sync)
-                .task {
-                    while !Task.isCancelled {
-                        if sync.autoSync && !sync.hasConflict && !sync.serverAddress.isEmpty { await sync.synchronize() }
-                        try? await Task.sleep(for: .seconds(30))
-                    }
+            Group {
+                if session.failedToOpenDatabase {
+                    DatabaseRecoveryView(session: session)
+                } else {
+                    AppRouter(database: session.database)
                 }
+            }
+            .environment(\.appDatabase, session.database)
+            .environmentObject(navigationCoordinator)
+            .environmentObject(session.sync)
+            .environmentObject(session.ai)
+            .aboLifeDesign(session.design)
+            .aboLifeAppearance()
+            .defaultAppStorage(session.preferences)
+            .task {
+                while !Task.isCancelled {
+                    if session.sync.autoSync && !session.sync.hasConflict && !session.sync.serverAddress.isEmpty {
+                        await session.sync.synchronize()
+                    }
+                    try? await Task.sleep(for: .seconds(30))
+                }
+            }
         }
         .windowStyle(.titleBar)
 
         Settings {
-            SettingsView(database: appDatabase)
-                .environmentObject(sync)
-                .frame(minWidth: 580, minHeight: 520)
-                .preferredColorScheme(.dark)
+            Group {
+                if session.failedToOpenDatabase {
+                    DatabaseRecoveryView(session: session)
+                } else {
+                    SettingsView(database: session.database)
+                }
+            }
+            .environmentObject(session.sync)
+            .environmentObject(session.ai)
+            .frame(minWidth: 580, minHeight: 520)
+            .aboLifeDesign(session.design)
+            .aboLifeAppearance()
+            .defaultAppStorage(session.preferences)
         }
         .defaultSize(width: 700, height: 720)
         .windowResizability(.contentMinSize)
 
         MenuBarExtra("AboLife", systemImage: "a.circle") {
-            MenuBarQuickPanelView(database: appDatabase)
-                .environmentObject(navigationCoordinator)
+            Group {
+                if session.failedToOpenDatabase {
+                    DatabaseRecoveryView(session: session).frame(width: 320)
+                } else {
+                    MenuBarQuickPanelView(database: session.database)
+                }
+            }
+            .environmentObject(navigationCoordinator)
+            .aboLifeDesign(session.design)
+            .aboLifeAppearance()
+            .defaultAppStorage(session.preferences)
         }
         .menuBarExtraStyle(.window)
     }

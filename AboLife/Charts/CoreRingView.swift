@@ -6,9 +6,10 @@ struct CoreRingView: View {
     let tint: Color
     var valueText: String? = nil
     var labelText: String = "Daily Core"
+    var showsScale = false
 
     private var clampedProgress: Double {
-        min(max(progress, 0), 1)
+        progress.isFinite ? min(max(progress, 0), 1) : 0
     }
 
     private var resolvedValueText: String {
@@ -18,33 +19,30 @@ struct CoreRingView: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(AboLifeColors.quietFill, lineWidth: lineWidth)
-                .overlay {
-                    Circle()
-                        .stroke(AboLifeColors.glassStrokeMuted, lineWidth: 0.7)
-                }
+                .strokeBorder(AboLifeColors.subtleFill, lineWidth: lineWidth)
 
             Circle()
+                .inset(by: lineWidth / 2)
                 .trim(from: 0, to: clampedProgress)
-                .stroke(
-                    AngularGradient(
-                        colors: [
-                            tint.opacity(0.44),
-                            tint.opacity(0.88),
-                            tint.opacity(0.70),
-                            tint.opacity(0.52)
-                        ],
-                        center: .center
-                    ),
-                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                )
+                .stroke(tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .shadow(color: tint.opacity(0.14), radius: 8, x: 0, y: 0)
+                .opacity(clampedProgress > 0 ? 1 : 0)
+                .aboLifeMotion(value: clampedProgress)
 
-            VStack(spacing: 8) {
+            if showsScale {
+                Circle()
+                    .inset(by: lineWidth + 7)
+                    .strokeBorder(
+                        AboLifeColors.glassStroke,
+                        style: StrokeStyle(lineWidth: 4, dash: [1, 5])
+                    )
+            }
+
+            VStack(spacing: 4) {
                 Text(resolvedValueText)
-                    .font(.system(size: 42, weight: .semibold, design: .rounded))
+                    .font(showsScale ? AboLifeTypography.heroNumber : .system(size: 42, weight: .semibold))
                     .monospacedDigit()
+                    .aboLifeNumericTransition(value: resolvedValueText)
                     .foregroundStyle(AboLifeColors.primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.72)
@@ -58,6 +56,7 @@ struct CoreRingView: View {
             .padding(.horizontal, lineWidth + 10)
         }
         .aspectRatio(1, contentMode: .fit)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(labelText) \(resolvedValueText)")
     }
 }

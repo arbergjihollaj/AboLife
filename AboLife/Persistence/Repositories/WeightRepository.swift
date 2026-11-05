@@ -91,8 +91,21 @@ struct WeightRepository {
         .sorted { $0.date < $1.date }
     }
 
+    /// Historical API: `days` is a measurement limit. Calendar-window callers use `inLastDays`.
     func summary(days: Int) throws -> WeightTrendSummary {
         WeightTrendSummary(entries: try recent(limit: days))
+    }
+
+    func summary(inLastDays days: Int, endingAt date: Date = Date(), calendar: Calendar = .current) throws -> WeightTrendSummary {
+        let interval = DateIntervals.trailingDays(days, endingAt: date, calendar: calendar)
+        let start = DateIntervals.dayKey(for: interval.start, calendar: calendar)
+        let end = DateIntervals.dayKey(for: interval.end, calendar: calendar)
+        return try database.writer.read { db in
+            WeightTrendSummary(entries: try WeightEntryRecord
+                .filter(Column("date") >= start && Column("date") < end)
+                .order(Column("date"))
+                .fetchAll(db))
+        }
     }
 
     func delete(id: String) throws {

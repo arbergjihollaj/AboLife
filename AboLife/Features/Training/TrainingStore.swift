@@ -46,7 +46,7 @@ final class TrainingViewModel: ObservableObject {
         self.bodyProgressService = BodyProgressService()
         self.exerciseProgressions = TrainingPlanSeeder.defaultProgressions
         self.recommendations = []
-        self.bodyTrend = bodyProgressService.trend(from: TrainingPlanSeeder.sampleMeasurements)
+        self.bodyTrend = bodyProgressService.trend(from: [])
         self.trainingStatistics = TrainingStatistics(
             trainingsThisWeek: 0,
             currentStreak: 0,
@@ -54,7 +54,6 @@ final class TrainingViewModel: ObservableObject {
             pushVolume: 0,
             pullVolume: 0,
             legVolume: 0,
-            strongestWeek: 0,
             trainingRate: 0,
             averageSetsPerTraining: 0,
             minimumWorkouts: 0,
@@ -196,13 +195,15 @@ final class TrainingViewModel: ObservableObject {
         homeWorkoutPlan.makeExerciseInputs(for: scheduledHomeWorkout, intensity: intensity)
     }
 
+    @discardableResult
     func completeDetailedHomeWorkout(
         intensity: HomeWorkoutIntensity,
         exercises: [WorkoutExerciseInput],
         note: String?,
         painReported: Bool
-    ) {
+    ) -> Bool {
         isSavingPlanWorkout = true
+        defer { isSavingPlanWorkout = false }
         completionMessage = nil
 
         let detailed = homeWorkoutPlan.makeDetailedWorkoutSession(
@@ -217,8 +218,7 @@ final class TrainingViewModel: ObservableObject {
         guard let database else {
             sessions.insert(detailed.session, at: 0)
             completionMessage = "Workout mit Details gespeichert"
-            isSavingPlanWorkout = false
-            return
+            return true
         }
 
         do {
@@ -226,11 +226,11 @@ final class TrainingViewModel: ObservableObject {
             completionMessage = "Workout mit Details gespeichert"
             errorMessage = nil
             reload()
+            return true
         } catch {
             errorMessage = "Workout konnte nicht gespeichert werden."
+            return false
         }
-
-        isSavingPlanWorkout = false
     }
 
     func clearCompletionMessage() {
@@ -263,34 +263,30 @@ final class TrainingViewModel: ObservableObject {
         let history = database.flatMap { try? WorkoutRepository(database: $0).fetchAllExerciseSummaries() } ?? []
         exerciseProgressStatuses = makeExerciseProgressStatuses(from: history)
 
-        recommendations = exerciseProgressions.map { progression in
+        recommendations = exerciseProgressions.compactMap { progression in
             let results = exerciseResults(for: progression, history: history)
-            return progressionService.recommendation(
-                for: progression,
-                results: results.isEmpty ? sampleResults(for: progression) : results
-            )
+            guard !results.isEmpty else { return nil }
+            return progressionService.recommendation(for: progression, results: results)
         }
 
-        bodyTrend = bodyProgressService.trend(from: TrainingPlanSeeder.sampleMeasurements)
+        if let database {
+            do {
+                let weights = try WeightRepository(database: database).summary(inLastDays: 30, endingAt: now(), calendar: calendar)
+                bodyTrend = BodyProgressTrend(
+                    latestWeightKg: weights.latest?.weightKg,
+                    weightChangeKg: weights.firstToLastChangeKg,
+                    waistChangeCm: nil, chestChangeCm: nil, armChangeCm: nil,
+                    pushupChange: nil, pullupChange: nil
+                )
+            } catch {
+                bodyTrend = bodyProgressService.trend(from: [])
+                errorMessage = "Körperdaten konnten nicht geladen werden. Bitte erneut versuchen."
+            }
+        } else {
+            bodyTrend = bodyProgressService.trend(from: [])
+        }
         trainingStatistics = makeTrainingStatistics()
         motivationCards = makeMotivationCards()
-    }
-
-    private func sampleResults(for progression: ExerciseProgression) -> [ExerciseSetResult] {
-        switch progression.exerciseName.lowercased() {
-        case let name where name.contains("klimm"):
-            return [4, 4, 3, 3].enumerated().map {
-                ExerciseSetResult(exerciseName: progression.exerciseName, reps: $0.element, setIndex: $0.offset)
-            }
-        case let name where name.contains("pike"):
-            return [10, 9, 8, 7].enumerated().map {
-                ExerciseSetResult(exerciseName: progression.exerciseName, reps: $0.element, setIndex: $0.offset)
-            }
-        default:
-            return [12, 12, 12, 12].enumerated().map {
-                ExerciseSetResult(exerciseName: progression.exerciseName, reps: $0.element, setIndex: $0.offset)
-            }
-        }
     }
 
     private func makeTrainingStatistics() -> TrainingStatistics {
@@ -298,7 +294,7 @@ final class TrainingViewModel: ObservableObject {
         let pushVolume = volume(for: completed, matching: ["push", "liegest", "pike", "diamond", "brust"])
         let pullVolume = volume(for: completed, matching: ["pull", "klimm", "negative", "ruecken"])
         let legVolume = volume(for: completed, matching: ["leg", "squat", "kniebeuge", "ausfallschritt", "split"])
-        let totalVolume = max(pushVolume + pullVolume + legVolume, completed.reduce(0) { $0 + $1.durationMin })
+        let totalVolume = completed.reduce(0) { $0 + max($1.durationMin, 0) }
 
         return TrainingStatistics(
             trainingsThisWeek: completed.count,
@@ -307,7 +303,6 @@ final class TrainingViewModel: ObservableObject {
             pushVolume: pushVolume,
             pullVolume: pullVolume,
             legVolume: legVolume,
-            strongestWeek: max(completed.count, weeklyWorkoutTarget),
             trainingRate: Self.progress(current: Double(completed.count), target: Double(weeklyWorkoutTarget)),
             averageSetsPerTraining: averageSetsPerTraining(for: completed),
             minimumWorkouts: completed.filter { $0.workoutIntensity == HomeWorkoutIntensity.minimum.rawValue }.count,
@@ -387,7 +382,7 @@ final class TrainingViewModel: ObservableObject {
     private func volume(for sessions: [WorkoutSessionRecord], matching keywords: [String]) -> Int {
         sessions.reduce(0) { total, session in
             let haystack = "\(session.workoutType) \(session.note ?? "")".lowercased()
-            return keywords.contains { haystack.contains($0) } ? total + max(session.durationMin, 1) : total
+            return keywords.contains { haystack.contains($0) } ? total + max(session.durationMin, 0) : total
         }
     }
 
@@ -406,14 +401,12 @@ final class TrainingViewModel: ObservableObject {
     }
 
     private func makeMotivationCards() -> [MotivationCard] {
-        let pullupRecord = exerciseProgressions.first { $0.exerciseName.lowercased().contains("klimm") }?.personalRecord ?? 5
-        let pushupRecord = exerciseProgressions.first { $0.exerciseName.lowercased().contains("liegest") }?.personalRecord ?? 24
-
-        return [
-            MotivationCard(id: "pushup-pr", title: "Neuer Rekord", detail: "\(pushupRecord) Liegestuetze", systemImage: "trophy.fill"),
-            MotivationCard(id: "pullup-goal", title: "Erstes Ziel erreicht", detail: "\(pullupRecord) Klimmzuege", systemImage: "flag.checkered"),
-            MotivationCard(id: "weekly-streak", title: "Wochenziel", detail: statusMessage, systemImage: "flame.fill")
-        ]
+        let records = exerciseProgressStatuses.prefix(2).compactMap { status -> MotivationCard? in
+            guard let reps = status.bestSetReps else { return nil }
+            return MotivationCard(id: status.id, title: "Bester erfasster Satz",
+                                  detail: "\(status.exerciseName): \(reps) Wiederholungen", systemImage: "chart.bar")
+        }
+        return records + [MotivationCard(id: "weekly-goal", title: "Wochenziel", detail: statusMessage, systemImage: "target")]
     }
 
     private var weekInterval: DateInterval {

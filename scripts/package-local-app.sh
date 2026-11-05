@@ -29,7 +29,7 @@ cp "$ABOLIFE_BINARY" "$ABOLIFE_BUNDLE/Contents/MacOS/AboLife"
 xcrun actool AboLife/Assets.xcassets --compile "$ABOLIFE_BUNDLE/Contents/Resources" --platform macosx --minimum-deployment-target 14.0 --app-icon AppIcon --output-partial-info-plist "$PWD/work/icon-info.plist" > work/assets-build.log 2>&1
 python3 - "$ABOLIFE_BUNDLE" <<'PY'
 import plistlib,sys,pathlib
-bundle=pathlib.Path(sys.argv[1]);info={'CFBundleName':'AboLife','CFBundleDisplayName':'AboLife','CFBundleExecutable':'AboLife','CFBundleIdentifier':'com.private.AboLife','CFBundlePackageType':'APPL','CFBundleShortVersionString':'0.4.0','CFBundleVersion':'4','LSMinimumSystemVersion':'14.0','NSPrincipalClass':'NSApplication','LSApplicationCategoryType':'public.app-category.productivity','NSHighResolutionCapable':True}
+bundle=pathlib.Path(sys.argv[1]);info={'CFBundleName':'AboLife','CFBundleDisplayName':'AboLife','CFBundleExecutable':'AboLife','CFBundleIdentifier':'com.private.AboLife','CFBundlePackageType':'APPL','CFBundleShortVersionString':pathlib.Path('VERSION').read_text().strip(),'CFBundleVersion':'5','LSMinimumSystemVersion':'14.0','NSPrincipalClass':'NSApplication','LSApplicationCategoryType':'public.app-category.productivity','NSHighResolutionCapable':True}
 info.update(plistlib.load(open('work/icon-info.plist','rb')))
 plistlib.dump(info,open(bundle/'Contents/Info.plist','wb'))
 PY
@@ -39,5 +39,5 @@ for resource in "$PWD/work/swift-build/out/Products/Release"/*.bundle; do
 done
 codesign --force --sign - "$ABOLIFE_BUNDLE" > work/codesign.log 2>&1
 codesign --verify --deep --strict "$ABOLIFE_BUNDLE"
-/usr/bin/ditto -c -k --sequesterRsrc --keepParent "$ABOLIFE_BUNDLE" "$PWD/outputs/AboLife-0.4-macOS.zip"
+/usr/bin/ditto -c -k --sequesterRsrc --keepParent "$ABOLIFE_BUNDLE" "$PWD/outputs/AboLife-$(tr -d '\n' < VERSION)-macOS.zip"
 printf 'App bereit: %s\n' "$ABOLIFE_BUNDLE"

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct StatisticsView: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @StateObject private var store: StatisticsStore
 
     init(database: AppDatabase?) {
@@ -15,8 +16,13 @@ struct StatisticsView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     header
                     insightGrid
+                    Text(
+                        "Berechnet aus lokalen Einträgen. Wochenwerte beziehen sich auf die Woche des ausgewählten Datums, Monatswerte auf den gesamten Monat. Ziele verwenden aktuelle Einstellungen. Gewichtsschnitte nutzen vorhandene Messungen der letzten 7 bzw. 30 Kalendertage; fehlende Tage werden nicht ergänzt. Aktive Tage zählen über den gesamten Verlauf."
+                    )
+                    .font(AboLifeTypography.caption)
+                    .foregroundStyle(designStyle.colors.secondaryText)
                 }
-                .padding(22)
+                .aboLifePage()
             }
         }
         .navigationTitle("")
@@ -26,24 +32,36 @@ struct StatisticsView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Statistiken")
+                    .accessibilityIdentifier("page.statistics")
                     .font(AboLifeTypography.dashboardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
-                Text("Diese Woche und aktueller Monat")
+                Text(store.periodDescription)
                     .font(AboLifeTypography.body)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
             }
 
             Spacer()
+
+            AboLifePeriodControl(
+                title: store.selectedDate.formatted(.dateTime.month(.abbreviated).year()),
+                previousLabel: "Statistiken des Vormonats", nextLabel: "Statistiken des Folgemonats",
+                canGoForward: !Calendar.current.isDate(store.selectedDate, equalTo: Date(), toGranularity: .month),
+                previous: { store.moveMonth(by: -1) }, next: { store.moveMonth(by: 1) }
+            )
+
+            Button("Aktuellen Zeitraum anzeigen", systemImage: "calendar") { store.selectedDate = Date() }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.bordered)
 
             Button {
                 store.reload()
             } label: {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .medium))
             }
             .buttonStyle(.bordered)
             .help("Neu laden")
@@ -55,16 +73,14 @@ struct StatisticsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Label("Überblick", systemImage: "chart.bar.xaxis")
                     .font(AboLifeTypography.cardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 if let errorMessage = store.errorMessage {
-                    Text(errorMessage)
-                        .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                    AboLifeNotice(title: "Statistiken nicht verfügbar", message: errorMessage, retry: store.reload)
                 } else if store.insights.isEmpty {
                     emptyState
                 } else {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 216), spacing: 12)], spacing: 12) {
                         ForEach(store.insights) { insight in
                             StatisticInsightTile(insight: insight)
                         }
@@ -76,65 +92,14 @@ struct StatisticsView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text("Noch keine Statistikdaten.")
+            Text("Noch keine Statistikdaten")
                 .font(AboLifeTypography.body.weight(.semibold))
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
 
-            Text("Sobald du Einträge speicherst, entstehen hier echte Wochen- und Monatswerte.")
+            Text("Wochen- und Monatswerte erscheinen nach deinem ersten Eintrag")
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
         }
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
-    }
-}
-
-private struct StatisticInsightTile: View {
-    let insight: StatisticInsight
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 9) {
-                Image(systemName: insight.systemImage)
-                    .foregroundStyle(tint)
-                    .frame(width: 20)
-
-                Text(insight.title)
-                    .font(AboLifeTypography.caption.weight(.semibold))
-                    .foregroundStyle(AboLifeColors.primaryText)
-                    .lineLimit(1)
-            }
-
-            Text(insight.value)
-                .font(AboLifeTypography.metric)
-                .foregroundStyle(AboLifeColors.primaryText)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-
-            Text(insight.detail)
-                .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.secondaryText)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, minHeight: 148, alignment: .topLeading)
-        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 0.7)
-        }
-    }
-
-    private var tint: Color {
-        switch insight.tintRole {
-        case .training:
-            return AboLifeColors.training
-        case .finance:
-            return AboLifeColors.finance
-        case .habits:
-            return AboLifeColors.habits
-        case .review:
-            return AboLifeColors.review
-        }
     }
 }

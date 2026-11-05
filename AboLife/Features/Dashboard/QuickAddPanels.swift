@@ -1,22 +1,23 @@
 import SwiftUI
 
 struct QuickAddGeneralMenu: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let select: (QuickAddKind) -> Void
     let quickHabit: (QuickHabitAction) -> Void
 
-    private let entryActions: [QuickAddAction] = [
-        QuickAddAction(kind: .workout, title: "Training / Home-Workout", systemImage: "figure.strengthtraining.traditional", tint: AboLifeColors.training),
-        QuickAddAction(kind: .expense, title: "Ausgabe eintragen", systemImage: "eurosign.circle", tint: AboLifeColors.finance),
-        QuickAddAction(kind: .weight, title: "Gewicht eintragen", systemImage: "scalemass", tint: AboLifeColors.review),
-        QuickAddAction(kind: .habit, title: "Gewohnheit aktualisieren", systemImage: "checkmark.seal", tint: AboLifeColors.habits)
-    ]
+    private var entryActions: [QuickAddAction] { [
+        QuickAddAction(kind: .workout, title: "Training / Home-Workout", systemImage: "figure.strengthtraining.traditional", tint: designStyle.colors.training),
+        QuickAddAction(kind: .expense, title: "Ausgabe eintragen", systemImage: "eurosign.circle", tint: designStyle.colors.finance),
+        QuickAddAction(kind: .weight, title: "Gewicht eintragen", systemImage: "scalemass", tint: designStyle.colors.review),
+        QuickAddAction(kind: .habit, title: "Gewohnheit aktualisieren", systemImage: "checkmark.seal", tint: designStyle.colors.habits)
+    ] }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             QuickAddSection(title: "Eintragen", systemImage: "square.and.pencil") {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                     ForEach(entryActions) { action in
-                        QuickAddChip(title: action.title, systemImage: action.systemImage, tint: action.tint) {
+                        QuickAddChip(title: action.title, systemImage: action.systemImage) {
                             select(action.kind)
                         }
                     }
@@ -26,7 +27,7 @@ struct QuickAddGeneralMenu: View {
             QuickAddSection(title: "Schnelle Gewohnheiten", systemImage: "bolt.fill") {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                     ForEach(QuickHabitAction.generalMenuActions) { action in
-                        QuickAddChip(title: action.title, systemImage: action.systemImage, tint: action.tint) {
+                        QuickAddChip(title: action.title, systemImage: action.systemImage) {
                             quickHabit(action)
                         }
                     }
@@ -39,6 +40,7 @@ struct QuickAddGeneralMenu: View {
 
 
 struct QuickAddTrainingPanel: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @ObservedObject var store: DashboardStore
     let dismiss: DismissAction
     let setStatus: (String) -> Void
@@ -47,6 +49,7 @@ struct QuickAddTrainingPanel: View {
     @State private var manualName = ""
     @State private var manualDuration = "30"
     @State private var manualNote = ""
+    @State private var durationError: String?
 
     private var scheduledWorkout: ScheduledHomeWorkout {
         HomeWorkoutPlanProvider.plan.workout(for: Date())
@@ -54,15 +57,15 @@ struct QuickAddTrainingPanel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            QuickAddFormCard(tint: AboLifeColors.training, systemImage: "house.fill", title: "Heutiges Home-Workout") {
+            QuickAddFormCard(systemImage: "house.fill", title: "Heutiges Home-Workout") {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(scheduledWorkout.day.name)
                             .font(AboLifeTypography.cardTitle)
-                            .foregroundStyle(AboLifeColors.primaryText)
+                            .foregroundStyle(designStyle.colors.primaryText)
                         Text(scheduledWorkout.day.focusText)
                             .font(AboLifeTypography.caption)
-                            .foregroundStyle(AboLifeColors.secondaryText)
+                            .foregroundStyle(designStyle.colors.secondaryText)
                     }
 
                     Spacer()
@@ -70,11 +73,11 @@ struct QuickAddTrainingPanel: View {
                     AboLifeGlassCapsule {
                         Text(scheduledWorkout.headline)
                             .font(AboLifeTypography.micro)
-                            .foregroundStyle(AboLifeColors.training)
+                            .foregroundStyle(designStyle.colors.training)
                     }
                 }
 
-                Picker("Intensitaet", selection: $selectedIntensity) {
+                Picker("Intensität", selection: $selectedIntensity) {
                     ForEach(HomeWorkoutIntensity.allCases) { intensity in
                         Text("\(intensity.rawValue) · \(intensity.durationMinutes) Min.").tag(intensity)
                     }
@@ -83,22 +86,33 @@ struct QuickAddTrainingPanel: View {
 
                 Text(exercisePreview)
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
                     .lineLimit(2)
 
-                QuickAddSubmitButton(title: "Home-Workout abschliessen", systemImage: "checkmark.circle.fill", tint: AboLifeColors.training) {
-                    store.completeHomeWorkout(intensity: selectedIntensity)
-                    setStatus("Training gespeichert")
+                QuickAddSubmitButton(title: "Home-Workout abschließen", systemImage: "checkmark.circle.fill") {
+                    if store.completeHomeWorkout(intensity: selectedIntensity) {
+                        setStatus("Training gespeichert")
+                    }
                 }
             }
 
-            QuickAddFormCard(tint: AboLifeColors.review, systemImage: "square.and.pencil", title: "Training manuell eintragen") {
+            QuickAddFormCard(systemImage: "square.and.pencil", title: "Training manuell eintragen") {
                 labeledTextField("Name / Typ", text: $manualName)
                 labeledTextField("Dauer Minuten", text: $manualDuration)
                 labeledTextField("Notiz optional", text: $manualNote)
 
-                QuickAddSubmitButton(title: "Manuell speichern", systemImage: "plus.circle.fill", tint: AboLifeColors.training) {
-                    store.completeWorkout(type: manualName, durationMinutes: Int(parseDouble(manualDuration).rounded()), note: manualNote)
+                if let durationError {
+                    AboLifeNotice(title: "Dauer prüfen", message: durationError)
+                }
+
+                QuickAddSubmitButton(title: "Manuell speichern", systemImage: "plus.circle.fill") {
+                    let minutes = parseDouble(manualDuration)
+                    guard (1...1440).contains(minutes) else {
+                        durationError = "Bitte eine gültige Dauer zwischen 1 und 1440 Minuten eingeben."
+                        return
+                    }
+                    durationError = nil
+                    guard store.completeWorkout(type: manualName, durationMinutes: Int(minutes.rounded()), note: manualNote) else { return }
                     manualName = ""
                     manualDuration = "30"
                     manualNote = ""
@@ -114,6 +128,7 @@ struct QuickAddTrainingPanel: View {
 }
 
 struct QuickAddExpensePanel: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @ObservedObject var store: DashboardStore
     let dismiss: DismissAction
     let setStatus: (String) -> Void
@@ -122,12 +137,15 @@ struct QuickAddExpensePanel: View {
     @State private var amount = ""
     @State private var category = "Lebensmittel"
     @State private var note = ""
+    @FocusState private var focusedField: Field?
+    private enum Field { case title, amount }
 
-    private let categories = Array(FinanceCategoryCatalog.expenseCategories.prefix(8))
+    @State private var categories = FinanceCategoryCatalog.expenseCategories
 
     var body: some View {
-        QuickAddFormCard(tint: AboLifeColors.finance, systemImage: "eurosign.circle", title: "Ausgabe") {
+        QuickAddFormCard(systemImage: "eurosign.circle", title: "Ausgabe") {
             labeledTextField("Titel / Name", text: $title)
+                .focused($focusedField, equals: .title)
                 .onChange(of: title) { _, newValue in
                     let suggestion = FinanceCategoryCatalog.normalized(newValue, kind: .expense)
                     if categories.contains(suggestion) {
@@ -135,7 +153,8 @@ struct QuickAddExpensePanel: View {
                     }
                 }
 
-            labeledTextField("Betrag in EUR", text: $amount)
+            labeledTextField("Betrag in \(store.currency)", text: $amount)
+                .focused($focusedField, equals: .amount)
 
             Picker("Kategorie", selection: $category) {
                 ForEach(categories, id: \.self) { category in
@@ -147,25 +166,34 @@ struct QuickAddExpensePanel: View {
 
             labeledTextField("Notiz optional", text: $note)
 
-            QuickAddSubmitButton(title: "Speichern", systemImage: "checkmark.circle.fill", tint: AboLifeColors.finance) {
-                store.addExpense(title: title.isEmpty ? category : title, amount: parseDouble(amount), category: category, note: note)
+            QuickAddSubmitButton(title: "Speichern", systemImage: "checkmark.circle.fill") {
+                guard store.addExpense(title: title.isEmpty ? category : title, amount: parseDouble(amount), category: category, note: note) else { return }
                 title = ""
                 amount = ""
                 note = ""
                 setStatus("Ausgabe gespeichert")
+                focusedField = .title
             }
+            .disabled(parseDouble(amount) <= 0 || parseDouble(amount) > 1_000_000_000)
+            .keyboardShortcut(.defaultAction)
+        }
+        .onAppear {
+            categories = store.quickExpenseCategories()
+            if !categories.contains(category), let first = categories.first { category = first }
+            focusedField = .title
         }
     }
 }
 
 struct QuickAddHabitPanel: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @ObservedObject var store: DashboardStore
     let setStatus: (String) -> Void
 
     @State private var values: [String: Double] = [:]
 
     var body: some View {
-        QuickAddFormCard(tint: AboLifeColors.habits, systemImage: "checkmark.seal", title: "Heute schnell Fortschritt eintragen") {
+        QuickAddFormCard(systemImage: "checkmark.seal", title: "Heute schnell Fortschritt eintragen") {
             VStack(spacing: 10) {
                 ForEach(FixedHabit.defaults) { habit in
                     HabitQuickActionRow(
@@ -187,11 +215,11 @@ struct QuickAddHabitPanel: View {
     private func apply(habit: FixedHabit, delta: Double) {
         let nextValue = store.applyHabitDelta(habitKey: habit.key, delta: delta)
         values[habit.key] = nextValue
-        setStatus(status(for: habit, delta: delta))
+        if store.errorMessage == nil { setStatus(status(for: habit, delta: delta)) }
     }
 
     private func setSleep(done: Bool) {
-        store.setSleepRoutine(isCompleted: done)
+        guard store.setSleepRoutine(isCompleted: done) else { return }
         values["sleep"] = done ? 1 : 0
         setStatus(done ? "Schlafroutine erledigt" : "Schlafroutine offen")
     }
@@ -212,6 +240,7 @@ struct QuickAddHabitPanel: View {
 }
 
 struct HabitQuickActionRow: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let habit: FixedHabit
     let value: Double
     let decrement: () -> Void
@@ -230,10 +259,10 @@ struct HabitQuickActionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(habit.title)
                     .font(AboLifeTypography.caption.weight(.semibold))
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
                 Text(displayText)
                     .font(AboLifeTypography.micro)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
                     .monospacedDigit()
             }
 
@@ -246,12 +275,12 @@ struct HabitQuickActionRow: View {
                         .foregroundStyle(habit.accent)
                 }
             } else if habit.isBoolean {
-                Button(value >= 1 ? "Zuruecksetzen" : "Erledigt") {
+                Button(value >= 1 ? "Zurücksetzen" : "Erledigt") {
                     value >= 1 ? reset() : complete()
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-                .tint(habit.accent)
+                .tint(designStyle.colors.action)
             } else {
                 Button(stepTitle(isNegative: true), action: decrement)
                     .disabled(value <= 0)
@@ -276,6 +305,7 @@ struct HabitQuickActionRow: View {
 }
 
 struct QuickAddWeightPanel: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @ObservedObject var store: DashboardStore
     let dismiss: DismissAction
     let setStatus: (String) -> Void
@@ -283,13 +313,13 @@ struct QuickAddWeightPanel: View {
     @State private var weight = ""
 
     var body: some View {
-        QuickAddFormCard(tint: AboLifeColors.review, systemImage: "scalemass", title: "Gewicht") {
+        QuickAddFormCard(systemImage: "scalemass", title: "Gewicht") {
             Text("Heute")
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
 
             labeledTextField("Gewicht in kg", text: $weight)
-            QuickAddSubmitButton(title: "Speichern", systemImage: "checkmark.circle.fill", tint: AboLifeColors.review) {
+            QuickAddSubmitButton(title: "Speichern", systemImage: "checkmark.circle.fill") {
                 if store.updateWeight(parseDouble(weight)) {
                     weight = ""
                     setStatus("Gewicht gespeichert")

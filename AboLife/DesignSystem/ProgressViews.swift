@@ -5,7 +5,7 @@ struct MetricProgressView: View {
     let tint: Color
 
     private var clampedProgress: Double {
-        min(max(progress, 0), 1)
+        progress.isFinite ? min(max(progress, 0), 1) : 0
     }
 
     var body: some View {
@@ -20,32 +20,17 @@ struct PremiumProgressBar: View {
     var height: CGFloat = 8
 
     private var clampedProgress: Double {
-        min(max(progress, 0), 1)
+        progress.isFinite ? min(max(progress, 0), 1) : 0
     }
 
     var body: some View {
         GeometryReader { proxy in
-            let fillWidth = max(clampedProgress > 0 ? height : 0, proxy.size.width * CGFloat(clampedProgress))
+            let fillWidth = proxy.size.width * CGFloat(clampedProgress)
 
             ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(AboLifeColors.quietFill)
-                    .overlay {
-                        Capsule()
-                            .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 0.55)
-                    }
-
-                Capsule()
-                    .fill(AboLifeColors.premiumGradient(for: tint))
-                    .frame(width: fillWidth)
-                    .overlay(alignment: .top) {
-                        Capsule()
-                            .fill(Color.white.opacity(0.12))
-                            .frame(height: max(1, height * 0.20))
-                            .padding(.horizontal, 2)
-                            .padding(.top, 1)
-                    }
-                    .shadow(color: tint.opacity(0.13), radius: 5, x: 0, y: 0)
+                Capsule().fill(AboLifeColors.subtleFill)
+                Capsule().fill(tint).frame(width: fillWidth)
+                    .aboLifeMotion(value: clampedProgress)
             }
         }
         .frame(height: height)
@@ -61,45 +46,32 @@ struct WeeklyStatusStrip: View {
                 VStack(spacing: 6) {
                     Text(day.shortName)
                         .font(AboLifeTypography.micro)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .foregroundStyle(day.completion == nil ? AboLifeColors.secondaryText : day.tint)
                         .frame(height: 12)
 
                     GeometryReader { proxy in
-                        let clamped = min(max(day.completion, 0), 1)
-                        let fillHeight = max(clamped > 0 ? 8 : 0, proxy.size.height * CGFloat(clamped))
+                        let clamped = min(max(day.completion ?? 0, 0), 1)
+                        let fillHeight = proxy.size.height * CGFloat(clamped)
 
                         ZStack(alignment: .bottom) {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(AboLifeColors.quietFill)
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 0.55)
-                                }
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(AboLifeColors.subtleFill)
 
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(AboLifeColors.premiumGradient(for: day.tint))
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(day.tint.opacity(0.85))
                                 .frame(height: fillHeight)
-                                .overlay(alignment: .top) {
-                                    Capsule()
-                                        .fill(Color.white.opacity(0.11))
-                                        .frame(height: 1.5)
-                                        .padding(.horizontal, 5)
-                                        .padding(.top, 4)
-                                }
-                                .shadow(color: day.tint.opacity(0.10), radius: 5, x: 0, y: 0)
+                                .aboLifeMotion(value: clamped)
                         }
                     }
-                    .frame(width: 34, height: 48)
-
-                    Circle()
-                        .fill(day.completion >= 0.66 ? day.tint.opacity(0.70) : AboLifeColors.tertiaryText)
-                        .frame(width: 3.5, height: 3.5)
+                    .frame(width: 20, height: 44)
                 }
                 .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(day.shortName), \(day.statusText)")
             }
         }
         .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .ignore)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("Wochenstatus")
     }
 }
@@ -108,6 +80,11 @@ struct WeeklyStatusItem: Identifiable {
     var id: String { shortName }
 
     let shortName: String
-    let completion: Double
+    let completion: Double?
     let tint: Color
+
+    var statusText: String {
+        guard let completion else { return "Kein Tagesstand" }
+        return "\(Int(min(max(completion, 0), 1) * 100)) Prozent"
+    }
 }

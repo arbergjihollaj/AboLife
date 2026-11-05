@@ -99,6 +99,33 @@
 		AB0300000000000000000101 /* SharedDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0300000000000000000001; };
 		AB0300000000000000000199 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AB0300000000000000000099; };
 		AB0300000000000000000150 /* SharedDataAndNewsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0300000000000000000050; };
+728BBBF086BCE50B68B16E31 /* AIActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C43FE0910DA8067994C4EAE; };
+FCEC705798E49C07B9CBAD79 /* AIAssistantStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682E084F1C8D31B7C235921; };
+72BC7855247CE3E887338CC8 /* AIAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34DFF46D3EFB7AA9AA1708B9; };
+6876BC0BBAC55F5265012342 /* AIContextBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 720AF92D196BCF7BE4811AC8; };
+7568DF709AEB6486F8B37B6D /* BonsaiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B16FC7DBDF2F716D8F3D6C43; };
+5C3BA98950A2CEC57F507B9D /* AIAssistantTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D716606F8D03C775F9A8EED3; };
+AE1A2F227366B3A32F91ABC2 /* AppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9F2919FC9DD28CD5D56D2C8; };
+FF8BFFC52F378D513D19A43E /* AboLifeActionStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F5DD65DDD4CF84F65A4F9F7; };
+7A66FBD98E5FCF918560FEC1 /* AboLifeNotice.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5149E8CADAC93046426EE93; };
+3013345A595EA740254495CF /* AboLifePeriodControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E5F7F7041DD0BDF96215212; };
+0E2685A785A065A9D1FC223B /* AboLifeTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BF819BCCEE0777611FDA6A; };
+B0FE789E6592F421601D24F2 /* NewsArticleCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BE37939DF241232B6128E54; };
+D133F13F58D7BC065FE7F173 /* NewsFeedLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F480F5402C373E8588CBDFC; };
+2F1438E2384954CE944C2D54 /* NewsFeedParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A9B818D8A9BDB8CAC60204D; };
+8684F7BCADBD329D84B419C3 /* NewsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82C1BA65655B0C53EBE622F0; };
+A126C7EDA2E3E0EB053859AD /* NewsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B7AD41217978BF0165A5132; };
+3B78B8B2ABDE4A6E7DD5E66A /* StatisticInsightTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DEDE11A55A1B0208005AFA0; };
+CA25F97F724768BE921B95EA /* EvolutionQualityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE08F083455B620D3A7769CC; };
+A3E477D49CE9F06AE3EBC448 /* NewsQualityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E88242D42ED5AD11F8E2BB7; };
+40F1C2361A97546431343359 /* EvolutionPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3322F86B09A1381A087234; };
+C2A746A3F1B2A5F7DC227056 /* AboLifeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51832DE939CE2427FEA8B024; };
+C00FA6D84D3DA36C97081E9E /* DetailedWorkoutSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 087A3D25D37A90BBC82EEB03; };
+CDDF6329D1693F153603BB0A /* WorkoutSessionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 777E904ED5A8257203C95C73; };
+106B12023BE5166390CE8E2D /* FinanceEntryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = E63F51CDAAE93BF0774196A2; };
+46AD6C822AC225DFB1CD16A1 /* AboLifeDesign.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEEF80572DF403A1C71C32BC; };
+F85F1D7593E4E2B9726C5F09 /* DesignPreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C360DB13B810AAD9C0C21F1; };
+F9FB4B1974ACCE45EC3A585D /* DesignPreferenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42E18D26C32D68396E08E08E; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -204,6 +231,34 @@
 		AB0300000000000000000001 /* SharedDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Sync/SharedDataService.swift"; sourceTree = SOURCE_ROOT; };
 		AB0300000000000000000099 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = AboLife/Assets.xcassets; sourceTree = SOURCE_ROOT; };
 		AB0300000000000000000050 /* SharedDataAndNewsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboLifeTests/SharedDataAndNewsTests.swift; sourceTree = SOURCE_ROOT; };
+0C43FE0910DA8067994C4EAE /* AIActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/AI/AIActions.swift"; sourceTree = SOURCE_ROOT; };
+A682E084F1C8D31B7C235921 /* AIAssistantStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/AI/AIAssistantStore.swift"; sourceTree = SOURCE_ROOT; };
+34DFF46D3EFB7AA9AA1708B9 /* AIAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/AI/AIAssistantView.swift"; sourceTree = SOURCE_ROOT; };
+720AF92D196BCF7BE4811AC8 /* AIContextBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/AI/AIContextBuilder.swift"; sourceTree = SOURCE_ROOT; };
+B16FC7DBDF2F716D8F3D6C43 /* BonsaiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/AI/BonsaiClient.swift"; sourceTree = SOURCE_ROOT; };
+D716606F8D03C775F9A8EED3 /* AIAssistantTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLifeTests/AI/AIAssistantTests.swift"; sourceTree = SOURCE_ROOT; };
+A9F2919FC9DD28CD5D56D2C8 /* AppSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/App/AppSession.swift"; sourceTree = SOURCE_ROOT; };
+7F5DD65DDD4CF84F65A4F9F7 /* AboLifeActionStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/DesignSystem/AboLifeActionStyle.swift"; sourceTree = SOURCE_ROOT; };
+A5149E8CADAC93046426EE93 /* AboLifeNotice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/DesignSystem/AboLifeNotice.swift"; sourceTree = SOURCE_ROOT; };
+2E5F7F7041DD0BDF96215212 /* AboLifePeriodControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/DesignSystem/AboLifePeriodControl.swift"; sourceTree = SOURCE_ROOT; };
+18BF819BCCEE0777611FDA6A /* AboLifeTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/DesignSystem/AboLifeTokens.swift"; sourceTree = SOURCE_ROOT; };
+9BE37939DF241232B6128E54 /* NewsArticleCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/News/NewsArticleCard.swift"; sourceTree = SOURCE_ROOT; };
+8F480F5402C373E8588CBDFC /* NewsFeedLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/News/NewsFeedLoader.swift"; sourceTree = SOURCE_ROOT; };
+9A9B818D8A9BDB8CAC60204D /* NewsFeedParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/News/NewsFeedParser.swift"; sourceTree = SOURCE_ROOT; };
+82C1BA65655B0C53EBE622F0 /* NewsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/News/NewsModels.swift"; sourceTree = SOURCE_ROOT; };
+2B7AD41217978BF0165A5132 /* NewsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/News/NewsStore.swift"; sourceTree = SOURCE_ROOT; };
+2DEDE11A55A1B0208005AFA0 /* StatisticInsightTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/Statistics/StatisticInsightTile.swift"; sourceTree = SOURCE_ROOT; };
+CE08F083455B620D3A7769CC /* EvolutionQualityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLifeTests/EvolutionQualityTests.swift"; sourceTree = SOURCE_ROOT; };
+7E88242D42ED5AD11F8E2BB7 /* NewsQualityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLifeTests/NewsQualityTests.swift"; sourceTree = SOURCE_ROOT; };
+CD3322F86B09A1381A087234 /* EvolutionPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLifeTests/EvolutionPerformanceTests.swift"; sourceTree = SOURCE_ROOT; };
+51832DE939CE2427FEA8B024 /* AboLifeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLifeUITests/AboLifeUITests.swift"; sourceTree = SOURCE_ROOT; };
+E70100000000000000000201 /* AboLifeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AboLifeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+087A3D25D37A90BBC82EEB03 /* DetailedWorkoutSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/Training/DetailedWorkoutSheet.swift"; sourceTree = SOURCE_ROOT; };
+777E904ED5A8257203C95C73 /* WorkoutSessionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/Training/WorkoutSessionRow.swift"; sourceTree = SOURCE_ROOT; };
+E63F51CDAAE93BF0774196A2 /* FinanceEntryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/Finance/FinanceEntryRow.swift"; sourceTree = SOURCE_ROOT; };
+DEEF80572DF403A1C71C32BC /* AboLifeDesign.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/DesignSystem/AboLifeDesign.swift"; sourceTree = SOURCE_ROOT; };
+0C360DB13B810AAD9C0C21F1 /* DesignPreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLife/Features/Settings/DesignPreferencesView.swift"; sourceTree = SOURCE_ROOT; };
+42E18D26C32D68396E08E08E /* DesignPreferenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AboLifeTests/DesignPreferenceTests.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -215,6 +270,9 @@
 		100000000000000000000500 = {
 			isa = PBXGroup;
 			children = (
+42E18D26C32D68396E08E08E /* DesignPreferenceTests.swift */,
+0C360DB13B810AAD9C0C21F1 /* DesignPreferencesView.swift */,
+DEEF80572DF403A1C71C32BC /* AboLifeDesign.swift */,E70100000000000000000500 /* Quality Evolution */,341BE33842A3CFE27F331B42,
                 AB0300000000000000000001 /* SharedDataService.swift */,
                 AB0300000000000000000000 /* NewsView.swift */,
 				100000000000000000000501 /* AboLife */,
@@ -252,13 +310,15 @@
 		AB9A00000000000000000501 /* Weight */ = {isa = PBXGroup; children = (AB9A00000000000000000003 /* WeightView.swift */, AB9A00000000000000000004 /* WeightStore.swift */); path = Weight; sourceTree = "<group>"; };
 		AB9A00000000000000000502 /* Statistics */ = {isa = PBXGroup; children = (AB9A00000000000000000005 /* StatisticsView.swift */, AB9A00000000000000000006 /* StatisticsStore.swift */); path = Statistics; sourceTree = "<group>"; };
 		100000000000000000000520 /* AboLifeTests */ = {isa = PBXGroup; children = (100000000000000000000021 /* AboLifeTests.swift */, 2EEB97452232EADC7D3AF434 /* CalendarPlannerTests.swift */); path = AboLifeTests; sourceTree = "<group>"; };
-		100000000000000000000590 /* Products */ = {isa = PBXGroup; children = (100000000000000000000201 /* AboLife.app */, 100000000000000000000202 /* AboLifeTests.xctest */); name = Products; sourceTree = "<group>"; };
+		100000000000000000000590 /* Products */ = {isa = PBXGroup; children = (E70100000000000000000201,100000000000000000000201 /* AboLife.app */, 100000000000000000000202 /* AboLifeTests.xctest */); name = Products; sourceTree = "<group>"; };
 		AB0F00000000000000000501 /* Persistence */ = {isa = PBXGroup; children = (AB0F00000000000000000001 /* AppDatabase.swift */, AB0F00000000000000000002 /* DatabaseConfiguration.swift */, AB0F00000000000000000016 /* DateIntervals.swift */, AB0F00000000000000000020 /* BackupService.swift */, AB0F00000000000000000502 /* Migrations */, AB0F00000000000000000503 /* Models */, AB0F00000000000000000504 /* Repositories */, AB0F00000000000000000505 /* Seed */); path = Persistence; sourceTree = "<group>"; };
 		AB0F00000000000000000502 /* Migrations */ = {isa = PBXGroup; children = (AB0F00000000000000000003 /* DatabaseMigrator.swift */); path = Migrations; sourceTree = "<group>"; };
 		AB0F00000000000000000503 /* Models */ = {isa = PBXGroup; children = (AB0F00000000000000000004 /* NutritionEntryRecord.swift */, AB9C00000000000000000001 /* NutritionTemplateRecord.swift */, AB0F00000000000000000005 /* WorkoutSessionRecord.swift */, AB0F00000000000000000006 /* FinanceEntryRecord.swift */, AB1400000000000000000001 /* FinancePlanningRecords.swift */, AB0F00000000000000000007 /* HabitEntryRecord.swift */, AB9A00000000000000000001 /* WeightEntryRecord.swift */, AB0F00000000000000000008 /* BodyMetricEntryRecord.swift */, AB0F00000000000000000009 /* AppSettingsRecord.swift */, AB0F00000000000000000018 /* WeeklyReviewRecord.swift */); path = Models; sourceTree = "<group>"; };
 		AB0F00000000000000000504 /* Repositories */ = {isa = PBXGroup; children = (AB0F00000000000000000010 /* NutritionRepository.swift */, AB9C00000000000000000002 /* NutritionTemplateRepository.swift */, AB0F00000000000000000011 /* WorkoutRepository.swift */, AB0F00000000000000000012 /* FinanceRepository.swift */, AB0F00000000000000000013 /* HabitRepository.swift */, AB9A00000000000000000002 /* WeightRepository.swift */, AB0F00000000000000000017 /* BodyMetricRepository.swift */, AB0F00000000000000000019 /* WeeklyReviewRepository.swift */, AB0F00000000000000000014 /* SettingsRepository.swift */); path = Repositories; sourceTree = "<group>"; };
 		AB0F00000000000000000505 /* Seed */ = {isa = PBXGroup; children = (AB0F00000000000000000015 /* SeedData.swift */); path = Seed; sourceTree = "<group>"; };
 		CA1200000000000000000501 /* Calendar */ = {isa = PBXGroup; children = (CA2400000000000000000002 /* ModuleStudyPlanner.swift */, 5056FC7F6F4F6A3D6C4C46F7 /* CalendarRepository.swift */, 00C77973287D9414D4316F1C /* CalendarModels.swift */, 532A0D307DB18B3EE0E07362 /* StudyPlannerEngine.swift */, CB51DEC8B664749DBBC0F5BD /* CalendarStore.swift */, 02797B8AF0E4F3B084EB469E /* CalendarPlannerView.swift */, FEA14CEE10929142EB32110D /* CalendarEditors.swift */, 77552A635EF0EA6482761384 /* ICSImporter.swift */); path = Calendar; sourceTree = "<group>"; };
+341BE33842A3CFE27F331B42 = {isa = PBXGroup; children = (0C43FE0910DA8067994C4EAE,A682E084F1C8D31B7C235921,34DFF46D3EFB7AA9AA1708B9,720AF92D196BCF7BE4811AC8,B16FC7DBDF2F716D8F3D6C43,D716606F8D03C775F9A8EED3,); name = "AI Integration"; sourceTree = "<group>"; };
+E70100000000000000000500 /* Quality Evolution */ = {isa = PBXGroup; children = (E63F51CDAAE93BF0774196A2,777E904ED5A8257203C95C73,087A3D25D37A90BBC82EEB03,51832DE939CE2427FEA8B024,CD3322F86B09A1381A087234,A9F2919FC9DD28CD5D56D2C8 /* AppSession.swift */, 7F5DD65DDD4CF84F65A4F9F7 /* AboLifeActionStyle.swift */, A5149E8CADAC93046426EE93 /* AboLifeNotice.swift */, 2E5F7F7041DD0BDF96215212 /* AboLifePeriodControl.swift */, 18BF819BCCEE0777611FDA6A /* AboLifeTokens.swift */, 9BE37939DF241232B6128E54 /* NewsArticleCard.swift */, 8F480F5402C373E8588CBDFC /* NewsFeedLoader.swift */, 9A9B818D8A9BDB8CAC60204D /* NewsFeedParser.swift */, 82C1BA65655B0C53EBE622F0 /* NewsModels.swift */, 2B7AD41217978BF0165A5132 /* NewsStore.swift */, 2DEDE11A55A1B0208005AFA0 /* StatisticInsightTile.swift */, CE08F083455B620D3A7769CC /* EvolutionQualityTests.swift */, 7E88242D42ED5AD11F8E2BB7 /* NewsQualityTests.swift */,); name = "Quality Evolution"; sourceTree = "<group>"; };
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -286,6 +346,7 @@
 			productReference = 100000000000000000000202 /* AboLifeTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+E70100000000000000000301 /* AboLifeUITests */ = {isa = PBXNativeTarget; buildConfigurationList = E70100000000000000000701; buildPhases = (E70100000000000000000601,); buildRules = (); dependencies = (100000000000000000000221,); name = AboLifeUITests; productName = AboLifeUITests; productReference = E70100000000000000000201; productType = "com.apple.product-type.bundle.ui-testing"; };
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -310,7 +371,7 @@
 			productRefGroup = 100000000000000000000590 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (100000000000000000000301 /* AboLife */, 100000000000000000000302 /* AboLifeTests */);
+			targets = (E70100000000000000000301 /* AboLifeUITests */,100000000000000000000301 /* AboLife */, 100000000000000000000302 /* AboLifeTests */);
 		};
 /* End PBXProject section */
 
@@ -324,6 +385,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+F85F1D7593E4E2B9726C5F09 /* DesignPreferencesView.swift in Sources */,
+46AD6C822AC225DFB1CD16A1 /* AboLifeDesign.swift in Sources */,106B12023BE5166390CE8E2D,CDDF6329D1693F153603BB0A,C00FA6D84D3DA36C97081E9E,
+3B78B8B2ABDE4A6E7DD5E66A /* StatisticInsightTile.swift in Sources */,
+A126C7EDA2E3E0EB053859AD /* NewsStore.swift in Sources */,
+8684F7BCADBD329D84B419C3 /* NewsModels.swift in Sources */,
+2F1438E2384954CE944C2D54 /* NewsFeedParser.swift in Sources */,
+D133F13F58D7BC065FE7F173 /* NewsFeedLoader.swift in Sources */,
+B0FE789E6592F421601D24F2 /* NewsArticleCard.swift in Sources */,
+0E2685A785A065A9D1FC223B /* AboLifeTokens.swift in Sources */,
+3013345A595EA740254495CF /* AboLifePeriodControl.swift in Sources */,
+7A66FBD98E5FCF918560FEC1 /* AboLifeNotice.swift in Sources */,
+FF8BFFC52F378D513D19A43E /* AboLifeActionStyle.swift in Sources */,
+AE1A2F227366B3A32F91ABC2 /* AppSession.swift in Sources */,
+7568DF709AEB6486F8B37B6D /* BonsaiClient.swift in Sources */,
+6876BC0BBAC55F5265012342 /* AIContextBuilder.swift in Sources */,
+72BC7855247CE3E887338CC8 /* AIAssistantView.swift in Sources */,
+FCEC705798E49C07B9CBAD79 /* AIAssistantStore.swift in Sources */,
+728BBBF086BCE50B68B16E31 /* AIActions.swift in Sources */,
                 AB0300000000000000000101 /* SharedDataService.swift in Sources */,
                 AB0300000000000000000100 /* NewsView.swift in Sources */,
 				100000000000000000000101 /* AboLifeApp.swift in Sources */,
@@ -414,7 +493,12 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		100000000000000000000602 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (
+F9FB4B1974ACCE45EC3A585D /* DesignPreferenceTests.swift in Sources */,40F1C2361A97546431343359,
+A3E477D49CE9F06AE3EBC448 /* NewsQualityTests.swift in Sources */,
+CA25F97F724768BE921B95EA /* EvolutionQualityTests.swift in Sources */,
+5C3BA98950A2CEC57F507B9D /* AIAssistantTests.swift in Sources */,
                 AB0300000000000000000150 /* SharedDataAndNewsTests.swift in Sources */,100000000000000000000121 /* AboLifeTests.swift in Sources */, DB471ACCD5038C06F4F3A339 /* CalendarPlannerTests.swift in Sources */); runOnlyForDeploymentPostprocessing = 0; };
+E70100000000000000000601 /* UI Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (C2A746A3F1B2A5F7DC227056,); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -539,7 +623,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -548,7 +632,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -561,7 +645,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -570,7 +654,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -583,12 +667,12 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
                 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", "@loader_path/../Frameworks");
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLifeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -601,12 +685,12 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
                 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", "@loader_path/../Frameworks");
-				MARKETING_VERSION = 0.4.0;
+				MARKETING_VERSION = 0.4.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLifeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -614,12 +698,15 @@
 			};
 			name = Release;
 		};
+E70100000000000000000801 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLife.UITests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TEST_TARGET_NAME = AboLife; }; name = Debug; };
+E70100000000000000000802 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; MACOSX_DEPLOYMENT_TARGET = 14.0; PRODUCT_BUNDLE_IDENTIFIER = com.private.AboLife.UITests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TEST_TARGET_NAME = AboLife; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
 		100000000000000000000700 /* Build configuration list for PBXProject "AboLife" */ = {isa = XCConfigurationList; buildConfigurations = (100000000000000000000801 /* Debug */, 100000000000000000000802 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		100000000000000000000701 /* Build configuration list for PBXNativeTarget "AboLife" */ = {isa = XCConfigurationList; buildConfigurations = (100000000000000000000803 /* Debug */, 100000000000000000000804 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 		100000000000000000000702 /* Build configuration list for PBXNativeTarget "AboLifeTests" */ = {isa = XCConfigurationList; buildConfigurations = (100000000000000000000805 /* Debug */, 100000000000000000000806 /* Release */); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+E70100000000000000000701 = {isa = XCConfigurationList; buildConfigurations = (E70100000000000000000801, E70100000000000000000802,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */

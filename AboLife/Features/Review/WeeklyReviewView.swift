@@ -1,10 +1,17 @@
 import SwiftUI
 
 struct WeeklyReviewView: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @StateObject private var store: WeeklyReviewStore
+    @State private var pendingDate: Date?
+    @State private var showUnsavedConfirmation = false
 
     init(database: AppDatabase?) {
         _store = StateObject(wrappedValue: WeeklyReviewStore(database: database))
+    }
+
+    init(store: WeeklyReviewStore) {
+        _store = StateObject(wrappedValue: store)
     }
 
     var body: some View {
@@ -19,47 +26,64 @@ struct WeeklyReviewView: View {
                     trendsSection
                     reviewForm
                 }
-                .padding(22)
+                .aboLifePage()
             }
         }
         .navigationTitle("")
         .onAppear {
-            store.reload()
+            if !store.hasUnsavedChanges { store.reload() }
+        }
+        .confirmationDialog("Ungespeicherter Wochenrückblick", isPresented: $showUnsavedConfirmation) {
+            Button("Speichern und fortfahren") {
+                if store.saveReview() { applyPendingNavigation() }
+            }
+            Button("Änderungen verwerfen", role: .destructive, action: applyPendingNavigation)
+            Button("Abbrechen", role: .cancel) { pendingDate = nil }
+        } message: {
+            Text("Deine Eingaben sind noch nicht gespeichert. Speichere sie vor dem Wechsel oder bleibe in dieser Woche.")
         }
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Wochenreview")
+                    .accessibilityIdentifier("page.weeklyReview")
                     .font(AboLifeTypography.dashboardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 Text(store.weekSubtitle)
                     .font(AboLifeTypography.body)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
             }
 
             Spacer()
 
+            AboLifePeriodControl(
+                title: store.weekSubtitle,
+                previousLabel: "Vorherige Reviewwoche", nextLabel: "Nächste Reviewwoche", canGoForward: !store.isCurrentWeek,
+                previous: { requestNavigation(to: store.dateMovingWeek(by: -1)) },
+                next: { requestNavigation(to: store.dateMovingWeek(by: 1)) }
+            )
+
             Button {
-                store.selectCurrentWeek()
+                requestNavigation(to: Date())
             } label: {
                 Image(systemName: "calendar")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .medium))
             }
             .buttonStyle(.bordered)
-            .help("Diese Woche")
+            .help("Diese Woche").accessibilityLabel("Diese Woche")
             .disabled(store.isCurrentWeek)
 
             Button {
-                store.reload()
+                requestNavigation(to: nil)
             } label: {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .medium))
             }
             .buttonStyle(.bordered)
-            .help("Neu laden")
+            .help("Neu laden").accessibilityLabel("Neu laden")
         }
     }
 
@@ -67,14 +91,14 @@ struct WeeklyReviewView: View {
         AboLifeCard(isProminent: true) {
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .center, spacing: 24) {
-                    reviewRing(size: 150, lineWidth: 13)
                     heroCopy
                     Spacer(minLength: 0)
+                    reviewRing(size: 152, lineWidth: 8)
                 }
 
-                VStack(alignment: .leading, spacing: 18) {
-                    reviewRing(size: 136, lineWidth: 12)
+                VStack(alignment: .leading, spacing: 16) {
                     heroCopy
+                    reviewRing(size: 136, lineWidth: 8)
                 }
             }
         }
@@ -84,9 +108,9 @@ struct WeeklyReviewView: View {
         CoreRingView(
             progress: store.habitSummary.progress,
             lineWidth: lineWidth,
-            tint: AboLifeColors.review,
+            tint: designStyle.colors.review,
             valueText: "\(Int(store.habitSummary.progress * 100))%",
-            labelText: "Habits"
+            labelText: "Gewohnheiten"
         )
         .frame(width: size, height: size)
     }
@@ -94,25 +118,25 @@ struct WeeklyReviewView: View {
     private var heroCopy: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
-                Label("Diese Woche", systemImage: "calendar.badge.clock")
+                Label(store.isCurrentWeek ? "Diese Woche" : "Ausgewählte Woche", systemImage: "calendar.badge.clock")
                     .font(AboLifeTypography.cardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 AboLifeGlassCapsule {
                     Text("\(store.reviewedDaysCount) Tage")
                         .font(AboLifeTypography.micro)
-                        .foregroundStyle(AboLifeColors.review)
+                        .foregroundStyle(designStyle.colors.review)
                         .monospacedDigit()
                 }
             }
 
-            Text(store.hasMeaningfulData ? "Review bereit" : "Noch wenig Daten")
+            Text(store.hasMeaningfulData ? "Deine Woche im Rückblick" : "Noch wenig Daten")
                 .font(AboLifeTypography.heroMessage)
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
 
             Text(store.statusMessage)
                 .font(AboLifeTypography.body)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let errorMessage = store.errorMessage {
@@ -126,11 +150,11 @@ struct WeeklyReviewView: View {
         HStack(alignment: .center, spacing: 10) {
             Label(message, systemImage: "exclamationmark.circle")
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.habits)
+                .foregroundStyle(designStyle.colors.habits)
                 .fixedSize(horizontal: false, vertical: true)
 
             Button {
-                store.reload()
+                requestNavigation(to: nil)
             } label: {
                 Label("Erneut versuchen", systemImage: "arrow.clockwise")
             }
@@ -145,7 +169,7 @@ struct WeeklyReviewView: View {
             ReviewSummaryCard(
                 title: "Training",
                 systemImage: "figure.strengthtraining.traditional",
-                tint: AboLifeColors.training,
+                tint: designStyle.colors.training,
                 primary: "\(store.trainingSummary.completedWorkouts) / \(store.weeklyWorkoutTarget) Workouts",
                 secondary: "\(store.trainingSummary.totalDurationMin) Min. diese Woche",
                 progress: store.trainingProgress
@@ -154,7 +178,7 @@ struct WeeklyReviewView: View {
             ReviewSummaryCard(
                 title: "Finanzen",
                 systemImage: "eurosign.circle",
-                tint: AboLifeColors.finance,
+                tint: designStyle.colors.finance,
                 primary: "\(store.formatAmount(store.financeSummary.spent)) diese Woche",
                 secondary: store.financeAnalysis,
                 progress: store.financeProgress
@@ -163,12 +187,28 @@ struct WeeklyReviewView: View {
             ReviewSummaryCard(
                 title: "Gewohnheiten",
                 systemImage: "checkmark.seal",
-                tint: AboLifeColors.habits,
+                tint: designStyle.colors.habits,
                 primary: "\(Int((store.habitSummary.progress * 100).rounded()))% Habit-Fortschritt",
                 secondary: "inkl. Trainieren aus Workouts",
                 progress: store.habitSummary.progress
             )
         }
+    }
+
+    private func requestNavigation(to date: Date?) {
+        pendingDate = date
+        if store.hasUnsavedChanges { showUnsavedConfirmation = true }
+        else { applyPendingNavigation() }
+    }
+
+    private func applyPendingNavigation() {
+        if let date = pendingDate {
+            let previousWeek = store.weekStartKey
+            store.selectedDate = date
+            if previousWeek == store.weekStartKey { store.reload() }
+        }
+        else { store.reload() }
+        pendingDate = nil
     }
 
     private var trendsSection: some View {
@@ -177,11 +217,11 @@ struct WeeklyReviewView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Trends dieser Woche")
                         .font(AboLifeTypography.sectionTitle)
-                        .foregroundStyle(AboLifeColors.primaryText)
+                        .foregroundStyle(designStyle.colors.primaryText)
 
                     Text("Deine wichtigsten Werte pro Tag")
                         .font(AboLifeTypography.body)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .foregroundStyle(designStyle.colors.secondaryText)
                 }
 
                 Spacer()
@@ -190,7 +230,7 @@ struct WeeklyReviewView: View {
                     AboLifeGlassCapsule {
                         Text("Noch keine Daten für diese Woche.")
                             .font(AboLifeTypography.micro)
-                            .foregroundStyle(AboLifeColors.secondaryText)
+                            .foregroundStyle(designStyle.colors.secondaryText)
                     }
                 }
             }
@@ -201,7 +241,7 @@ struct WeeklyReviewView: View {
                 WeeklyTrendCard(
                     title: "Ausgaben",
                     systemImage: "eurosign.circle",
-                    tint: AboLifeColors.finance,
+                    tint: designStyle.colors.finance,
                     primary: store.formatCurrencyAmount(store.trends.spendingByDay.totalValue),
                     secondary: "Diese Woche",
                     points: store.trends.spendingByDay
@@ -210,7 +250,7 @@ struct WeeklyReviewView: View {
                 WeeklyTrendCard(
                     title: "Training",
                     systemImage: "figure.strengthtraining.traditional",
-                    tint: AboLifeColors.training,
+                    tint: designStyle.colors.training,
                     primary: "\(Int(store.trends.trainingMinutesByDay.totalValue.rounded())) Min.",
                     secondary: "\(store.trainingSummary.completedWorkouts) Workouts",
                     points: store.trends.trainingMinutesByDay
@@ -219,7 +259,7 @@ struct WeeklyReviewView: View {
                 WeeklyTrendCard(
                     title: "Gewohnheiten",
                     systemImage: "checkmark.seal",
-                    tint: AboLifeColors.habits,
+                    tint: designStyle.colors.habits,
                     primary: "\(Int(store.trends.habitCompletionByDay.averageValue.rounded())) %",
                     secondary: "Wochenschnitt",
                     points: store.trends.habitCompletionByDay
@@ -234,7 +274,7 @@ struct WeeklyReviewView: View {
                 HStack {
                     Label("Persönlicher Rückblick", systemImage: "square.and.pencil")
                         .font(AboLifeTypography.cardTitle)
-                        .foregroundStyle(AboLifeColors.primaryText)
+                        .foregroundStyle(designStyle.colors.primaryText)
 
                     Spacer()
 
@@ -242,7 +282,7 @@ struct WeeklyReviewView: View {
                         AboLifeGlassCapsule {
                             Text(saveMessage)
                                 .font(AboLifeTypography.micro)
-                                .foregroundStyle(AboLifeColors.review)
+                                .foregroundStyle(designStyle.colors.review)
                         }
                     }
                 }
@@ -254,7 +294,7 @@ struct WeeklyReviewView: View {
                 HStack {
                     Text("Ein Review pro Woche wird lokal gespeichert.")
                         .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .foregroundStyle(designStyle.colors.secondaryText)
 
                     Spacer()
 
@@ -264,7 +304,7 @@ struct WeeklyReviewView: View {
                         Label("Speichern", systemImage: "checkmark")
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AboLifeColors.review)
+                    .tint(designStyle.colors.action)
                 }
             }
         }
@@ -272,6 +312,7 @@ struct WeeklyReviewView: View {
 }
 
 private struct ReviewSummaryCard: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let title: String
     let systemImage: String
     let tint: Color
@@ -289,18 +330,18 @@ private struct ReviewSummaryCard: View {
 
                     Text(title)
                         .font(AboLifeTypography.cardTitle)
-                        .foregroundStyle(AboLifeColors.primaryText)
+                        .foregroundStyle(designStyle.colors.primaryText)
                 }
 
                 Text(primary)
                     .font(AboLifeTypography.metric)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
                     .lineLimit(2)
                     .minimumScaleFactor(0.78)
 
                 Text(secondary)
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.82)
 
@@ -311,6 +352,7 @@ private struct ReviewSummaryCard: View {
 }
 
 private struct ReviewTextEditor: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let title: String
     @Binding var text: String
 
@@ -318,20 +360,21 @@ private struct ReviewTextEditor: View {
         VStack(alignment: .leading, spacing: 7) {
             Text(title)
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
 
             TextEditor(text: $text)
+                .accessibilityLabel(title)
                 .font(AboLifeTypography.body)
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
                 .scrollContentBackground(.hidden)
                 .frame(minHeight: 74)
                 .padding(8)
                 .background {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(AboLifeColors.quietFill)
+                        .fill(designStyle.colors.quietFill)
                         .overlay {
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 0.7)
+                                .strokeBorder(designStyle.colors.glassStrokeMuted, lineWidth: 0.7)
                         }
                 }
         }

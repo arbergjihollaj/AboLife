@@ -481,12 +481,12 @@ final class AboLifeTests: XCTestCase {
             AppSettingsRecord(caloriesTarget: 2200, proteinTargetG: 150, monthlyBudget: 900, defaultCurrency: "EUR")
         )
         try FinanceRepository(database: database).insert(
-            FinanceEntryRecord(title: "Rewe", amount: 90, category: "Lebensmittel")
+            FinanceEntryRecord(title: "Rewe", amount: 9, category: "Lebensmittel")
         )
 
         let store = DashboardStore(database: database)
 
-        XCTAssertEqual(store.snapshot.finance.spentThisMonth, 90, accuracy: 0.001)
+        XCTAssertEqual(store.snapshot.finance.spentThisMonth, 9, accuracy: 0.001)
         XCTAssertEqual(store.snapshot.finance.monthlyBudget, 900, accuracy: 0.001)
         XCTAssertGreaterThan(store.snapshot.finance.remainingToday, 0)
         XCTAssertTrue(store.snapshot.finance.message.contains("EUR"))

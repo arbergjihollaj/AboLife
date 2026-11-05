@@ -60,9 +60,13 @@ final class FinanceStore: ObservableObject {
 
     var dailyBudgetRemaining: Double {
         guard remainingBudget > 0 else { return 0 }
-        let todaySpent = entries.filter { calendar.isDate($0.occurredAt, inSameDayAs: Date()) && $0.amount > 0 }.reduce(0) { $0 + $1.amount }
+        let todaySpent = entries.filter { calendar.isDate($0.occurredAt, inSameDayAs: Date()) && $0.amount > 0 }.reduce(
+            0
+        ) { $0 + $1.amount }
         let reference = isCurrentMonth ? Date() : selectedDate
-        return Self.dailyBudgetRemaining(spent: monthlySpent, budget: monthlyBudget, date: reference, calendar: calendar, spentToday: isCurrentMonth ? todaySpent : 0)
+        return Self.dailyBudgetRemaining(
+            spent: monthlySpent, budget: monthlyBudget, date: reference, calendar: calendar,
+            spentToday: isCurrentMonth ? todaySpent : 0)
     }
 
     var budgetProgress: Double {
@@ -74,10 +78,12 @@ final class FinanceStore: ObservableObject {
     }
 
     var forecastSpend: Double {
-        max(monthPlan?.forecastSpend ?? monthlyTrend.projectedSpend, monthlySpent)
+        guard isCurrentMonth else { return monthlySpent }
+        return max(monthPlan?.forecastSpend ?? monthlyTrend.projectedSpend, monthlySpent)
     }
 
     var forecastMessage: String {
+        guard isCurrentMonth else { return "Abgeschlossener Monat · keine Hochrechnung." }
         guard let monthPlan else { return "Noch keine Prognose verfügbar." }
         if monthPlan.isForecastOverBudget {
             return "Prognose: \(formatAmount(monthPlan.forecastDelta)) über Monatsbudget."
@@ -127,6 +133,13 @@ final class FinanceStore: ObservableObject {
         return "Monat bleibt im Rahmen."
     }
 
+    func moveMonth(by offset: Int) {
+        guard let month = calendar.dateInterval(of: .month, for: selectedDate)?.start,
+            let date = calendar.date(byAdding: .month, value: offset, to: month)
+        else { return }
+        selectedDate = date
+    }
+
     func selectCurrentMonth() {
         selectedDate = Date()
         reload()
@@ -150,31 +163,34 @@ final class FinanceStore: ObservableObject {
             let settings = try SettingsRepository(database: database).fetchDefault() ?? SeedData.defaultSettings
             let repository = FinanceRepository(database: database)
             let monthKey = FinanceRepository.monthKey(for: selectedDate, calendar: calendar)
+            let analysisDate = DateIntervals.analysisReference(forMonthContaining: selectedDate, calendar: calendar)
             monthlyBudget = settings.monthlyBudget
             currency = settings.defaultCurrency
             categories = try repository.fetchCategories(includeInactive: true)
-            activeCategoryNames = try repository.fetchActiveCategoryNames()
+            activeCategoryNames = FinanceCategoryCatalog.mergedCategoryNames(
+                primary: categories.filter(\.isActive).map(\.name), fallback: FinanceCategoryCatalog.expenseCategories)
             visibleCategoryNames = try repository.fetchCategoryNamesIncludingLegacy()
             entries = try repository.fetchEntries(forMonthContaining: selectedDate, calendar: calendar)
             categoryBudgets = try repository.fetchCategoryBudgets(monthKey: monthKey)
             fixedCosts = try repository.fetchFixedCosts()
             savingsGoals = try repository.fetchSavingsGoals()
-            categorySummaries = try repository.categorySummaries(forMonthContaining: selectedDate, calendar: calendar)
-            categoryTrends = try repository.categoryTrends(forDate: selectedDate, calendar: calendar)
-            monthlyTrend = try repository.monthlyTrend(forDate: selectedDate, calendar: calendar)
+            monthlyTrend = try repository.monthlyTrend(forDate: analysisDate, calendar: calendar)
             monthlyAnalysis = try repository.monthlyAnalysis(
-                forDate: selectedDate,
+                forDate: analysisDate,
                 monthlyBudget: monthlyBudget,
                 currency: currency,
                 calendar: calendar
             )
             monthPlan = try repository.monthPlan(
-                for: selectedDate,
+                for: analysisDate,
                 monthlyBudget: monthlyBudget,
                 currency: currency,
                 calendar: calendar
             )
-            weeklySummary = try repository.weeklySummary(forDate: selectedDate, weekStartsOn: settings.weekStartsOn, calendar: calendar)
+            categoryTrends = monthlyAnalysis.categoryTrends
+            categorySummaries = monthPlan?.categorySummaries ?? []
+            weeklySummary = try repository.weeklySummary(
+                forDate: selectedDate, weekStartsOn: settings.weekStartsOn, calendar: calendar)
             errorMessage = nil
         } catch {
             errorMessage = "Finanzdaten konnten nicht geladen werden."
@@ -255,9 +271,14 @@ final class FinanceStore: ObservableObject {
         }
     }
 
-    func saveCategoryBudget(category: String, amount: Double) {
-        guard let database else { return }
+    @discardableResult
+    func saveCategoryBudget(category: String, amount: Double) -> Bool {
+        guard let database else { return false }
 
+        guard amount.isFinite, amount > 0, !category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Bitte Kategorie und einen positiven Budgetbetrag eingeben."
+            return false
+        }
         do {
             try FinanceRepository(database: database).upsertCategoryBudget(
                 monthKey: FinanceRepository.monthKey(for: selectedDate, calendar: calendar),
@@ -266,8 +287,10 @@ final class FinanceStore: ObservableObject {
                 currency: currency
             )
             reload()
+            return true
         } catch {
             errorMessage = "Kategorie-Budget konnte nicht gespeichert werden."
+            return false
         }
     }
 
@@ -282,9 +305,14 @@ final class FinanceStore: ObservableObject {
         }
     }
 
-    func saveFixedCost(title: String, amount: Double, category: String, dueDay: Int) {
-        guard let database else { return }
+    @discardableResult
+    func saveFixedCost(title: String, amount: Double, category: String, dueDay: Int) -> Bool {
+        guard let database else { return false }
 
+        guard amount.isFinite, amount > 0, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Bitte Titel und einen positiven Fixkostenbetrag eingeben."
+            return false
+        }
         do {
             try FinanceRepository(database: database).upsertFixedCost(
                 FinanceFixedCostRecord(
@@ -296,8 +324,10 @@ final class FinanceStore: ObservableObject {
                 )
             )
             reload()
+            return true
         } catch {
             errorMessage = "Fixkosten konnten nicht gespeichert werden."
+            return false
         }
     }
 
@@ -325,9 +355,16 @@ final class FinanceStore: ObservableObject {
         }
     }
 
-    func saveSavingsGoal(title: String, targetAmount: Double, currentAmount: Double) {
-        guard let database else { return }
+    @discardableResult
+    func saveSavingsGoal(title: String, targetAmount: Double, currentAmount: Double) -> Bool {
+        guard let database else { return false }
 
+        guard targetAmount.isFinite, targetAmount > 0, currentAmount.isFinite, currentAmount >= 0,
+            !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            errorMessage = "Bitte Zielname, positives Sparziel und einen gültigen aktuellen Betrag eingeben."
+            return false
+        }
         do {
             try FinanceRepository(database: database).upsertSavingsGoal(
                 FinanceSavingsGoalRecord(
@@ -338,8 +375,10 @@ final class FinanceStore: ObservableObject {
                 )
             )
             reload()
+            return true
         } catch {
             errorMessage = "Sparziel konnte nicht gespeichert werden."
+            return false
         }
     }
 
@@ -394,9 +433,12 @@ final class FinanceStore: ObservableObject {
         return min(max(spent / budget, 0), 1)
     }
 
-    static func dailyBudgetRemaining(spent: Double, budget: Double, date: Date = Date(), calendar: Calendar = .current, spentToday: Double = 0) -> Double {
+    static func dailyBudgetRemaining(
+        spent: Double, budget: Double, date: Date = Date(), calendar: Calendar = .current, spentToday: Double = 0
+    ) -> Double {
         let today = max(spentToday, 0)
-        let allocation = max(budget - spent + today, 0) / Double(max(daysRemainingInMonth(for: date, calendar: calendar), 1))
+        let allocation =
+            max(budget - spent + today, 0) / Double(max(daysRemainingInMonth(for: date, calendar: calendar), 1))
         return max(allocation - today, 0)
     }
 
@@ -407,7 +449,7 @@ final class FinanceStore: ObservableObject {
 
     private static func daysRemainingInMonth(for date: Date, calendar: Calendar = .current) -> Int {
         guard let interval = calendar.dateInterval(of: .month, for: date) else { return 1 }
-        let referenceDate = calendar.isDate(date, equalTo: Date(), toGranularity: .month) ? Date() : interval.start
+        let referenceDate = date
         let start = calendar.startOfDay(for: referenceDate)
         let end = calendar.date(byAdding: .day, value: -1, to: interval.end) ?? interval.end
         let days = calendar.dateComponents([.day], from: start, to: end).day ?? 0

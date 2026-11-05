@@ -1,0 +1,30 @@
+# swift-format owns whitespace and wrapping. SwiftLint checks structural problems.
+included:
+  - AboLife
+  - AboLifeTests
+excluded:
+  - work
+  - graphify-out
+  - .agents
+only_rules:
+  - force_cast
+  - force_try
+  - unused_optional_binding
+  - duplicate_imports
+  - cyclomatic_complexity
+  - function_body_length
+  - type_body_length
+  - file_length
+cyclomatic_complexity:
+  warning: 18
+  error: 35
+  ignores_case_statements: true
+function_body_length:
+  warning: 100
+  error: 200
+type_body_length:
+  warning: 650
+  error: 1200
+file_length:
+  warning: 900
+  error: 2600

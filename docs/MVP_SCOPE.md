@@ -15,3 +15,7 @@ Docker-Build für Node und denselben Swift-Planer wie am Mac. Private HTTPS-Einr
 ## Grenzen
 
 Keine Mail-, HealthKit-, Banking- oder KI-Auswertungsintegration; keine native iPhone-App. Individuelle Satzwerte, ICS-Import und detaillierte Lernblockverschiebungen bleiben am Mac. Ernährung und Telegram sind entfernt; historische lokale Datenmodelle bleiben zur Sicherungskompatibilität erhalten.
+
+## Freigegebene lokale KI-Erweiterung
+
+Enthalten: BonsaiBar-Connector/Keychain, KI-Chat/Historie, kleiner Dashboard-/Toolbar-Zugang, Kontextvorschau und leere Standardfreigaben, deterministische Finanzwerte, bestehender Lernplaner, tatsächliche RSS-Schlagzeilen sowie typisierte bestätigte Aufgaben-/Lernblock-/Review-/Analyseaktionen. Nicht aktiviert: Cloud-Inferenz, Modell in AboLife, Mail/HealthKit, freie SQL-/Shell-Tools oder Remoteinferenz.

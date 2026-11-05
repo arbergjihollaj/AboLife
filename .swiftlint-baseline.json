@@ -1,0 +1,362 @@
+[
+  {
+    "text": "    func make(purpose: AIPurpose, granted: Set<AIScope>, news: [NewsArticle] = [], now: Date = Date()) throws -> AIContextSnapshot {",
+    "violation": {
+      "severity": "warning",
+      "ruleName": "Function Body Length",
+      "reason": "Function body should span 100 lines or less excluding comments and whitespace: currently spans 111 lines",
+      "location": {
+        "character": 5,
+        "line": 87,
+        "file": "AboLife/Features/AI/AIContextBuilder.swift"
+      },
+      "ruleIdentifier": "function_body_length",
+      "ruleDescription": "Function bodies should not span too many lines"
+    }
+  },
+  {
+    "text": "    static func parse(data: Data, sourceID: String, sourceName: String, fallbackZone: TimeZone = .current, kind: PlannerEventKind = .university) throws -> CalendarImportDraft {",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Cyclomatic Complexity",
+      "reason": "Function should have complexity 18 or less; currently complexity is 38",
+      "location": {
+        "character": 5,
+        "line": 71,
+        "file": "AboLife/Features/Calendar/ICSImporter.swift"
+      },
+      "ruleIdentifier": "cyclomatic_complexity",
+      "ruleDescription": "Complexity of function bodies should be limited."
+    }
+  },
+  {
+    "text": "    static func availability(events: [PlannerEvent], preferences p: PlannerPreferences, horizon: DateInterval) -> (windows: [StudyFreeWindow], issues: [PlannerIssue], journeys: [PlannerJourney], universityDays: Set<String>) {",
+    "violation": {
+      "severity": "warning",
+      "ruleName": "Cyclomatic Complexity",
+      "reason": "Function should have complexity 18 or less; currently complexity is 21",
+      "location": {
+        "character": 5,
+        "line": 48,
+        "file": "AboLife/Features/Calendar/StudyPlannerEngine.swift"
+      },
+      "ruleIdentifier": "cyclomatic_complexity",
+      "ruleDescription": "Complexity of function bodies should be limited."
+    }
+  },
+  {
+    "text": "    static func availability(events: [PlannerEvent], preferences p: PlannerPreferences, horizon: DateInterval) -> (windows: [StudyFreeWindow], issues: [PlannerIssue], journeys: [PlannerJourney], universityDays: Set<String>) {",
+    "violation": {
+      "severity": "warning",
+      "ruleName": "Function Body Length",
+      "reason": "Function body should span 100 lines or less excluding comments and whitespace: currently spans 111 lines",
+      "location": {
+        "character": 12,
+        "line": 48,
+        "file": "AboLife/Features/Calendar/StudyPlannerEngine.swift"
+      },
+      "ruleIdentifier": "function_body_length",
+      "ruleDescription": "Function bodies should not span too many lines"
+    }
+  },
+  {
+    "text": "    static func plan(_ input: CalendarWorkspace, now: Date, days: Int = 14) -> StudyPlanResult {",
+    "violation": {
+      "severity": "warning",
+      "ruleName": "Cyclomatic Complexity",
+      "reason": "Function should have complexity 18 or less; currently complexity is 23",
+      "location": {
+        "character": 5,
+        "line": 173,
+        "file": "AboLife/Features/Calendar/StudyPlannerEngine.swift"
+      },
+      "ruleIdentifier": "cyclomatic_complexity",
+      "ruleDescription": "Complexity of function bodies should be limited."
+    }
+  },
+  {
+    "text": "struct BackupService {",
+    "violation": {
+      "severity": "warning",
+      "ruleName": "Type Body Length",
+      "reason": "Struct body should span 650 lines or less excluding comments and whitespace: currently spans 1153 lines",
+      "location": {
+        "character": 1,
+        "line": 196,
+        "file": "AboLife/Persistence/BackupService.swift"
+      },
+      "ruleIdentifier": "type_body_length",
+      "ruleDescription": "Type bodies should not span too many lines"
+    }
+  },
+  {
+    "text": "    func createCSVExport() throws -> URL {",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Function Body Length",
+      "reason": "Function body should span 200 lines or less excluding comments and whitespace: currently spans 234 lines",
+      "location": {
+        "character": 5,
+        "line": 276,
+        "file": "AboLife/Persistence/BackupService.swift"
+      },
+      "ruleIdentifier": "function_body_length",
+      "ruleDescription": "Function bodies should not span too many lines"
+    }
+  },
+  {
+    "text": "}",
+    "violation": {
+      "severity": "warning",
+      "ruleName": "File Length",
+      "reason": "File should contain 900 lines or less: currently contains 1499",
+      "location": {
+        "character": 1,
+        "line": 1499,
+        "file": "AboLife/Persistence/BackupService.swift"
+      },
+      "ruleIdentifier": "file_length",
+      "ruleDescription": "Files should not span too many lines."
+    }
+  },
+  {
+    "text": "}",
+    "violation": {
+      "severity": "warning",
+      "ruleName": "File Length",
+      "reason": "File should contain 900 lines or less: currently contains 950",
+      "location": {
+        "character": 1,
+        "line": 950,
+        "file": "AboLife/Persistence/Repositories/FinanceRepository.swift"
+      },
+      "ruleIdentifier": "file_length",
+      "ruleDescription": "Files should not span too many lines."
+    }
+  },
+  {
+    "text": "                    return normalized.sorted { (($0 as! [String: Any])[\"id\"] as! String) < (($1 as! [String: Any])[\"id\"] as! String) }",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 53,
+        "line": 27,
+        "file": "AboLife/Sync/SharedDataService.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "                    return normalized.sorted { (($0 as! [String: Any])[\"id\"] as! String) < (($1 as! [String: Any])[\"id\"] as! String) }",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 78,
+        "line": 27,
+        "file": "AboLife/Sync/SharedDataService.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "                    return normalized.sorted { (($0 as! [String: Any])[\"id\"] as! String) < (($1 as! [String: Any])[\"id\"] as! String) }",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 97,
+        "line": 27,
+        "file": "AboLife/Sync/SharedDataService.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "                    return normalized.sorted { (($0 as! [String: Any])[\"id\"] as! String) < (($1 as! [String: Any])[\"id\"] as! String) }",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 122,
+        "line": 27,
+        "file": "AboLife/Sync/SharedDataService.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "                for row in rows { let id = row[\"id\"] as! String; guard result[id] == nil else { throw SharedDataError.invalidDocument }; result[id] = row }",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 54,
+        "line": 317,
+        "file": "AboLife/Sync/SharedDataService.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "final class AboLifeTests: XCTestCase {",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Type Body Length",
+      "reason": "Class body should span 1200 lines or less excluding comments and whitespace: currently spans 1916 lines",
+      "location": {
+        "character": 7,
+        "line": 6,
+        "file": "AboLifeTests/AboLifeTests.swift"
+      },
+      "ruleIdentifier": "type_body_length",
+      "ruleDescription": "Type bodies should not span too many lines"
+    }
+  },
+  {
+    "text": "        let manifest = try JSONSerialization.jsonObject(with: manifestData) as! [String: Any]",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 77,
+        "line": 2140,
+        "file": "AboLifeTests/AboLifeTests.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "        let files = manifest[\"files\"] as! [[String: Any]]",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 39,
+        "line": 2178,
+        "file": "AboLifeTests/AboLifeTests.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "        let charts = manifest[\"charts\"] as! [[String: Any]]",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 41,
+        "line": 2184,
+        "file": "AboLifeTests/AboLifeTests.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "        let excluded = manifest[\"excludedSensitiveFields\"] as! [String]",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 60,
+        "line": 2186,
+        "file": "AboLifeTests/AboLifeTests.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "}",
+    "violation": {
+      "severity": "warning",
+      "ruleName": "File Length",
+      "reason": "File should contain 900 lines or less: currently contains 2436",
+      "location": {
+        "character": 1,
+        "line": 2436,
+        "file": "AboLifeTests/AboLifeTests.swift"
+      },
+      "ruleIdentifier": "file_length",
+      "ruleDescription": "Files should not span too many lines."
+    }
+  },
+  {
+    "text": "        let object = try JSONSerialization.jsonObject(with: Data(contentsOf: json)) as! [String: Any]",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 85,
+        "line": 306,
+        "file": "AboLifeTests/CalendarPlannerTests.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "        let exported = try JSONSerialization.jsonObject(with: Data(contentsOf: export)) as! [String: Any]",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 89,
+        "line": 16,
+        "file": "AboLifeTests/SharedDataAndNewsTests.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "        var object = try JSONSerialization.jsonObject(with: Data(contentsOf: exported)) as! [String: Any]",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 89,
+        "line": 169,
+        "file": "AboLifeTests/SharedDataAndNewsTests.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  },
+  {
+    "text": "        let rows = object[\"financeEntries\"] as! [[String: Any]]",
+    "violation": {
+      "severity": "error",
+      "ruleName": "Force Cast",
+      "reason": "Force casts should be avoided",
+      "location": {
+        "character": 45,
+        "line": 170,
+        "file": "AboLifeTests/SharedDataAndNewsTests.swift"
+      },
+      "ruleIdentifier": "force_cast",
+      "ruleDescription": "Force casts should be avoided"
+    }
+  }
+]

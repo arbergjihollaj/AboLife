@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.aboLifeStyle) private var designStyle
+    @AppStorage("abolife.appearance") private var appearance = AboLifeAppearance.system.rawValue
+    @EnvironmentObject private var ai: AIAssistantStore
     @EnvironmentObject private var sync: SharedSyncCoordinator
     @State private var conflictResolution: String?
     @StateObject private var store: SettingsStore
@@ -16,16 +19,37 @@ struct SettingsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     header
+                    DesignPreferencesView()
+                    settingsCard(title: "Darstellung", systemImage: "circle.lefthalf.filled", tint: designStyle.colors.review) {
+                        Picker("Erscheinungsbild", selection: $appearance) {
+                            ForEach(AboLifeAppearance.allCases, id: \.rawValue) { mode in
+                                Text(mode.title).tag(mode.rawValue)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        Text("System übernimmt die macOS-Einstellung. Animationen berücksichtigen „Bewegung reduzieren“.")
+                            .font(AboLifeTypography.caption)
+                            .foregroundStyle(designStyle.colors.secondaryText)
+                    }
                     weightCard
                     trainingCard
                     financeCard
                     syncCard
+                    settingsCard(title: "AboLife AI", systemImage: "bubble.left.and.text.bubble.right", tint: designStyle.colors.accentGreen) {
+                        Text("Lokale Inferenz über BonsaiBar. Persönliche Daten werden pro Anfrage ausdrücklich freigegeben.").font(.caption).foregroundStyle(.secondary)
+                        Text(ai.status).font(.caption)
+                        HStack {
+                            Button("BonsaiBar verbinden …") { ai.importConnection() }
+                            if ai.connector != nil { Button("Verbindung trennen") { ai.disconnect() } }
+                        }
+                    }
                     generalCard
                     backupExportCard
                     actions
                 }
-                .padding(22)
                 .frame(maxWidth: 920, alignment: .leading)
+                .padding(24)
+                .frame(maxWidth: .infinity)
             }
         }
         .navigationTitle("Einstellungen")
@@ -39,7 +63,7 @@ struct SettingsView: View {
     }
 
     private var syncCard: some View {
-        settingsCard(title: "Mac & Web verbinden", systemImage: "arrow.triangle.2.circlepath", tint: AboLifeColors.review) {
+        settingsCard(title: "Mac & Web verbinden", systemImage: "arrow.triangle.2.circlepath", tint: designStyle.colors.review) {
             Text("Dein Homelab speichert den gemeinsamen Stand. Mac und iPhone verbinden sich über dieselbe private HTTPS-Adresse; auf beiden Geräten muss Tailscale aktiv sein.")
                 .font(.caption).foregroundStyle(.secondary)
             TextField("Serveradresse (https://…)", text: $sync.serverAddress)
@@ -51,7 +75,7 @@ struct SettingsView: View {
                 Text("Zuletzt abgeglichen: \(last.formatted(date: .abbreviated, time: .shortened))").font(.caption).foregroundStyle(.secondary)
             }
             if let url = URL(string: sync.serverAddress), url.scheme == "https" {
-                Link("Mobile Weboberfläche öffnen ↗", destination: url)
+                Link("Weboberfläche öffnen", destination: url)
             }
             if sync.hasConflict {
                 Text("Beide Geräte haben Änderungen. Vor dem Ersetzen wird eine lokale Sicherung erstellt; der Server behält frühere Versionen.").font(.caption)
@@ -70,18 +94,18 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Einstellungen")
                 .font(AboLifeTypography.dashboardTitle)
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
 
-            Text("Persönliche Ziele und lokale App-Werte")
+            Text("Ziele, Geräte und Datensicherung")
                 .font(AboLifeTypography.body)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
         }
     }
 
 
 
     private var trainingCard: some View {
-        settingsCard(title: "Trainingsziel", systemImage: "figure.strengthtraining.traditional", tint: AboLifeColors.training) {
+        settingsCard(title: "Trainingsziel", systemImage: "figure.strengthtraining.traditional", tint: designStyle.colors.training) {
             stepperRow(
                 title: "Workouts pro Woche",
                 value: $store.weeklyWorkoutTarget,
@@ -93,7 +117,7 @@ struct SettingsView: View {
     }
 
     private var weightCard: some View {
-        settingsCard(title: "Gewichtsziel", systemImage: "scalemass", tint: AboLifeColors.review) {
+        settingsCard(title: "Gewichtsziel", systemImage: "scalemass", tint: designStyle.colors.review) {
             weightStepperRow(
                 title: "Zielgewicht",
                 value: $store.targetWeightKg,
@@ -112,13 +136,13 @@ struct SettingsView: View {
 
             Text("0 kg bedeutet: noch nicht gesetzt. Der Zielkorridor bleibt optional.")
                 .font(AboLifeTypography.micro)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var financeCard: some View {
-        settingsCard(title: "Finanzziele", systemImage: "eurosign.circle", tint: AboLifeColors.finance) {
+        settingsCard(title: "Finanzziele", systemImage: "eurosign.circle", tint: designStyle.colors.finance) {
             Stepper(value: $store.monthlyBudget, in: 0...100_000, step: 50) {
                 valueRow(title: "Monatsbudget", value: "\(Int(store.monthlyBudget.rounded())) \(store.currencyCode)")
             }
@@ -126,7 +150,7 @@ struct SettingsView: View {
             HStack {
                 Text("Währung")
                     .font(AboLifeTypography.body)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 Spacer()
 
@@ -140,41 +164,41 @@ struct SettingsView: View {
     }
 
     private var generalCard: some View {
-        settingsCard(title: "Allgemein", systemImage: "calendar", tint: AboLifeColors.review) {
+        settingsCard(title: "Allgemein", systemImage: "calendar", tint: designStyle.colors.review) {
             HStack {
                 Text("Woche startet am")
                     .font(AboLifeTypography.body)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 Spacer()
 
                 Text(store.weekStartsOnLabel)
                     .font(AboLifeTypography.caption.weight(.semibold))
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
             }
 
             Divider().opacity(0.18)
 
             Label("Deine Mac-Daten werden lokal gespeichert. Eine eingerichtete Webverbindung gleicht die aktiven Bereiche mit deinem Server ab.", systemImage: "internaldrive")
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
         }
     }
 
     private var backupExportCard: some View {
-        settingsCard(title: "Backup & Export", systemImage: "externaldrive", tint: AboLifeColors.review) {
+        settingsCard(title: "Backup & Export", systemImage: "externaldrive", tint: designStyle.colors.review) {
             VStack(alignment: .leading, spacing: 8) {
                 Label("Deine Mac-Daten werden lokal gespeichert. Eine eingerichtete Webverbindung gleicht die aktiven Bereiche mit deinem Server ab.", systemImage: "lock")
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
 
                 Label("Du kannst ein SQLite-Backup, einen JSON-Export oder ein CSV-Backup mit Offline-Report erstellen.", systemImage: "doc.text")
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
 
                 Label("JSON, SQLite und neue CSV-Backup-Ordner lassen sich nach Vorprüfung wiederherstellen. Vor dem Ersetzen wird der aktuelle lokale Stand gesichert.", systemImage: "arrow.down.doc")
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
             }
 
             Divider().opacity(0.18)
@@ -248,16 +272,16 @@ struct SettingsView: View {
                 if let errorMessage = store.errorMessage {
                     Text(errorMessage)
                         .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.habits)
+                        .foregroundStyle(designStyle.colors.habits)
                         .fixedSize(horizontal: false, vertical: true)
                 } else if let statusMessage = store.statusMessage {
                     Text(statusMessage)
                         .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.review)
+                        .foregroundStyle(designStyle.colors.review)
                 } else {
                     Text("Änderungen werden lokal gespeichert.")
                         .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .foregroundStyle(designStyle.colors.secondaryText)
                 }
 
                 Spacer()
@@ -275,7 +299,7 @@ struct SettingsView: View {
                     Label("Speichern", systemImage: "checkmark")
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AboLifeColors.review)
+                .tint(designStyle.colors.action)
             }
         }
     }
@@ -285,18 +309,18 @@ struct SettingsView: View {
         if let backupErrorMessage = store.backupErrorMessage {
             Label(backupErrorMessage, systemImage: "exclamationmark.circle")
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.habits)
+                .foregroundStyle(designStyle.colors.habits)
                 .fixedSize(horizontal: false, vertical: true)
         } else if let backupStatusMessage = store.backupStatusMessage {
             VStack(alignment: .leading, spacing: 4) {
                 Label(backupStatusMessage, systemImage: "checkmark.circle")
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(AboLifeColors.review)
+                    .foregroundStyle(designStyle.colors.review)
 
                 if let lastExportPath = store.lastExportPath {
                     Text(lastExportPath)
                         .font(AboLifeTypography.micro)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .foregroundStyle(designStyle.colors.secondaryText)
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
@@ -305,7 +329,7 @@ struct SettingsView: View {
         } else {
             Text("Noch kein Backup oder Export erstellt.")
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
         }
     }
 
@@ -319,7 +343,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Label(title, systemImage: systemImage)
                     .font(AboLifeTypography.cardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 VStack(spacing: 12) {
                     content()
@@ -353,13 +377,13 @@ struct SettingsView: View {
         HStack {
             Text(title)
                 .font(AboLifeTypography.body)
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
 
             Spacer()
 
             Text(value)
                 .font(AboLifeTypography.caption.weight(.semibold))
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
                 .monospacedDigit()
         }
     }
@@ -372,6 +396,9 @@ struct SettingsView: View {
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
         SettingsView(database: nil)
+            .environmentObject(AboLifeDesignStore(defaults: UserDefaults(suiteName: "AboLife.SettingsPreview")!))
+            .environmentObject(AIAssistantStore.previewStore())
+            .environmentObject(SharedSyncCoordinator(database: nil))
             .environmentObject(SharedSyncCoordinator(database: nil))
             .frame(width: 980, height: 760)
     }

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct WeeklyTrendCard: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let title: String
     let systemImage: String
     let tint: Color
@@ -18,26 +19,26 @@ struct WeeklyTrendCard: View {
                 HStack(spacing: 8) {
                     Image(systemName: systemImage)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(tint)
+                        .foregroundStyle(designStyle.colors.secondaryText)
                         .frame(width: 18)
 
                     Text(title)
                         .font(AboLifeTypography.cardTitle)
-                        .foregroundStyle(AboLifeColors.primaryText)
+                        .foregroundStyle(designStyle.colors.primaryText)
                         .lineLimit(1)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(primary)
                         .font(AboLifeTypography.metric)
-                        .foregroundStyle(AboLifeColors.primaryText)
+                        .foregroundStyle(designStyle.colors.primaryText)
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.72)
 
                     Text(secondary)
                         .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .foregroundStyle(designStyle.colors.secondaryText)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
@@ -47,9 +48,9 @@ struct WeeklyTrendCard: View {
 
                 HStack {
                     ForEach(points) { point in
-                        Text(point.weekdayLabel.prefix(2).uppercased())
+                        Text(point.weekdayLabel.prefix(2))
                             .font(AboLifeTypography.micro)
-                            .foregroundStyle(AboLifeColors.tertiaryText)
+                            .foregroundStyle(designStyle.colors.tertiaryText)
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -61,6 +62,7 @@ struct WeeklyTrendCard: View {
 }
 
 private struct WeeklySparklineView: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let values: [Double]
     let tint: Color
 
@@ -71,7 +73,7 @@ private struct WeeklySparklineView: View {
                     .frame(height: 42)
             } else {
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
-                    .fill(AboLifeColors.glassStrokeMuted.opacity(0.55))
+                    .fill(designStyle.colors.glassStrokeMuted.opacity(0.55))
                     .frame(height: 2)
                     .frame(maxHeight: .infinity)
             }

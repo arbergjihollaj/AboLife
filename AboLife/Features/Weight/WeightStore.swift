@@ -53,11 +53,18 @@ final class WeightStore: ObservableObject {
     }
 
     var sevenDayEntries: [WeightEntryRecord] {
-        Array(entries.prefix(7)).sorted { $0.date < $1.date }
+        entries(inLastDays: 7)
     }
 
     var thirtyDayEntries: [WeightEntryRecord] {
-        Array(entries.prefix(30)).sorted { $0.date < $1.date }
+        entries(inLastDays: 30)
+    }
+
+    private func entries(inLastDays days: Int) -> [WeightEntryRecord] {
+        let interval = DateIntervals.trailingDays(days, endingAt: selectedDate, calendar: calendar)
+        let start = DateIntervals.dayKey(for: interval.start, calendar: calendar)
+        let end = DateIntervals.dayKey(for: interval.end, calendar: calendar)
+        return entries.filter { $0.date >= start && $0.date < end }.sorted { $0.date < $1.date }
     }
 
     var dateSubtitle: String {

@@ -1,20 +1,22 @@
 import SwiftUI
 
 private struct PlannerEditorFrame<Content: View>: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let title: String
     let content: Content
     init(_ title: String, @ViewBuilder content: () -> Content) { self.title = title; self.content = content() }
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(title).font(AboLifeTypography.sectionTitle).foregroundStyle(AboLifeColors.primaryText)
+            Text(title).font(AboLifeTypography.sectionTitle).foregroundStyle(designStyle.colors.primaryText)
             content
         }
-        .padding(22).frame(width: 580)
-        .background(AboLifeColors.premiumBackgroundGradient).preferredColorScheme(.dark)
+        .padding(24).frame(width: 580)
+        .background(designStyle.colors.pageBackground)
     }
 }
 
 struct PlannerEventEditor: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @Environment(\.dismiss) private var dismiss
     @State var event: PlannerEvent
     @ObservedObject var store: CalendarPlannerStore
@@ -46,11 +48,11 @@ struct PlannerEventEditor: View {
                     if hasEnd { DatePicker("Letzter Tag", selection: $semesterEnd, displayedComponents: .date) }
                 }
             }.formStyle(.grouped).frame(height: event.weekly ? 400 : 270)
-            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(AboLifeColors.habits) }
+            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(designStyle.colors.habits) }
             HStack {
                 Button("Abbrechen") { dismiss() }.keyboardShortcut(.cancelAction)
                 Spacer()
-                Button("Speichern") { save() }.buttonStyle(.borderedProminent).tint(AboLifeColors.review).keyboardShortcut(.defaultAction)
+                Button("Speichern") { save() }.buttonStyle(.borderedProminent).tint(designStyle.colors.action).keyboardShortcut(.defaultAction)
             }
         }
         .onAppear {
@@ -86,6 +88,7 @@ struct PlannerEventEditor: View {
 }
 
 struct PlannerTopicEditor: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @Environment(\.dismiss) private var dismiss
     @State var topic: StudyTopic
     @ObservedObject var store: CalendarPlannerStore
@@ -101,8 +104,8 @@ struct PlannerTopicEditor: View {
                 Toggle("Prüfungstermin berücksichtigen", isOn: $hasExam)
                 if hasExam { DatePicker("Prüfung", selection: $exam, displayedComponents: .date) }
             }.formStyle(.grouped).frame(height: 270)
-            Text("Beginne mit einem überschaubaren Thema. Nach Bewertungen passt sich die Fälligkeit an; erledigte Einheiten helfen, die benötigte Dauer besser einzuschätzen.").font(.caption).foregroundStyle(AboLifeColors.secondaryText)
-            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(AboLifeColors.habits) }
+            Text("Beginne mit einem überschaubaren Thema. Nach Bewertungen passt sich die Fälligkeit an; erledigte Einheiten helfen, die benötigte Dauer besser einzuschätzen.").font(.caption).foregroundStyle(designStyle.colors.secondaryText)
+            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(designStyle.colors.habits) }
             HStack {
                 Button("Abbrechen") { dismiss() }.keyboardShortcut(.cancelAction)
                 Spacer()
@@ -110,13 +113,14 @@ struct PlannerTopicEditor: View {
                     var value = topic
                     value.examDate = hasExam ? store.workspace.preferences.calendar.date(byAdding: .second, value: -1, to: store.workspace.preferences.calendar.date(byAdding: .day, value: 1, to: store.workspace.preferences.calendar.startOfDay(for: exam))!) : nil
                     if store.saveTopic(value) { dismiss() }
-                }.buttonStyle(.borderedProminent).tint(AboLifeColors.accentGreen).keyboardShortcut(.defaultAction)
+                }.buttonStyle(.borderedProminent).tint(designStyle.colors.action).keyboardShortcut(.defaultAction)
             }
         }.onAppear { hasExam = topic.examDate != nil; exam = topic.examDate ?? exam }
     }
 }
 
 struct PlannerReviewSheet: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @Environment(\.dismiss) private var dismiss
     let session: StudySession
     @ObservedObject var store: CalendarPlannerStore
@@ -125,21 +129,22 @@ struct PlannerReviewSheet: View {
     private var automaticPhase: ModuleStudyPhase? { store.workspace.topics.first { $0.id == session.topicID }?.automaticTask?.phase }
     var body: some View {
         PlannerEditorFrame(automaticPhase != nil ? "Lernphase abschließen" : "Wiederholung abschließen") {
-            Text(automaticPhase == .preparation ? "Wie gut fühlst du dich auf die Veranstaltung vorbereitet?" : "Wie gut konntest du den Stoff bearbeiten bzw. aus dem Gedächtnis abrufen?").foregroundStyle(AboLifeColors.primaryText)
+            Text(automaticPhase == .preparation ? "Wie gut fühlst du dich auf die Veranstaltung vorbereitet?" : "Wie gut konntest du den Stoff bearbeiten bzw. aus dem Gedächtnis abrufen?").foregroundStyle(designStyle.colors.primaryText)
             Picker("Abruf", selection: $rating) { ForEach(StudyRating.allCases) { Text(automaticPhase == .preparation && $0 == .again ? "Noch unklar" : $0.title).tag($0) } }.pickerStyle(.segmented)
-            Text(automaticPhase != nil ? "Deine Rückmeldung wird gespeichert. Die tatsächliche Dauer hilft bei weiteren Phasen dieses Moduls; ihre Zeitfenster richten sich nach deinem Stundenplan." : "„Schwer“ bedeutet: noch richtig erinnert, aber mit Mühe. Wenn du es nicht mehr wusstest, wähle „Vergessen“.").font(.caption).foregroundStyle(AboLifeColors.secondaryText)
+            Text(automaticPhase != nil ? "Deine Rückmeldung wird gespeichert. Die tatsächliche Dauer hilft bei weiteren Phasen dieses Moduls; ihre Zeitfenster richten sich nach deinem Stundenplan." : "„Schwer“ bedeutet: noch richtig erinnert, aber mit Mühe. Wenn du es nicht mehr wusstest, wähle „Vergessen“.").font(.caption).foregroundStyle(designStyle.colors.secondaryText)
             Stepper("Tatsächliche Lerndauer: \(minutes) Minuten", value: $minutes, in: 5...180, step: 5)
-            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(AboLifeColors.habits) }
+            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(designStyle.colors.habits) }
             HStack {
                 Button("Abbrechen") { dismiss() }.keyboardShortcut(.cancelAction)
                 Spacer()
-                Button("Bewertung speichern") { if store.review(session.id, rating: rating, actualMinutes: minutes) { dismiss() } }.buttonStyle(.borderedProminent).tint(AboLifeColors.accentGreen)
+                Button("Bewertung speichern") { if store.review(session.id, rating: rating, actualMinutes: minutes) { dismiss() } }.buttonStyle(.borderedProminent).tint(designStyle.colors.action)
             }
         }.onAppear { minutes = min(max(session.minutes, 5), 180) }
     }
 }
 
 struct PlannerMoveSheet: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @Environment(\.dismiss) private var dismiss
     let session: StudySession
     @ObservedObject var store: CalendarPlannerStore
@@ -147,18 +152,19 @@ struct PlannerMoveSheet: View {
     var body: some View {
         PlannerEditorFrame("Lernen verschieben") {
             DatePicker("Neuer Beginn", selection: $start)
-            Text("\(session.minutes) Minuten. Der Termin wird fixiert; Termine, Wege, Pausen und Lernzeiten werden geprüft.").font(.caption).foregroundStyle(AboLifeColors.secondaryText)
-            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(AboLifeColors.habits) }
+            Text("\(session.minutes) Minuten. Der Termin wird fixiert; Termine, Wege, Pausen und Lernzeiten werden geprüft.").font(.caption).foregroundStyle(designStyle.colors.secondaryText)
+            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(designStyle.colors.habits) }
             HStack {
                 Button("Abbrechen") { dismiss() }
                 Spacer()
-                Button("Verschieben & fixieren") { if store.moveSession(session.id, start: start) { dismiss() } }.buttonStyle(.borderedProminent).tint(AboLifeColors.review)
+                Button("Verschieben & fixieren") { if store.moveSession(session.id, start: start) { dismiss() } }.buttonStyle(.borderedProminent).tint(designStyle.colors.action)
             }
         }.onAppear { start = max(session.start, Date()) }
     }
 }
 
 struct PlannerPreferencesEditor: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @Environment(\.dismiss) private var dismiss
     @State var preferences: PlannerPreferences
     @ObservedObject var store: CalendarPlannerStore
@@ -213,11 +219,11 @@ struct PlannerPreferencesEditor: View {
                     }
                 }
             }.frame(height: 480)
-            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(AboLifeColors.habits) }
+            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(designStyle.colors.habits) }
             HStack {
                 Button("Abbrechen") { dismiss() }
                 Spacer()
-                Button("Speichern & neu planen") { if store.savePreferences(preferences) { dismiss() } }.buttonStyle(.borderedProminent).tint(AboLifeColors.review)
+                Button("Speichern & neu planen") { if store.savePreferences(preferences) { dismiss() } }.buttonStyle(.borderedProminent).tint(designStyle.colors.action)
             }
         }
     }
@@ -238,7 +244,7 @@ struct PlannerPreferencesEditor: View {
                 Text("\(minutes) Min. · wie Hinfahrt").font(.caption).foregroundStyle(.secondary)
                 Button("Anpassen") { preferences.travelMinutes[key] = minutes }
             } else {
-                Text("Noch offen").font(.caption).foregroundStyle(AboLifeColors.habits)
+                Text("Noch offen").font(.caption).foregroundStyle(designStyle.colors.habits)
                 Button("Eintragen") { preferences.travelMinutes[key] = key.contains("university") ? 60 : 15 }
             }
         }
@@ -246,6 +252,7 @@ struct PlannerPreferencesEditor: View {
 }
 
 struct PlannerImportPreview: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @Environment(\.dismiss) private var dismiss
     let draft: CalendarImportDraft
     @ObservedObject var store: CalendarPlannerStore
@@ -258,10 +265,10 @@ struct PlannerImportPreview: View {
     }
     var body: some View {
         PlannerEditorFrame("Import prüfen · \(draft.sourceName)") {
-            Text("\(draft.events.count) Termine / Serien gelesen. Noch wurde nichts übernommen.").foregroundStyle(AboLifeColors.primaryText)
+            Text("\(draft.events.count) Termine / Serien gelesen. Noch wurde nichts übernommen.").foregroundStyle(designStyle.colors.primaryText)
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    ForEach(draft.warnings, id: \.self) { Label($0, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(AboLifeColors.habits) }
+                    ForEach(draft.warnings, id: \.self) { Label($0, systemImage: "exclamationmark.circle").font(.caption).foregroundStyle(designStyle.colors.habits) }
                     ForEach(draft.events) { event in
                         VStack(alignment: .leading, spacing: 3) {
                             Text(event.title).font(AboLifeTypography.cardTitle)
@@ -270,7 +277,7 @@ struct PlannerImportPreview: View {
                     }
                     if !conflicts.isEmpty {
                         Divider()
-                        Text("\(conflicts.count) bestehende Einträge sind lokal angepasst und bleiben standardmäßig erhalten.").font(.caption).foregroundStyle(AboLifeColors.habits)
+                        Text("\(conflicts.count) bestehende Einträge sind lokal angepasst und bleiben standardmäßig erhalten.").font(.caption).foregroundStyle(designStyle.colors.habits)
                         ForEach(conflicts) { Text($0.title).font(.caption) }
                         Toggle("Diese lokalen Änderungen ausdrücklich überschreiben", isOn: $overwriteLocal)
                     }
@@ -283,14 +290,14 @@ struct PlannerImportPreview: View {
                     }
                 }
             }.frame(height: 340)
-            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(AboLifeColors.habits) }
+            if let error = store.errorMessage { Text(error).font(.caption).foregroundStyle(designStyle.colors.habits) }
             HStack {
                 Button("Abbrechen") { dismiss() }
                 Spacer()
                 Button("Übernehmen & planen") {
                     store.importChanges(draft, overwriteLocal: overwriteLocal, removeMissing: removeMissing)
                     if store.errorMessage == nil { dismiss() }
-                }.buttonStyle(.borderedProminent).tint(AboLifeColors.review).disabled(draft.events.isEmpty && !(removeMissing && draft.warnings.isEmpty && !missing.isEmpty))
+                }.buttonStyle(.borderedProminent).tint(designStyle.colors.action).disabled(draft.events.isEmpty && !(removeMissing && draft.warnings.isEmpty && !missing.isEmpty))
             }
         }
     }

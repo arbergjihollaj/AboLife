@@ -13,3 +13,7 @@
 | News | Privater RSS-Reader vorhanden; Liveprüfung auf dem Zielserver offen |
 
 Der nächste notwendige Schritt ist die Abnahme auf dem erreichbaren Homelab und dem iPhone. Offene technische Einrichtungsschritte stehen in `TODO.md`. Mail, native iPhone-App, Apple Health und KI bleiben zurückgestellt.
+
+## Lokale KI-Erweiterung
+
+Implementiert: Connector zur getrennten BonsaiBar-App, Bereichsfilter, Datenvorschau, KI-Chat, lokale Historie und bestätigte schema-begrenzte Aktionen. Offene externe Abnahmen: physisches Sleep/Wake des Inferenz-Macs, weitere Hardware/Accessibility und Developer-ID-/Notarisierungszugang. Keine Freigabe eines ungeschützten Ports ins Netzwerk.

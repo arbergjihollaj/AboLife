@@ -31,7 +31,31 @@ final class AppDatabase {
     static func makeDefault() throws -> AppDatabase {
         let databaseURL = try DatabaseConfiguration.applicationDatabaseURL()
         try bootstrapMainCopyIfNeeded(destination: databaseURL)
+        try backupBeforeLocalAIMigration(at: databaseURL)
         return try AppDatabase(path: databaseURL.path)
+    }
+
+    /// Consistent read-only source backup before adding local-AI receipt/note tables.
+    static func backupBeforeLocalAIMigration(at url: URL) throws {
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        var configuration = DatabaseConfiguration.makeConfiguration(); configuration.readonly = true
+        let source = try DatabaseQueue(path: url.path, configuration: configuration)
+        defer { try? source.close() }
+        let alreadyMigrated = try source.read { db in
+            guard try db.tableExists("grdb_migrations") else { return false }
+            return try String.fetchOne(db, sql: "SELECT identifier FROM grdb_migrations WHERE identifier=?", arguments: ["v14_local_ai_actions"]) != nil
+        }
+        guard !alreadyMigrated else { return }
+        let directory = url.deletingLastPathComponent().appendingPathComponent("Backups", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+        let target = directory.appendingPathComponent("AboLife-before-local-AI.sqlite")
+        guard !FileManager.default.fileExists(atPath: target.path) else { return }
+        let temporary = directory.appendingPathComponent("backup-\(UUID()).sqlite")
+        defer { try? FileManager.default.removeItem(at: temporary) }
+        let copy = try DatabaseQueue(path: temporary.path)
+        try source.backup(to: copy); try copy.close()
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: temporary.path)
+        try FileManager.default.moveItem(at: temporary, to: target)
     }
 
     /// Prefer the latest preview, fall back to 0.1; copy only once into the stable main app.

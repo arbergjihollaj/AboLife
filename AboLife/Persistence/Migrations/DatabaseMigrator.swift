@@ -303,6 +303,19 @@ enum DatabaseMigrationPlan {
                 }
             }
         }
+        migrator.registerMigration("v14_local_ai_actions") { db in
+            try db.create(table: "ai_action_receipts") { t in
+                t.column("id", .text).primaryKey()
+                t.column("kind", .text).notNull()
+                t.column("confirmed_at", .datetime).notNull()
+            }
+            try db.create(table: "ai_saved_notes") { t in
+                t.column("id", .text).primaryKey()
+                t.column("title", .text).notNull()
+                t.column("content", .text).notNull()
+                t.column("created_at", .datetime).notNull()
+            }
+        }
         return migrator
     }
 }

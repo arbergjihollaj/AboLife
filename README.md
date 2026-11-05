@@ -4,7 +4,7 @@
 
 <h1 align="center">AboLife</h1>
 <p align="center">Ein persönlicher Alltagsbegleiter für macOS – mit adaptiver Lernplanung und privatem mobilen Webzugriff.</p>
-<p align="center"><strong>Hauptversion 0.4.0</strong> · SwiftUI · SQLite/GRDB · Node.js · Docker</p>
+<p align="center"><strong>Hauptversion 0.4.1</strong> · SwiftUI · SQLite/GRDB · Node.js · Docker</p>
 
 AboLife verbindet Studienplanung, tägliche Gewohnheiten, Training und Budget in einer nativen Mac-App. Eine ergänzende Weboberfläche erlaubt Eingaben unterwegs. Das Projekt entstand aus dem Wunsch, diese Abläufe an einer Stelle zusammenzubringen, und dient als praktisches Softwareentwicklungsprojekt.
 
@@ -63,7 +63,7 @@ scripts/package-local-app.sh
 scripts/package-homelab.sh
 ```
 
-`check-native.sh` nutzt einen vorhandenen GRDB-Checkout. Alternativ `ABOLIFE_GRDB_CHECKOUT` explizit setzen; siehe [CONTRIBUTING.md](CONTRIBUTING.md). Die Haupt-App entsteht intern unter `work/app-build.noindex/AboLife.app`, die ZIP unter `outputs/AboLife-0.4-macOS.zip`. Die ZIP entpacken und `AboLife.app` in den Programme-Ordner ziehen; bei Updates die bestehende App ersetzen. So bleibt eine einzige installierte Haupt-App ohne Versionsnummer im Namen. Builddateien und persönliche Daten gehören nicht in Git.
+`check-native.sh` nutzt einen vorhandenen GRDB-Checkout. Alternativ `ABOLIFE_GRDB_CHECKOUT` explizit setzen; siehe [CONTRIBUTING.md](CONTRIBUTING.md). Die Haupt-App entsteht intern unter `work/app-build.noindex/AboLife.app`, die ZIP unter `outputs/AboLife-0.4.1-macOS.zip`. Die ZIP entpacken und `AboLife.app` in den Programme-Ordner ziehen; bei Updates die bestehende App ersetzen. So bleibt eine einzige installierte Haupt-App ohne Versionsnummer im Namen. Builddateien und persönliche Daten gehören nicht in Git.
 
 ### Präsentation mit Demodaten
 
@@ -79,7 +79,7 @@ Die [Homelab-Anleitung](web/README.md) beschreibt Docker, Tailscale, HTTPS, Pass
 
 ## Prüfstand und Grenzen
 
-Lokal bestehen **232 native Tests und 26 Web-/Clienttests**, einschließlich Swift↔JavaScript-Datenvertrag, gemeinsamem Planer, Konkurrenzkonflikten, Offline-Duplikatschutz und Wiederherstellung. Eine GitHub-Actions-Konfiguration prüft Weblogik, native Verträge und den Linux-Container. Konfigurierter CI-Umfang ist keine Behauptung über bereits erfolgreiche Remote-Läufe.
+Lokal wurden **276 native Tests entdeckt (273 ausgeführt, 3 optionale KI-Livetests übersprungen) und 26 Web-/Clienttests bestanden**, einschließlich Swift↔JavaScript-Datenvertrag, gemeinsamem Planer, Konkurrenzkonflikten, Offline-Duplikatschutz und Wiederherstellung. Eine GitHub-Actions-Konfiguration prüft Weblogik, native Verträge und den Linux-Container. Konfigurierter CI-Umfang ist keine Behauptung über bereits erfolgreiche Remote-Läufe.
 
 Der tatsächliche Homelab-/iPhone-Abgleich und mobile Safari-/Service-Worker-Lebenszyklen benötigen weiterhin die Abnahme auf den Zielgeräten. Individuelle Satzwerte und detaillierte Lernblockverschiebungen werden am Mac bearbeitet. Eine historische CSV-Sicherung ohne vollständigen Begleitstand kann nicht verlustfrei wiederhergestellt werden.
 
@@ -88,3 +88,17 @@ Der tatsächliche Homelab-/iPhone-Abgleich und mobile Safari-/Service-Worker-Leb
 ## Projekt und Rechte
 
 **Arber Gjihollaj** · persönliches Entwicklungsprojekt für Studium, Alltag und Portfolio. Der Quellcode steht zur Einsicht und zum Code-Review bereit; die Rechte regelt [LICENSE](LICENSE). Drittanbieterbedingungen: [THIRD_PARTY.md](THIRD_PARTY.md). Hinweise zum sicheren Umgang mit Daten: [SECURITY.md](SECURITY.md).
+
+## AboLife AI · lokale BonsaiBar-Erweiterung
+
+Der zusätzliche Sparkles-Button öffnet den lokalen Assistenten. In BonsaiBar die lokale API aktivieren, Client AboLife anlegen und die Verbindungsdatei exportieren; hier importieren. Zugang liegt im Schlüsselbund. Grants starten leer, die Vorschau zeigt den tatsächlichen Anfragekontext. Budgetwerte berechnet weiterhin AboLife; freie Lernzeiten liefert der vorhandene Planer.
+
+Aktionen werden als begrenztes JSON vorgeschlagen und erst nach bestätigter Vorschau übernommen. Bekannte Fächer/IDs, Zeiten, aktueller Datenstand und Doppelübernahmen werden geprüft. Vor der additiven KI-Migration wird die Hauptdatenbank konsistent gesichert. KI-Historie und private Action-Receipts werden nicht ins Homelab synchronisiert. Ohne BonsaiBar bleiben bestehende Funktionen verfügbar. Details: [KI-Integration](docs/AI_INTEGRATION.md).
+
+## UI- und Qualitätsevolution · November 2026
+
+Die Hauptversion 0.4.1 erhält adaptive System-/Hell-/Dunkeldarstellung, reduzierte Motion, animierte Werte/Ringe, erreichbare Monats-/Reviewnavigation, robustere Formulare und einen entkoppelten News-Reader. Persönliche Daten bleiben in der bestehenden GRDB-Datenhaltung. Die vorhandene BonsaiBar-Anbindung wird in diesem Auftrag nicht erweitert.
+
+[Abschlussbericht](docs/EVOLUTION_REPORT.md) · [Designsystem](DESIGN.md) · [Arbeitsregeln](AGENTS.md) · [geprüfte Skills](docs/AGENT_SKILLS.md) · [BonsaiBar-Analytics-Plan](docs/BONSAIBAR_ANALYTICS_PLAN.md).
+
+`scripts/check-quality.py` prüft Formatierung, strukturelles Linting und private Artefakte; `scripts/check-ui.sh` führt die neuen UI-Tests ausschließlich mit isolierten Demodaten aus und benötigt einen entsperrten Mac. Alle drei grafischen Abläufe wurden lokal in der entsperrten Sitzung bestanden. Vorher die aktuelle Demo mit den beiden Paketierungsskripten bauen; der Test adressiert ausdrücklich deren isolierte Bundle-ID.

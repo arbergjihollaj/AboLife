@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct WeightView: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @StateObject private var store: WeightStore
 
     init(database: AppDatabase?) {
@@ -19,7 +20,7 @@ struct WeightView: View {
                     overviewGrid
                     historySection
                 }
-                .padding(22)
+                .aboLifePage()
             }
         }
         .navigationTitle("")
@@ -29,15 +30,15 @@ struct WeightView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Gewicht")
                     .font(AboLifeTypography.dashboardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 Text(store.dateSubtitle)
                     .font(AboLifeTypography.body)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
             }
 
             Spacer()
@@ -51,19 +52,19 @@ struct WeightView: View {
                 store.selectToday()
             } label: {
                 Image(systemName: "calendar")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .medium))
             }
             .buttonStyle(.bordered)
-            .help("Heute")
+            .help("Heute").accessibilityLabel("Heute")
 
             Button {
                 store.reload()
             } label: {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .medium))
             }
             .buttonStyle(.bordered)
-            .help("Neu laden")
+            .help("Neu laden").accessibilityLabel("Neu laden")
         }
     }
 
@@ -89,16 +90,16 @@ struct WeightView: View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Tagesgewicht", systemImage: "scalemass")
                 .font(AboLifeTypography.cardTitle)
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
 
             Text(store.latestValueText)
                 .font(AboLifeTypography.heroMessage)
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
                 .monospacedDigit()
 
             Text(store.latestEntry == nil ? "Noch kein Gewicht eingetragen." : "Letzter Eintrag: \(store.latestEntry?.date ?? "")")
                 .font(AboLifeTypography.body)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
         }
     }
 
@@ -109,7 +110,7 @@ struct WeightView: View {
             if let errorMessage = store.errorMessage {
                 Text(errorMessage)
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(AboLifeColors.habits)
+                    .foregroundStyle(designStyle.colors.habits)
             }
 
             Button {
@@ -120,15 +121,15 @@ struct WeightView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .tint(AboLifeColors.review)
+            .tint(designStyle.colors.action)
         }
     }
 
     private var overviewGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-            metricTile(title: "Aktuell", value: store.latestValueText, systemImage: "scalemass", tint: AboLifeColors.review)
-            metricTile(title: "Ziel", value: store.goalSummary.targetWeightKg.map(WeightStore.formatWeight) ?? "nicht gesetzt", systemImage: "target", tint: AboLifeColors.finance)
-            metricTile(title: "Veränderung", value: WeightStore.formatChange(store.changeFromPreviousKg), systemImage: "arrow.up.arrow.down", tint: AboLifeColors.habits)
+            metricTile(title: "Aktuell", value: store.latestValueText, systemImage: "scalemass", tint: designStyle.colors.review)
+            metricTile(title: "Ziel", value: store.goalSummary.targetWeightKg.map(WeightStore.formatWeight) ?? "nicht gesetzt", systemImage: "target", tint: designStyle.colors.finance)
+            metricTile(title: "Veränderung", value: WeightStore.formatChange(store.changeFromPreviousKg), systemImage: "arrow.up.arrow.down", tint: designStyle.colors.habits)
         }
     }
 
@@ -137,12 +138,12 @@ struct WeightView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Label("Zielgewicht und Korridor", systemImage: "target")
                     .font(AboLifeTypography.cardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
-                    metricTile(title: "Ziel", value: store.goalSummary.targetWeightKg.map(WeightStore.formatWeight) ?? "nicht gesetzt", systemImage: "target", tint: AboLifeColors.review)
-                    metricTile(title: "Abstand", value: store.goalSummary.distanceText, systemImage: "arrow.left.and.right", tint: AboLifeColors.finance)
-                    metricTile(title: "Status", value: store.goalSummary.statusText, systemImage: store.goalSummary.isInTargetCorridor == true ? "checkmark.circle" : "exclamationmark.circle", tint: store.goalSummary.isInTargetCorridor == true ? AboLifeColors.positive : AboLifeColors.habits)
+                    metricTile(title: "Ziel", value: store.goalSummary.targetWeightKg.map(WeightStore.formatWeight) ?? "nicht gesetzt", systemImage: "target", tint: designStyle.colors.review)
+                    metricTile(title: "Abstand", value: store.goalSummary.distanceText, systemImage: "arrow.left.and.right", tint: designStyle.colors.finance)
+                    metricTile(title: "Status", value: store.goalSummary.statusText, systemImage: store.goalSummary.isInTargetCorridor == true ? "checkmark.circle" : "exclamationmark.circle", tint: store.goalSummary.isInTargetCorridor == true ? designStyle.colors.positive : designStyle.colors.habits)
                 }
 
                 ViewThatFits(in: .horizontal) {
@@ -156,7 +157,7 @@ struct WeightView: View {
                             Label("Ziele speichern", systemImage: "checkmark.circle")
                         }
                         .buttonStyle(.bordered)
-                        .tint(AboLifeColors.review)
+                        .tint(designStyle.colors.review)
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -170,7 +171,7 @@ struct WeightView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
-                        .tint(AboLifeColors.review)
+                        .tint(designStyle.colors.review)
                     }
                 }
             }
@@ -182,21 +183,21 @@ struct WeightView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Label("Verlauf", systemImage: "chart.xyaxis.line")
                     .font(AboLifeTypography.cardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 if store.entries.isEmpty {
                     emptyState
                 } else {
-                    WeightLineChart(entries: store.sevenDayEntries, tint: AboLifeColors.review)
+                    WeightLineChart(entries: store.sevenDayEntries, tint: designStyle.colors.review)
                         .frame(height: 150)
 
                     if store.thirtyDayEntries.count >= 2 {
-                        WeightLineChart(entries: store.thirtyDayEntries, tint: AboLifeColors.finance)
+                        WeightLineChart(entries: store.thirtyDayEntries, tint: designStyle.colors.finance)
                             .frame(height: 150)
                     } else {
                         Text("Noch nicht genug Gewichtsdaten für einen 30-Tage-Verlauf.")
                             .font(AboLifeTypography.caption)
-                            .foregroundStyle(AboLifeColors.secondaryText)
+                            .foregroundStyle(designStyle.colors.secondaryText)
                     }
 
                     VStack(spacing: 10) {
@@ -213,11 +214,11 @@ struct WeightView: View {
         VStack(alignment: .leading, spacing: 7) {
             Text("Noch kein Gewicht eingetragen.")
                 .font(AboLifeTypography.body.weight(.semibold))
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
 
             Text("Trage oben dein Tagesgewicht ein. Ein vorhandener Eintrag am selben Tag wird aktualisiert.")
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
         }
         .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
     }
@@ -231,10 +232,10 @@ struct WeightView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(AboLifeTypography.micro)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
                 Text(value)
                     .font(AboLifeTypography.caption.weight(.semibold))
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -242,15 +243,16 @@ struct WeightView: View {
         }
         .padding(13)
         .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(designStyle.colors.quietFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 0.7)
+                .strokeBorder(designStyle.colors.glassStrokeMuted, lineWidth: 0.7)
         }
     }
 }
 
 private struct WeightEntryRow: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let entry: WeightEntryRecord
     let edit: () -> Void
     let delete: () -> Void
@@ -260,38 +262,39 @@ private struct WeightEntryRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(entry.date)
                     .font(AboLifeTypography.caption.weight(.semibold))
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
                 Text("Aktualisiert \(entry.updatedAt.formatted(.dateTime.hour().minute()))")
                     .font(AboLifeTypography.micro)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
             }
 
             Spacer()
 
             Text(WeightStore.formatWeight(entry.weightKg))
                 .font(AboLifeTypography.caption.weight(.semibold))
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
                 .monospacedDigit()
 
             Button(action: edit) {
                 Image(systemName: "pencil")
             }
             .buttonStyle(.bordered)
-            .help("Bearbeiten")
+            .help("Bearbeiten").accessibilityLabel("Bearbeiten")
 
             Button(role: .destructive, action: delete) {
                 Image(systemName: "trash")
             }
             .buttonStyle(.bordered)
-            .help("Löschen")
+            .help("Löschen").accessibilityLabel("Löschen")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(AboLifeColors.quietFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(designStyle.colors.quietFill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 
 private struct WeightLineChart: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let entries: [WeightEntryRecord]
     let tint: Color
 
@@ -312,12 +315,12 @@ private struct WeightLineChart: View {
 
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(AboLifeColors.quietFill)
+                    .fill(designStyle.colors.quietFill)
 
                 if points.count < 2 {
                     Text("Noch nicht genug Daten für einen Verlauf.")
                         .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.secondaryText)
+                        .foregroundStyle(designStyle.colors.secondaryText)
                 } else {
                     Path { path in
                         path.move(to: points[0])

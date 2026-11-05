@@ -24,7 +24,7 @@ enum AppSection: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .news: return "News"
+        case .news: return "Nachrichten"
         case .calendar:
             return "Kalender"
         case .dashboard:
@@ -67,226 +67,145 @@ enum AppSection: String, CaseIterable, Identifiable {
     }
 }
 
+/// Layout changes keep the content's semantic identity and existing feature stores.
 struct AppRouter: View {
     @Environment(\.appDatabase) private var appDatabase
+    @Environment(\.openSettings) private var openSettings
+    @Environment(\.aboLifeStyle) private var style
+    @EnvironmentObject private var ai: AIAssistantStore
     @EnvironmentObject private var navigation: AppNavigationCoordinator
-    @State private var isHealthExpanded = false
+    @StateObject private var reviewStore: WeeklyReviewStore
+
+    private enum Slot: String, Identifiable {
+        case navigation, content
+        var id: String { rawValue }
+    }
+    init(database: AppDatabase? = nil) {
+        _reviewStore = StateObject(wrappedValue: WeeklyReviewStore(database: database))
+    }
+    private var layout: AnyLayout {
+        style.design == .bento ? AnyLayout(HStackLayout(spacing: 0)) : AnyLayout(VStackLayout(spacing: 0))
+    }
+    private var slots: [Slot] {
+        style.design == .spatial ? [.content, .navigation] : [.navigation, .content]
+    }
 
     var body: some View {
-        NavigationSplitView {
-            ZStack {
-                AboLifePremiumBackground()
-
-                VStack(alignment: .leading, spacing: 18) {
-                    sidebarHeader
-
-                    List {
-                        sidebarButton(.dashboard)
-                        sidebarButton(.calendar)
-
-                        healthCategory
-
-                        if isHealthExpanded {
-                            ForEach(AppSection.allCases.filter(\.isHealthSection)) { section in
-                                sidebarButton(section)
-                                    .padding(.leading, 12)
-                            }
-                        }
-
-                        ForEach(AppSection.allCases.filter { $0 != .dashboard && $0 != .calendar && !$0.isHealthSection }) { section in
-                            sidebarButton(section)
-                        }
+        VStack(spacing: 0) {
+            header
+            layout {
+                ForEach(slots) { slot in
+                    switch slot {
+                    case .navigation: designNavigation
+                    case .content:
+                        detail
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .frame(minWidth: 620, minHeight: 440)
                     }
-                    .scrollContentBackground(.hidden)
-                    .listStyle(.sidebar)
-
-                    Spacer(minLength: 18)
-
-                    sidebarProfile
-                }
-                .padding(18)
-            }
-            .navigationSplitViewColumnWidth(min: 240, ideal: 250)
-        } detail: {
-            Group {
-                switch navigation.selectedSection ?? .dashboard {
-                case .news:
-                    NewsView(database: appDatabase)
-                case .calendar:
-                    CalendarPlannerView(database: appDatabase)
-                case .dashboard:
-                    DashboardView(store: DashboardStore(database: appDatabase))
-                case .training:
-                    TrainingView(database: appDatabase)
-                case .weight:
-                    WeightView(database: appDatabase)
-                case .finance:
-                    FinanceView(database: appDatabase)
-                case .habits:
-                    HabitsView(database: appDatabase)
-                case .statistics:
-                    StatisticsView(database: appDatabase)
-                case .weeklyReview:
-                    WeeklyReviewView(database: appDatabase)
                 }
             }
-            .frame(minWidth: 860, minHeight: 640)
         }
-        .onAppear {
-            if navigation.selectedSection?.isHealthSection == true {
-                isHealthExpanded = true
-            }
-        }
-        .onChange(of: navigation.selectedSection) { _, section in
-            if section?.isHealthSection == true {
-                isHealthExpanded = true
+        .background(style.colors.pageBackground)
+        .sheet(isPresented: $ai.showAssistant) { AIAssistantView(store: ai) }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("AboLife AI", systemImage: "bubble.left.and.text.bubble.right") {
+                    ai.open(for: navigation.selectedSection ?? .dashboard)
+                }
+                .help("Bestehenden lokalen Assistenten öffnen")
             }
         }
     }
 
-    private var healthCategory: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.16)) {
-                isHealthExpanded.toggle()
+    private var header: some View {
+        HStack(spacing: 14) {
+            Image("AppMark").resizable().frame(width: 28, height: 28).accessibilityHidden(true)
+            Text("AboLife").font(.system(size: 20, weight: .semibold))
+            if style.design == .fieldnotes {
+                Text("Ein persönlicher Begleiter.").font(.callout).italic().foregroundStyle(.secondary)
             }
-        } label: {
-            sidebarLabel(
-                title: "Gesundheit",
-                systemImage: "heart",
-                isSelected: navigation.selectedSection?.isHealthSection == true && !isHealthExpanded
+            Spacer(minLength: 4)
+            Button("AboLife AI", systemImage: "bubble.left.and.text.bubble.right") {
+                ai.open(for: navigation.selectedSection ?? .dashboard)
+            }
+            .accessibilityIdentifier("navigation.ai")
+            Button("Einstellungen", systemImage: "slider.horizontal.3") { openSettings() }
+                .labelStyle(.iconOnly)
+                .help("Design, Widgets und Einstellungen")
+        }
+        .padding(.horizontal, 22).padding(.vertical, 14)
+        .background(style.colors.cardBackground.opacity(style.design == .spatial ? 0.8 : 1))
+    }
+
+    @ViewBuilder
+    private var designNavigation: some View {
+        if style.design == .bento {
+            ScrollView {
+                VStack(spacing: 8) {
+                    ForEach(AppSection.allCases) { section in navigationButton(section, stacked: true) }
+                    Divider().padding(.vertical, 8)
+                    Button {
+                        ai.open(for: navigation.selectedSection ?? .dashboard)
+                    } label: {
+                        Label("AboLife AI", systemImage: "bubble.left.and.text.bubble.right")
+                            .font(.caption).frame(maxWidth: .infinity)
+                    }.buttonStyle(.plain).padding(8)
+                }.padding(10)
+            }
+            .frame(width: 112)
+            .background(style.colors.cardBackground)
+        } else {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: style.design == .spatial ? 6 : 14) {
+                    ForEach(AppSection.allCases) { section in
+                        navigationButton(section, stacked: style.design == .spatial)
+                    }
+                }
+                .padding(10)
+            }
+            .background(
+                style.design == .spatial
+                    ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(style.colors.cardBackground)
             )
-            .overlay(alignment: .trailing) {
-                Image(systemName: isHealthExpanded ? "chevron.down" : "chevron.right")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(AboLifeColors.secondaryText)
-                    .padding(.trailing, 10)
-            }
-            .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: style.design == .spatial ? 20 : 0))
+            .padding(.horizontal, style.design == .spatial ? 24 : 0)
+            .padding(.bottom, style.design == .spatial ? 12 : 0)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Gesundheit")
-        .accessibilityValue(isHealthExpanded ? "Ausgeklappt" : "Eingeklappt")
-        .selectionDisabled()
-        .listRowInsets(EdgeInsets(top: 3, leading: 0, bottom: 3, trailing: 0))
-        .listRowSeparator(.hidden)
-        .listRowBackground(Color.clear)
     }
 
-    private func sidebarButton(_ section: AppSection) -> some View {
-        Button {
+    private func navigationButton(_ section: AppSection, stacked: Bool) -> some View {
+        let selected = (navigation.selectedSection ?? .dashboard) == section
+        return Button {
             navigation.select(section)
         } label: {
-            sidebarRow(section)
-                .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            let layout = stacked ? AnyLayout(VStackLayout(spacing: 6)) : AnyLayout(HStackLayout(spacing: 8))
+            layout {
+                Image(systemName: section.systemImage).font(.system(size: 17))
+                Text(section.title).font(.system(size: stacked ? 10 : 12, weight: selected ? .semibold : .regular))
+            }
+            .frame(minWidth: stacked ? 68 : 0, minHeight: stacked ? 42 : 28)
+            .padding(7)
+            .background(selected ? style.colors.subtleFill : .clear, in: RoundedRectangle(cornerRadius: 12))
+            .foregroundStyle(selected ? style.colors.action : style.colors.secondaryText)
         }
         .buttonStyle(.plain)
-        .accessibilityAddTraits((navigation.selectedSection ?? .dashboard) == section ? .isSelected : [])
-        // The row already draws its own selection surface.
-        .selectionDisabled()
-        .listRowInsets(EdgeInsets(top: 3, leading: 0, bottom: 3, trailing: 0))
-        .listRowSeparator(.hidden)
-        .listRowBackground(Color.clear)
+        .accessibilityIdentifier("navigation.\(section.rawValue)")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+        .aboLifeMotion(value: selected, kind: .navigation)
     }
 
-    private func sidebarRow(_ section: AppSection) -> some View {
-        let isSelected = (navigation.selectedSection ?? .dashboard) == section
-        return sidebarLabel(title: section.title, systemImage: section.systemImage, isSelected: isSelected)
-    }
-
-    private func sidebarLabel(title: String, systemImage: String, isSelected: Bool) -> some View {
-        return HStack(spacing: 12) {
-            Image(systemName: systemImage)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(isSelected ? AboLifeColors.primaryText : AboLifeColors.secondaryText)
-                .frame(width: 24)
-
-            Text(title)
-                .font(.system(size: 14, weight: isSelected ? .semibold : .medium, design: .rounded))
-                .foregroundStyle(isSelected ? AboLifeColors.primaryText : AboLifeColors.secondaryText)
-
-            Spacer(minLength: 0)
+    @ViewBuilder
+    private var detail: some View {
+        switch navigation.selectedSection ?? .dashboard {
+        case .news: NewsView(database: appDatabase) { articles in ai.open(for: .news, news: articles) }
+        case .calendar: CalendarPlannerView(database: appDatabase)
+        case .dashboard: DashboardView(store: DashboardStore(database: appDatabase))
+        case .training: TrainingView(database: appDatabase)
+        case .weight: WeightView(database: appDatabase)
+        case .finance: FinanceView(database: appDatabase)
+        case .habits: HabitsView(database: appDatabase)
+        case .statistics: StatisticsView(database: appDatabase)
+        case .weeklyReview: WeeklyReviewView(store: reviewStore)
         }
-        .padding(.horizontal, 13)
-        .frame(maxWidth: .infinity, minHeight: 42, alignment: .leading)
-        .background {
-            if isSelected {
-                AboLifeLiquidGlassSurface(
-                    shape: RoundedRectangle(cornerRadius: 14, style: .continuous),
-                    tint: AboLifeColors.review.opacity(0.16),
-                    isProminent: false,
-                    isInteractive: true
-                )
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(AboLifeColors.sidebarSelectionGradient.opacity(0.46))
-                            .blendMode(.screen)
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(AboLifeColors.glassStroke, lineWidth: 0.9)
-                    }
-                    .shadow(color: AboLifeColors.review.opacity(0.18), radius: 10, x: 0, y: 5)
-            }
-        }
-    }
-
-    private var sidebarHeader: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                Image("AppMark").resizable().frame(width: 38, height: 38)
-                    .accessibilityHidden(true)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("AboLife 0.4")
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
-                        .foregroundStyle(AboLifeColors.primaryText)
-                    Text("Dein täglicher Rhythmus.")
-                        .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.secondaryText)
-                }
-            }
-
-            AboLifeGlassCapsule {
-                Label("Dein persönlicher Alltag", systemImage: "sparkles")
-                    .font(AboLifeTypography.micro)
-                    .foregroundStyle(AboLifeColors.secondaryText)
-            }
-        }
-        .padding(.bottom, 6)
-    }
-
-    private var sidebarProfile: some View {
-        AboLifeCard {
-            HStack(spacing: 12) {
-                Text("A")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundStyle(AboLifeColors.primaryText)
-                    .frame(width: 34, height: 34)
-                    .background(AboLifeColors.quietFill, in: Circle())
-                    .overlay {
-                        Circle()
-                            .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 1)
-                    }
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(DemoData.isEnabled ? "Demo" : "Arber")
-                        .font(AboLifeTypography.cardTitle)
-                        .foregroundStyle(AboLifeColors.primaryText)
-                    Text(DemoData.isEnabled ? "Fiktive Beispieldaten" : "AboLife lokal")
-                        .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.secondaryText)
-                }
-
-                Spacer(minLength: 0)
-            }
-        }
-    }
-}
-
-struct AppRouter_Previews: PreviewProvider {
-    static var previews: some View {
-        AppRouter()
-            .environmentObject(AppNavigationCoordinator())
-            .environmentObject(SharedSyncCoordinator(database: nil))
     }
 }

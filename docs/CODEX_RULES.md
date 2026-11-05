@@ -137,3 +137,7 @@ Codex soll vermeiden:
 - globale Zustände ohne Begründung
 - direkte Datenbanklogik in Views
 - UI-Polish ohne Datenvertrag
+
+## Freigabe vom 2. November 2026
+
+BonsaiBar-Masterprompt und anschließender Auftrag „mach alles“ geben die getrennte lokale AboLife-AI-Integration frei: Connector, ausdrücklich gefilterter Kontext, KI-Ansicht/Quick Action und bestätigte typisierte Aktionen. Bestehende Funktionen und Dashboardaufbau bleiben erhalten; keine Mail-/HealthKit-/Remote-Erweiterung ist damit aktiviert.

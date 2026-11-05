@@ -1,0 +1,35 @@
+# AboLife – natives Designsystem
+
+AboLife bleibt eine ruhige persönliche Mac-App. Die vorhandene Dashboard-Hierarchie ist die gestalterische Basis: Tagesstand mit Daily-Core-Ring, offene Punkte, Training/Budget, danach Gewohnheiten, letzte Aktivitäten und Woche. Keine neue Dashboard-Metapher und keine wieder eingeführten Ernährungs-/Telegrambereiche.
+
+## Flächen und Farbe
+
+`AboLifeColors` besitzt die semantischen Farben. Dunkel verwendet matte Graphitstufen, Hell neutrale sehr helle Flächen mit weißen Karten. Primär-/Sekundärtext und Konturen passen sich an; Kategorien behalten zurückhaltende funktionale Akzente. Blau markiert Aktionen und Auswahl, Türkis Finanzen, Orange Gewohnheiten, Violett Training. Zeichen, Beschriftung und Werte ergänzen Farbe; Farbe allein trägt keine Aussage.
+
+Keine Blur-/Glow-Schichten oder dekorative Schattenketten. `AboLifeCard` liefert Padding, Kontur und kontinuierliche Rundung; bei erhöhtem Systemkontrast wird die Kontur deutlicher. Der historische Typname GlassCapsule bleibt aus Kompatibilitätsgründen, die Darstellung ist eine matte Statusfläche.
+
+## Tokens
+
+| Gruppe | Quelle | Werte / Rolle |
+|---|---|---|
+| Abstände | AboLifeSpacing | 8 / 12 / 16 / 24 / 32 pt; Seite 24, Karte 16, prominente Karte 24 |
+| Radien | AboLifeRadius | Control 8, Karte 12, prominent 16 pt |
+| Typografie | AboLifeTypography | SF-Systemschrift, bewusst vorhandene Rollen; Titel 32, Kennzahl 28, Body 14, Caption 12 pt; Monospaced Digits nur für Werte |
+| Flächen | AboLifeColors | page/sidebar/card/elevated sowie quietFill/subtleFill; keine eigenen Flächenfarben pro Seite |
+| Motion | AboLifeMotion | Interaktion 120 ms, Navigation 180 ms, Metrik 350 ms, jeweils wertgebunden; bei Reduce Motion keine Animation |
+
+Neue oder substanziell umgebaute Komponenten verwenden Tokens. Ältere lokale Layoutwerte werden bei gezielter Überarbeitung übernommen; kein riskanter globaler Austausch gleich aussehender Zahlen mit unterschiedlicher Bedeutung.
+
+## Hierarchie und Interaktion
+
+Eine Karte besitzt eine Hauptaussage. Der Finanzüberblick zeigt Restbudget; Tagesverfügbarkeit und Fixkosten sind sekundär und klar beschriftet. Kategorieplanung liegt hinter Disclosure, Monats-/Wochenwechsel ist direkt erreichbar. Eine spätere KI ergänzt belegte Erkenntnisse unter den Primärdaten, keine parallelen fiktiven Kennzahlen.
+
+Native Formulare/Buttons behalten Tastaturverhalten. Dock und Sidebar besitzen eigenes dezentes Hover-/Druckfeedback. Ringe, Balken und numerische Werte animieren Änderungen; Sparklines verwenden Swift Charts. Kein dauerhaft laufender Effekt. Dashboard-Einblendung ist kurz und entfällt bei Reduce Motion.
+
+## Zustände, Fenster und Accessibility
+
+Detailinhalte unterstützen mindestens 660 pt Breite und 460 pt Höhe zusätzlich zur Sidebar. Karten umbrechen; Formulare scrollen, Kopf und Aktionen bleiben erreichbar. Schnellerfassung hat adaptive Maße statt eines starren 560×600-Rechtecks. Trainingseingaben bleiben bei Fehlern offen. Einstellungen erlauben System/Hell/Dunkel, ohne Datenmigration.
+
+Symbole haben Textlabels, dekorative Bilder sind ausgeblendet, Auswahl wird als ausgewählt vorgelesen. Fehler nennen eine Handlung, Erfolg erscheint erst nach erfolgreichem Speichern. Finanzbuchungen behalten Centbeträge und unterscheidbare Vorzeichen für Einnahmen/Ausgaben. Fehlende Daten und unbekannte RSS-Daten bleiben erkennbar.
+
+Die automatisierten Referenzen rendern die tatsächliche Dashboard-Kartenkomposition in Hell/Dunkel, 760/1100 pt und verschiedenen Datenzuständen. ImageRenderer erfasst keine native Fenster-/Formular- oder VoiceOver-Abnahme. Live-Prüfung und Animationen müssen auf einem entsperrten Mac geprüft werden; Details im Abschlussbericht.

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct HabitsView: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     @StateObject private var store: HabitsStore
 
     init(database: AppDatabase?) {
@@ -18,7 +19,7 @@ struct HabitsView: View {
                     habitGrid
                     weeklyOverview
                 }
-                .padding(22)
+                .aboLifePage()
             }
         }
         .navigationTitle("")
@@ -28,25 +29,18 @@ struct HabitsView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Gewohnheiten")
                     .font(AboLifeTypography.dashboardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 Text(store.dateSubtitle)
                     .font(AboLifeTypography.body)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
             }
 
             Spacer()
-
-            AboLifeGlassCapsule {
-                Text("\(store.completedHabits) / \(store.totalHabits) heute")
-                    .font(AboLifeTypography.micro)
-                    .foregroundStyle(AboLifeColors.habits)
-                    .monospacedDigit()
-            }
 
             DatePicker("", selection: $store.selectedDate, displayedComponents: .date)
                 .datePickerStyle(.compact)
@@ -57,35 +51,35 @@ struct HabitsView: View {
                 store.selectToday()
             } label: {
                 Image(systemName: "calendar")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .medium))
             }
             .buttonStyle(.bordered)
-            .help("Heute")
+            .help("Heute").accessibilityLabel("Heute")
             .disabled(store.isToday)
 
             Button {
                 store.reload()
             } label: {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .medium))
             }
             .buttonStyle(.bordered)
-            .help("Neu laden")
+            .help("Neu laden").accessibilityLabel("Neu laden")
         }
     }
 
     private var dailyOverview: some View {
         AboLifeCard(isProminent: true) {
             ViewThatFits(in: .horizontal) {
-                HStack(alignment: .center, spacing: 28) {
-                    habitRing(size: 176, lineWidth: 15)
+                HStack(alignment: .center, spacing: 24) {
                     overviewCopy
                     Spacer(minLength: 0)
+                    habitRing(size: 152, lineWidth: 8)
                 }
 
-                VStack(alignment: .leading, spacing: 18) {
-                    habitRing(size: 154, lineWidth: 13)
+                VStack(alignment: .leading, spacing: 16) {
                     overviewCopy
+                    habitRing(size: 136, lineWidth: 8)
                 }
             }
         }
@@ -95,7 +89,7 @@ struct HabitsView: View {
         CoreRingView(
             progress: store.dailyProgressPercent,
             lineWidth: lineWidth,
-            tint: AboLifeColors.habits,
+            tint: designStyle.colors.habits,
             valueText: "\(Int((store.dailyProgressPercent * 100).rounded()))%",
             labelText: "Heute"
         )
@@ -103,49 +97,34 @@ struct HabitsView: View {
     }
 
     private var overviewCopy: some View {
-        VStack(alignment: .leading, spacing: 13) {
-            HStack(spacing: 10) {
-                Label("Tagesring", systemImage: "circle.hexagongrid.fill")
-                    .font(AboLifeTypography.cardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Tagesziele")
+                .font(AboLifeTypography.cardTitle)
+                .foregroundStyle(designStyle.colors.secondaryText)
 
-                AboLifeGlassCapsule {
-                    Text("\(store.completedHabits) / \(store.totalHabits) Ziele erreicht")
-                        .font(AboLifeTypography.micro)
-                        .foregroundStyle(AboLifeColors.habits)
-                        .monospacedDigit()
-                }
-            }
-
-            Text("Gewohnheiten im Fluss")
+            Text("\(store.completedHabits) von \(store.totalHabits) erreicht")
                 .font(AboLifeTypography.heroMessage)
-                .foregroundStyle(AboLifeColors.primaryText)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-
-            PremiumProgressBar(progress: store.dailyProgressPercent, tint: AboLifeColors.habits, height: 8)
-                .frame(maxWidth: 430)
+                .foregroundStyle(designStyle.colors.primaryText)
+                .monospacedDigit()
 
             Text(store.statusMessage)
                 .font(AboLifeTypography.body)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
 
             if !store.focusHabits.isEmpty {
                 HStack(spacing: 8) {
                     ForEach(store.focusHabits) { habit in
-                        AboLifeGlassCapsule {
-                            Label(habit.title, systemImage: habit.systemImage)
-                                .font(AboLifeTypography.micro)
-                                .foregroundStyle(habit.accent)
-                        }
+                        Label(habit.title, systemImage: habit.systemImage)
+                            .font(AboLifeTypography.caption)
+                            .foregroundStyle(designStyle.colors.secondaryText)
                     }
                 }
             }
 
             Text("\(store.weeklyCompletedScore) / \(store.weeklyTotalScore) diese Woche")
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
                 .monospacedDigit()
         }
         .frame(maxWidth: 620, alignment: .leading)
@@ -156,14 +135,14 @@ struct HabitsView: View {
             HStack {
                 Label("Heute", systemImage: "square.grid.2x2.fill")
                     .font(AboLifeTypography.sectionTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 Spacer()
 
                 if let errorMessage = store.errorMessage {
                     Text(errorMessage)
                         .font(AboLifeTypography.caption)
-                        .foregroundStyle(AboLifeColors.habits)
+                        .foregroundStyle(designStyle.colors.habits)
                         .lineLimit(1)
                 }
             }
@@ -207,16 +186,16 @@ struct HabitsView: View {
         VStack(alignment: .leading, spacing: 7) {
             Label("Diese Woche", systemImage: "calendar.badge.clock")
                 .font(AboLifeTypography.cardTitle)
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
 
             Text("\(Int((store.weeklyProgressPercent * 100).rounded()))%")
                 .font(AboLifeTypography.heroMessage)
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
                 .monospacedDigit()
 
             Text("Wochendurchschnitt")
                 .font(AboLifeTypography.caption)
-                .foregroundStyle(AboLifeColors.secondaryText)
+                .foregroundStyle(designStyle.colors.secondaryText)
         }
         .frame(minWidth: 150, alignment: .leading)
     }
@@ -225,12 +204,12 @@ struct HabitsView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Ziele")
                 .font(AboLifeTypography.cardTitle)
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
 
             ForEach(store.habits) { habit in
                 Text(goalText(for: habit))
                     .font(AboLifeTypography.caption)
-                    .foregroundStyle(AboLifeColors.secondaryText)
+                    .foregroundStyle(designStyle.colors.secondaryText)
                     .lineLimit(1)
             }
         }
@@ -252,6 +231,7 @@ struct HabitsView: View {
 }
 
 private struct HabitMetricCard: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let habit: FixedHabit
     let value: Double
     let progress: Double
@@ -271,13 +251,13 @@ private struct HabitMetricCard: View {
                         .background(habit.accent.opacity(0.15), in: Circle())
                         .overlay {
                             Circle()
-                                .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 0.7)
+                                .strokeBorder(designStyle.colors.glassStrokeMuted, lineWidth: 0.7)
                         }
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(habit.title)
                             .font(AboLifeTypography.body.weight(.semibold))
-                            .foregroundStyle(AboLifeColors.primaryText)
+                            .foregroundStyle(designStyle.colors.primaryText)
                             .lineLimit(1)
 
                         Text("\(Int((progress * 100).rounded()))%")
@@ -291,7 +271,7 @@ private struct HabitMetricCard: View {
 
                 Text(habit.isBoolean || habit.isDerived ? (progress >= 1 ? "1 / 1" : "0 / 1") : habit.displayValue(value))
                     .font(AboLifeTypography.metric)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
@@ -314,7 +294,7 @@ private struct HabitMetricCard: View {
                         Label(progress >= 1 ? "Offen" : "Erledigt", systemImage: progress >= 1 ? "circle" : "checkmark.circle")
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(habit.accent)
+                    .tint(designStyle.colors.action)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     HStack(spacing: 8) {
@@ -337,6 +317,7 @@ private struct HabitMetricCard: View {
 }
 
 private struct HabitStepButton: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let systemImage: String
     let label: String
     let action: () -> Void
@@ -354,6 +335,7 @@ private struct HabitStepButton: View {
 }
 
 private struct HabitWeekDots: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let days: [HabitDayProgress]
     let tint: Color
 
@@ -363,7 +345,7 @@ private struct HabitWeekDots: View {
                 VStack(spacing: 4) {
                     ZStack {
                         Circle()
-                            .strokeBorder(AboLifeColors.glassStrokeMuted, lineWidth: 1)
+                            .strokeBorder(designStyle.colors.glassStrokeMuted, lineWidth: 1)
                             .frame(width: 15, height: 15)
 
                         Circle()
@@ -386,9 +368,9 @@ private struct HabitWeekDots: View {
                         }
                     }
 
-                    Text(day.label.prefix(2).uppercased())
+                    Text(day.label.prefix(2))
                         .font(AboLifeTypography.micro)
-                        .foregroundStyle(day.isToday ? tint : AboLifeColors.tertiaryText)
+                        .foregroundStyle(day.isToday ? tint : designStyle.colors.tertiaryText)
                         .frame(width: 24)
                 }
                 .frame(maxWidth: .infinity)
@@ -398,6 +380,7 @@ private struct HabitWeekDots: View {
 }
 
 private struct WeeklyHabitBars: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let days: [HabitDayProgress]
 
     var body: some View {
@@ -405,20 +388,20 @@ private struct WeeklyHabitBars: View {
             ForEach(days) { day in
                 VStack(spacing: 6) {
                     GeometryReader { proxy in
-                        let height = max(proxy.size.height * CGFloat(day.progress), 3)
+                        let height = proxy.size.height * CGFloat(min(max(day.progress, 0), 1))
                         RoundedRectangle(cornerRadius: 5, style: .continuous)
-                            .fill(AboLifeColors.quietFill)
+                            .fill(designStyle.colors.quietFill)
                             .overlay(alignment: .bottom) {
                                 RoundedRectangle(cornerRadius: 5, style: .continuous)
-                                    .fill(AboLifeColors.premiumGradient(for: AboLifeColors.habits))
+                                    .fill(day.isToday ? designStyle.colors.habits : designStyle.colors.secondaryText.opacity(0.48))
                                     .frame(height: height)
                             }
                     }
                     .frame(height: 72)
 
-                    Text(day.label.prefix(2).uppercased())
+                    Text(day.label.prefix(2))
                         .font(AboLifeTypography.micro)
-                        .foregroundStyle(day.isToday ? AboLifeColors.habits : AboLifeColors.tertiaryText)
+                        .foregroundStyle(day.isToday ? designStyle.colors.habits : designStyle.colors.tertiaryText)
                 }
                 .frame(maxWidth: .infinity)
             }

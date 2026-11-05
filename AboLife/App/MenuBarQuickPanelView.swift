@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 struct MenuBarQuickPanelView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.openWindow) private var openWindow
     @EnvironmentObject private var navigation: AppNavigationCoordinator
     @StateObject private var store: DashboardStore
@@ -9,29 +10,49 @@ struct MenuBarQuickPanelView: View {
     @State private var selected: QuickAddKind?
     init(database: AppDatabase?) { _store = StateObject(wrappedValue: DashboardStore(database: database)) }
     var body: some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 16) {
             HStack {
                 Button {
                     openWindow(id: AppNavigationCoordinator.mainWindowID)
                     NSApp.activate(ignoringOtherApps: true)
                 } label: {
-                    Image("AppMark").resizable().frame(width: 30, height: 30)
+                    Image("AppMark").resizable().frame(width: 28, height: 28)
                 }.buttonStyle(.plain).accessibilityLabel("AboLife öffnen")
                 Spacer()
                 Text("AboLife").font(.headline)
             }
-            CoreRingView(progress: store.snapshot.coreProgress, lineWidth: 9, tint: AboLifeColors.review, labelText: "Heute")
-                .frame(width: 112, height: 112)
-            MenuBarBudgetRing(monthlyBudget: store.state.monthlyBudget, dailyBudgetRemaining: store.state.dailyBudgetRemaining)
-            Button { quickActions.toggle() } label: { Label("Quick Actions", systemImage: "plus.circle") }.buttonStyle(.bordered)
+            HStack(spacing: 20) {
+                CoreRingView(
+                    progress: store.snapshot.coreProgress, lineWidth: 6, tint: AboLifeColors.review, labelText: "Heute"
+                )
+                .frame(width: 108, height: 108)
+                MenuBarBudgetRing(
+                    monthlyBudget: store.state.monthlyBudget, dailyBudgetRemaining: store.state.dailyBudgetRemaining)
+            }
+            Button {
+                withAnimation(AboLifeMotion.animation(for: .navigation, reduceMotion: reduceMotion)) {
+                    quickActions.toggle()
+                }
+            } label: {
+                Label("Schnellerfassung", systemImage: quickActions ? "chevron.up" : "plus")
+            }
+            .buttonStyle(.bordered)
+            .accessibilityValue(quickActions ? "Ausgeklappt" : "Eingeklappt")
             if quickActions {
                 ForEach(QuickAddAction.dashboardActions) { action in
-                    Button { selected = action.kind } label: { Label(action.title, systemImage: action.systemImage).frame(maxWidth: .infinity, alignment: .leading) }.buttonStyle(.bordered)
+                    Button {
+                        selected = action.kind
+                    } label: {
+                        Label(action.title, systemImage: action.systemImage).frame(
+                            maxWidth: .infinity, alignment: .leading)
+                    }.buttonStyle(.bordered)
                 }
             }
         }
-        .padding(18).frame(width: 292).background(.ultraThinMaterial).preferredColorScheme(.dark)
-        .onAppear { store.refreshFromPersistence(); quickActions = false }
+        .padding(16).frame(width: 288).background(AboLifeColors.pageBackground)
+        .onAppear {
+            store.refreshFromPersistence(); quickActions = false
+        }
         .sheet(item: $selected) { QuickAddPlaceholderSheet(store: store, initialKind: $0) }
     }
 }
@@ -57,34 +78,34 @@ private struct MenuBarBudgetRing: View {
         ZStack {
             // The full ring is the monthly budget; only today's available share is green.
             Circle()
-                .stroke(Color.gray.opacity(0.24), lineWidth: 8)
+                .stroke(AboLifeColors.subtleFill, lineWidth: 6)
 
             if availableFraction > 0 {
                 Circle()
                     .trim(from: 0, to: availableFraction)
-                    .stroke(Color.green, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .stroke(AboLifeColors.finance, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                    .aboLifeMotion(value: availableFraction)
             }
 
-            VStack(spacing: 5) {
+            VStack(spacing: 4) {
                 Text(amountText)
-                    .font(.system(size: 22, weight: .medium, design: .rounded))
+                    .font(.system(size: 20, weight: .medium))
                     .foregroundStyle(AboLifeColors.primaryText)
                     .monospacedDigit()
+                    .aboLifeNumericTransition(value: availableToday)
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 Text("heute frei")
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
+                    .font(AboLifeTypography.micro)
                     .foregroundStyle(AboLifeColors.secondaryText)
             }
-            .padding(.horizontal, 14)
+            .padding(.horizontal, 12)
         }
-        .frame(width: 144, height: 144)
-        .padding(6)
-        .animation(.easeInOut(duration: 0.2), value: availableFraction)
+        .frame(width: 108, height: 108)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Budget: heute verfügbar")
         .accessibilityValue(amountText)
-        .help("Grau: Monatsbudget. Grün: heute verfügbarer Anteil.")
+        .help("Grau: Monatsbudget. Türkis: heute verfügbarer Anteil.")
     }
 }

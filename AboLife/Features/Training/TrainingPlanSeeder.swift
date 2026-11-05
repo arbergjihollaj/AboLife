@@ -83,29 +83,9 @@ enum TrainingPlanSeeder {
     ])
 
     static let defaultProgressions: [ExerciseProgression] = [
-        ExerciseProgression(exerciseName: "Liegestuetze", level: 1, targetSets: 4, targetMinReps: 8, targetMaxReps: 12, personalRecord: 24),
-        ExerciseProgression(exerciseName: "Klimmzuege", level: 1, targetSets: 4, targetMinReps: 3, targetMaxReps: 5, personalRecord: 5),
-        ExerciseProgression(exerciseName: "Pike Push-ups", level: 1, targetSets: 4, targetMinReps: 6, targetMaxReps: 10, personalRecord: 12)
+        ExerciseProgression(exerciseName: "Liegestuetze", level: 1, targetSets: 4, targetMinReps: 8, targetMaxReps: 12, personalRecord: 0),
+        ExerciseProgression(exerciseName: "Klimmzuege", level: 1, targetSets: 4, targetMinReps: 3, targetMaxReps: 5, personalRecord: 0),
+        ExerciseProgression(exerciseName: "Pike Push-ups", level: 1, targetSets: 4, targetMinReps: 6, targetMaxReps: 10, personalRecord: 0)
     ]
 
-    static let sampleMeasurements: [BodyMeasurement] = [
-        BodyMeasurement(weightKg: 86.5, waistCm: 88, chestCm: 101, armCm: 35, maxPushups: 24, maxPullups: 5),
-        BodyMeasurement(measuredAt: Date().addingTimeInterval(60 * 60 * 24 * 14), weightKg: 87.2, waistCm: 87, chestCm: 102.5, armCm: 35.8, maxPushups: 29, maxPullups: 7)
-    ]
-
-    private static func variants(_ normal: [(String, String)]) -> [HomeWorkoutIntensity: [HomeWorkoutExercise]] {
-        [
-            .minimum: normal.prefix(max(3, min(normal.count, 4))).map { HomeWorkoutExercise(name: $0.0, prescription: $0.1) },
-            .normal: normal.map { HomeWorkoutExercise(name: $0.0, prescription: $0.1) },
-            .strong: normal.map { HomeWorkoutExercise(name: $0.0, prescription: stronger($0.1)) }
-        ]
-    }
-
-    private static func stronger(_ prescription: String) -> String {
-        if prescription.contains("Minuten") || prescription.contains("Sekunden") {
-            return prescription
-        }
-
-        return "\(prescription) + 1 Satz"
-    }
 }

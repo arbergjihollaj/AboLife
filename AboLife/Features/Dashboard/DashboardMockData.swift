@@ -2,7 +2,6 @@ import Foundation
 import SwiftUI
 
 struct DashboardSnapshot {
-    let greeting: String
     let dateLine: String
     let coreProgress: Double
     let coreMessage: String
@@ -97,9 +96,9 @@ struct WeightDashboardStatus {
 }
 
 struct DashboardDayStatus: Identifiable {
-    let id = UUID()
+    var id: String { shortName }
     let shortName: String
-    let completion: Double
+    let completion: Double?
     let tint: Color
 
     var weeklyStatusItem: WeeklyStatusItem {
@@ -125,14 +124,13 @@ enum DashboardMockData {
         )
 
         return DashboardSnapshot(
-            greeting: Calendar.current.component(.hour, from: Date()) < 11 ? "Guten Morgen, \(DemoData.isEnabled ? "Alex" : "Arber")" : Calendar.current.component(.hour, from: Date()) < 18 ? "Hallo, \(DemoData.isEnabled ? "Alex" : "Arber")" : "Guten Abend, \(DemoData.isEnabled ? "Alex" : "Arber")",
             dateLine: formattedDateLine(),
             coreProgress: coreProgress,
-            coreMessage: coreMessage(for: state, coreProgress: coreProgress),
-            nextStep: todayOpen.nextStep ?? "Der Tag steht gut. Du kannst ihn ruhig ausklingen lassen.",
+            coreMessage: coreMessage(for: coreProgress),
+            nextStep: todayOpen.nextStep ?? "Für heute ist alles erledigt.",
             training: TrainingToday(
                 title: "Training heute",
-                status: trainingStatus(for: state),
+                status: trainingStatus(for: state, todayStatus: todayOpen.training),
                 weeklyProgress: "\(state.weeklyWorkoutCompleted) / \(state.weeklyWorkoutTarget) Einheiten diese Woche",
                 todayStatus: todayOpen.training,
                 nextWorkout: todayWorkout.isToday ? todayWorkout.day.name : "\(todayWorkout.day.name) am \(todayWorkout.day.weekdayName)",
@@ -157,8 +155,8 @@ enum DashboardMockData {
                 items: state.habits
             ),
             week: WeekStatus(
-                title: "7-Tage-Wochenstatus",
-                message: "Heute reagiert live auf deine lokalen Einträge.",
+                title: "Diese Woche",
+                message: "Daily Core für heute",
                 days: weekDays(todayCompletion: coreProgress)
             ),
             weight: WeightDashboardStatus(
@@ -185,35 +183,28 @@ enum DashboardMockData {
 
 
 
-    private static func coreMessage(for state: DashboardMockState, coreProgress: Double) -> String {
-        if coreProgress >= 0.80 {
-            return "Der Tag steht sehr solide. Deine Gewohnheiten und dein Budget sind auf Kurs."
+    private static func coreMessage(for coreProgress: Double) -> String {
+        switch coreProgress {
+        case 0.80...: return "Gut im Tagesrhythmus"
+        case 0.40..<0.80: return "Dein Tag nimmt Form an"
+        default: return "Zeit für den ersten Schritt"
         }
-
-        if state.weeklyWorkoutCompleted < state.weeklyWorkoutTarget {
-            return "Der Tag ist stabil. Deine Gewohnheiten geben dem Tag Struktur."
-        }
-
-        return "Der Tag bewegt sich. Ein kleiner Eintrag reicht, damit das Dashboard direkt reagiert."
     }
 
-
-
-
-
-    private static func trainingStatus(for state: DashboardMockState) -> String {
-        if state.trainingPausedToday {
+    private static func trainingStatus(for state: DashboardMockState, todayStatus: TodayTrainingStatus) -> String {
+        switch todayStatus {
+        case .paused:
             return "Heute pausiert"
+        case .completed:
+            if let type = state.lastWorkoutType, let duration = state.lastWorkoutDurationMinutes {
+                return "\(type) erledigt · \(duration) Min"
+            }
+            return "Heute erledigt"
+        case .open:
+            return "Training heute offen"
+        case .notScheduled:
+            return "Heute kein Plantraining"
         }
-        if let type = state.lastWorkoutType, let duration = state.lastWorkoutDurationMinutes {
-            return "\(type) erledigt · \(duration) Min"
-        }
-
-        let scheduled = HomeWorkoutPlanProvider.plan.workout(for: Date())
-        if scheduled.isToday {
-            return "\(scheduled.day.name) offen"
-        }
-        return state.weeklyWorkoutCompleted >= state.weeklyWorkoutTarget ? "Wochentraining erledigt" : "Heute kein Plantraining"
     }
 
     private static func calmTrainingMessage(for state: DashboardMockState, todayOpen: TodayOpenStatus) -> String {
@@ -257,7 +248,7 @@ enum DashboardMockData {
             guard let date = calendar.date(byAdding: .day, value: offset, to: interval.start) else { return nil }
             return DashboardDayStatus(
                 shortName: formatter.string(from: date),
-                completion: calendar.isDateInToday(date) ? todayCompletion : 0,
+                completion: calendar.isDateInToday(date) ? todayCompletion : nil,
                 tint: AboLifeColors.review
             )
         }

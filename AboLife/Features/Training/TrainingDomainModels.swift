@@ -238,7 +238,6 @@ struct TrainingStatistics: Equatable {
     let pushVolume: Int
     let pullVolume: Int
     let legVolume: Int
-    let strongestWeek: Int
     let trainingRate: Double
     let averageSetsPerTraining: Double
     let minimumWorkouts: Int

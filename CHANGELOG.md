@@ -1,3 +1,11 @@
+## Unveröffentlicht · UI- und Qualitätsevolution auf 0.4.1
+
+- System-/Hell-/Dunkeldarstellung, gemeinsame Motiontokens und dezente native Interaktionsübergänge; ursprünglicher Dashboardaufbau erhalten.
+- Monats-/Reviewnavigation, fachlich klarere Finanzvergleiche und Filter; ungespeicherte Reviews bleiben beim Bereichswechsel erhalten.
+- Speicherfehler erhalten Formulare; keine Trainingserkenntnisse aus Seedwerten und echte 7-/30-Kalendertagesfenster.
+- News in Parser/Abruf/Store/Komponenten getrennt; Abbruch, Quellenwechsel und unlesbare Präferenzen abgesichert.
+- 21 zusätzliche native Prüfungen, isoliertes UI-Testtarget, lokale Quality-Gates und projektspezifische Skills. BonsaiBar-Analytics ausschließlich geplant.
+
 # Änderungen
 
 ## Hauptversion 0.4.0
@@ -109,3 +117,11 @@ Validierung: 240 Tests erfolgreich; Release-Build sowie native Ansichten geprüf
 - Fixieren, Verschieben, Auslassen und bewertete Wiederholungen mit tatsächlicher Dauer. Transparente Heuristik passt Intervalle und Dauer an Rückmeldungen an.
 - Separate App-Kennung und Datenkopie schützen den gesicherten Stand 0.1. Kalenderdaten sind in SQLite-, JSON- und mehrteiligen CSV-Sicherungen enthalten.
 - 224 Tests erfolgreich, einschließlich der bestehenden 195 Tests.
+
+## Lokale KI-Erweiterung der Hauptversion 0.4
+
+- AboLife AI über getrennte BonsaiBar-App ergänzt: Chat, Keychain-Verbindung, ausdrücklich gefilterter Kontext und Vorschau.
+- Begrenzte JSON-Aktionen für Lernaufgaben/-blöcke, Review und Budgetanalyse mit Bestätigung, Fach-/Termin-/Konflikt-/Replay-Prüfung.
+- Private additive Migration v14 mit konsistenter Vorabsicherung; keine Änderung der Web-Sync-Allowlist.
+- Historische Tagesbudgetberechnung verwendet das übergebene Datum. Bestehende datumsabhängige Testfixture stabilisiert.
+- Native/Live-/Webprüfungen und isolierte UI-Demo erweitert; Dashboardaufbau und bisherige Fachfunktionen erhalten.

@@ -1,13 +1,12 @@
 import SwiftUI
 
 struct QuickAddFormCard<Content: View>: View {
-    let tint: Color
+    @Environment(\.aboLifeStyle) private var designStyle
     let systemImage: String
     let title: String
     let content: Content
 
-    init(tint: Color, systemImage: String, title: String, @ViewBuilder content: () -> Content) {
-        self.tint = tint
+    init(systemImage: String, title: String, @ViewBuilder content: () -> Content) {
         self.systemImage = systemImage
         self.title = title
         self.content = content()
@@ -15,10 +14,10 @@ struct QuickAddFormCard<Content: View>: View {
 
     var body: some View {
         AboLifeCard(isProminent: true) {
-            VStack(alignment: .leading, spacing: 13) {
+            VStack(alignment: .leading, spacing: 12) {
                 Label(title, systemImage: systemImage)
                     .font(AboLifeTypography.cardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 content
             }
@@ -27,6 +26,7 @@ struct QuickAddFormCard<Content: View>: View {
 }
 
 struct QuickAddSection<Content: View>: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let title: String
     let systemImage: String
     let content: Content
@@ -42,7 +42,7 @@ struct QuickAddSection<Content: View>: View {
             VStack(alignment: .leading, spacing: 12) {
                 Label(title, systemImage: systemImage)
                     .font(AboLifeTypography.cardTitle)
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
 
                 content
             }
@@ -51,23 +51,22 @@ struct QuickAddSection<Content: View>: View {
 }
 
 struct QuickAddChip: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let title: String
     let systemImage: String
-    let tint: Color
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 9) {
+            HStack(spacing: 8) {
                 Image(systemName: systemImage)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(tint)
-                    .frame(width: 24, height: 24)
-                    .background(tint.opacity(0.12), in: Circle())
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(designStyle.colors.secondaryText)
+                    .frame(width: 20)
 
                 Text(title)
                     .font(AboLifeTypography.caption.weight(.medium))
-                    .foregroundStyle(AboLifeColors.primaryText)
+                    .foregroundStyle(designStyle.colors.primaryText)
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
 
@@ -75,10 +74,10 @@ struct QuickAddChip: View {
             }
             .padding(.horizontal, 12)
             .frame(maxWidth: .infinity, minHeight: 44)
-            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(designStyle.colors.elevatedCardBackground, in: RoundedRectangle(cornerRadius: 8))
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(AboLifeColors.glassStrokeMuted.opacity(0.72), lineWidth: 0.7)
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(designStyle.colors.glassStrokeMuted.opacity(0.72), lineWidth: 0.7)
             }
         }
         .buttonStyle(.plain)
@@ -86,9 +85,9 @@ struct QuickAddChip: View {
 }
 
 struct QuickAddSubmitButton: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let title: String
     let systemImage: String
-    let tint: Color
     let action: () -> Void
 
     var body: some View {
@@ -96,33 +95,34 @@ struct QuickAddSubmitButton: View {
             Spacer()
             Button(action: action) {
                 Label(title, systemImage: systemImage)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.system(size: 14, weight: .semibold))
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .tint(tint)
+            .tint(designStyle.colors.action)
         }
     }
 }
 
 struct QuickAddStatusMessage: View {
+    @Environment(\.aboLifeStyle) private var designStyle
     let message: String
 
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(AboLifeColors.habits)
+                .foregroundStyle(designStyle.colors.habits)
             Text(message)
                 .font(AboLifeTypography.caption.weight(.semibold))
-                .foregroundStyle(AboLifeColors.primaryText)
+                .foregroundStyle(designStyle.colors.primaryText)
             Spacer()
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 9)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(designStyle.colors.elevatedCardBackground, in: RoundedRectangle(cornerRadius: 8))
         .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(AboLifeColors.glassStrokeMuted.opacity(0.65), lineWidth: 0.7)
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(designStyle.colors.glassStrokeMuted.opacity(0.65), lineWidth: 0.7)
         }
     }
 }

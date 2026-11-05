@@ -19,3 +19,7 @@ Ernährung, Mahlzeiten, Kalorien, Protein, Barcode-Scan und Telegram entfallen a
 ## Gestaltungsprinzipien
 
 Ruhige native Oberfläche, wenige Hauptaussagen, schnelle Eingaben, sichtbare Lade-/Fehler-/Leerzustände und keine stillen Datenüberschreibungen. News zeigen Quellen und Originalverweise. KI, Banking, Apple Health, Mail und native iPhone-App sind nicht Teil dieses Auftrags.
+
+## Lokaler Assistent · Erweiterung vom 2. November 2026
+
+AboLife AI ist eine ausdrücklich beauftragte Ergänzung der Hauptversion 0.4. BonsaiBar bleibt eine getrennte lokale Inferenz-App. Tages-, Finanz-, Lern-, Trainings-, Review- und Schlagzeilenhilfe verwenden nur pro Zweck freigegebene Daten. Vorschläge ändern Daten ausschließlich nach konkreter Vorschau und Bestätigung. AboLife funktioniert bei fehlender KI unverändert weiter.

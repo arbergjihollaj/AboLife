@@ -17,8 +17,8 @@ struct TodayOpenStatus: Equatable {
     let openHabitTitles: [String]
     let dailyBudgetRemaining: Double
     var summary: String {
-        let items = (training == .open ? ["dein Training"] : []) + openHabitTitles
-        return items.isEmpty ? "Für heute ist alles erledigt." : "Noch offen: " + items.joined(separator: ", ") + "."
+        let items = (training == .open ? ["Training"] : []) + openHabitTitles
+        return items.isEmpty ? "Für heute ist alles erledigt." : items.joined(separator: ", ")
     }
     var nextStep: String? {
         if let habit = openHabitTitles.first { return "\(habit) ist ein guter nächster Schritt." }

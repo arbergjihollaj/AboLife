@@ -39,7 +39,15 @@ jobs:
           package-manager-cache: false
       - name: Resolve the pinned GRDB dependency
         run: xcodebuild -resolvePackageDependencies -project AboLife.xcodeproj -scheme AboLife -clonedSourcePackagesDirPath work/dependencies
+      - name: Install SwiftLint for structural quality checks
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: brew list --versions swiftlint || brew install swiftlint
+      - name: Format, structural lint and private-artifact checks
+        run: scripts/check-quality.py
       - run: scripts/check-native.sh
+      - name: Compile Xcode app and isolated UI test target
+        run: xcodebuild build-for-testing -project AboLife.xcodeproj -scheme AboLife -destination 'platform=macOS' -derivedDataPath work/xcode-quality -clonedSourcePackagesDirPath work/dependencies CODE_SIGNING_ALLOWED=NO
       - name: Build native app with assets and verify signature
         run: scripts/package-local-app.sh
   container:

@@ -33,3 +33,20 @@ Der Docker-Dienst läuft mit eingeschränkten Rechten und dauerhaftem SQLite-Vol
 Lokale Restore-Daten werden auf einer isolierten Datenbank geprüft. Nach Bestätigung wird der bisherige Stand gesichert und transaktional ersetzt. Alte Sync-Ausgangsstände werden verworfen, damit eine Wiederherstellung keinen neueren Serverstand still überschreibt.
 
 Prüfbare Grenzen und noch offene reale Geräte-/Linux-Abnahmen: [TESTING.md](../TESTING.md).
+
+## AboLife AI · getrennte lokale Inferenz
+
+`Features/AI` ergänzt den vorhandenen Aufbau. Foundation-Connector → authentifizierte BonsaiBar-API → gemeinsame Inferenzverwaltung. Die Verbindung liegt im Schlüsselbund. Der AIContextBuilder schneidet explizite Grants mit dem Zweck; Kalender-/Finanz-/Habit-Repositories liefern Primärdaten und deterministische Werte. Abgeleitete Lernfenster benötigen auch Kalenderfreigabe.
+
+JSON-Schema begrenzt die Modellantwort. AIActionExecutor prüft Fach/ID, Zeiten, Fahrt-/Tagesregeln, Grant und Rohdaten-Fingerprint. Preview ist keine Ausführung; bestätigte Transaktion schreibt Fachänderung plus Replay-Receipt atomar. Es gibt keine Datenbank-/Shell-Ausführung aus Modelltext. Unlesbare KI-Historien werden nicht überschrieben.
+
+
+## UI- und Qualitätsevolution · 5.11.2026
+
+AppSession öffnet die bestehende Datenbank und stellt bei Fehlern eine Recovery-Ansicht bereit. Es gibt keinen beschreibbaren nil-Datenbank-Ersatzpfad in der echten App. Demo/Tests erhalten getrennte UserDefaults und temporäre Historie, damit eine bestehende Auto-Sync-Konfiguration nicht auf Fixture-Daten angewandt wird. Das bestehende KI-Modul bleibt fachlich unverändert.
+
+DesignSystem bündelt adaptive Farben, Spacing/Radius, Motion und gemeinsame Status-/Zeitraumcontrols. Die vorhandenen ObservableObject-Stores bleiben angemessen; keine pauschale Observation-/Swift-6-Migration. Der Review-Store lebt oberhalb der Sidebar-Ziele, damit ungespeicherte Eingaben beim Navigieren erhalten bleiben. Zeitraumwechsel und Reload prüfen Änderungen.
+
+NewsModels, NewsFeedParser, NewsFeedLoader, NewsStore, NewsArticleCard und NewsView trennen Verträge, Parsing, Netzwerk, Zustand und Darstellung. Höchstens vier bekannte Quellen laufen in strukturierten Tasks; pro Quelle sind zwei MB begrenzt. Generation und Quellenauswahl verhindern überholte Ergebnisse. Beschädigte Präferenzen werden nicht mit Defaults überschrieben. Kein neuer Cache.
+
+Gewichtsauswertungen verwenden ausdrücklich Kalenderintervalle; die historische Repository-API mit Messungsanzahl bleibt kompatibel. Finanzansichten verwenden vorhandene deterministische Ergebnisse mehrfach statt sie mehrfach zu laden/berechnen. Dashboard-State wird einmal pro Reload veröffentlicht. Neue Analytics-/Review-/News-KI bleibt der [separate Plan](BONSAIBAR_ANALYTICS_PLAN.md), ohne zusätzliche Transport-/Inferenzimplementierung.
