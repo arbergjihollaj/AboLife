@@ -1,0 +1,4 @@
+// B: isolated dashboard composition. Shared data keeps the comparison fair.
+export function renderB({ core, parts, card, financeWidget, trainingWidget, habitsWidget, timeline, ring, progress, btn, go, data, personal }) {
+  return `<div class="spatial-heading"><span class="eyebrow">PERSÖNLICHER ORBIT / 05.11.26</span><h1>Alles in deiner Umlaufbahn.</h1></div><div class="orbit-board">${card(personal?'Budget':'01 / Ressourcen',financeWidget(),'orbit-finance')}${card(personal?'Training':'02 / Energie',trainingWidget(),'orbit-training')}<section class="orbit-core">${ring(progress(),'Tageskern')}<p>Dein Tag ist in Bewegung.</p>${btn('+ Erfassen','add','primary')}</section>${card(personal?'Gewohnheiten':'03 / Rhythmus',habitsWidget(),'orbit-habits')}${card(personal?'Kalender':'04 / Nächster Halt',timeline(),'orbit-calendar')}</div>`;
+}
