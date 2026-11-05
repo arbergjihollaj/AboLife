@@ -68,7 +68,7 @@ final class DesignRenderingTests: XCTestCase {
         for design in AboLifeDesign.allCases {
             for (name, scheme) in [("light", ColorScheme.light), ("dark", ColorScheme.dark)] {
                 for width in [660.0, 1100.0] {
-                    let view = DashboardView(store: DashboardStore(state: .default)).overview
+                    let view = DashboardView(store: DashboardStore(state: .default), rendersOverviewOnly: true)
                         .environmentObject(AIAssistantStore.previewStore())
                         .environmentObject(AppNavigationCoordinator())
                         .environment(\.aboLifeStyle, AboLifeStyle(design: design))

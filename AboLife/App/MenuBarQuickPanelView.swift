@@ -53,7 +53,7 @@ struct MenuBarQuickPanelView: View {
         .onAppear {
             store.refreshFromPersistence(); quickActions = false
         }
-        .sheet(item: $selected) { QuickAddPlaceholderSheet(store: store, initialKind: $0) }
+        .sheet(item: $selected) { QuickAddSheet(store: store, initialKind: $0) }
     }
 }
 

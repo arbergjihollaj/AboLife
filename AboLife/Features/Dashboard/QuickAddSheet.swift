@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct QuickAddPlaceholderSheet: View {
+struct QuickAddSheet: View {
     @Environment(\.aboLifeStyle) private var designStyle
     @ObservedObject var store: DashboardStore
     let initialKind: QuickAddKind?

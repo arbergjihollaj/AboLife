@@ -230,8 +230,7 @@ final class EvolutionRenderingTests: XCTestCase {
         for (scenario, state) in states {
             for (name, scheme) in [("dark", ColorScheme.dark), ("light", ColorScheme.light)] {
                 for width in [760.0, 1100.0] {
-                    let view = DashboardView(store: DashboardStore(state: state))
-                        .overview
+                    let view = DashboardView(store: DashboardStore(state: state), rendersOverviewOnly: true)
                         .environmentObject(AIAssistantStore.previewStore())
                         .environmentObject(AppNavigationCoordinator())
                         .padding(24)

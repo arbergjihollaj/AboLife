@@ -10,7 +10,15 @@ struct DashboardView: View {
     @StateObject var store: DashboardStore
     @State private var selectedQuickAddKind: QuickAddKind?
 
+    var rendersOverviewOnly = false
+
     var body: some View {
+        Group {
+            if rendersOverviewOnly { overview } else { appBody }
+        }
+    }
+
+    private var appBody: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 header
@@ -46,7 +54,7 @@ struct DashboardView: View {
             }
         }
         .sheet(item: $selectedQuickAddKind) { kind in
-            QuickAddPlaceholderSheet(store: store, initialKind: kind)
+            QuickAddSheet(store: store, initialKind: kind)
         }
     }
 
