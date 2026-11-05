@@ -33,3 +33,15 @@ Detailinhalte unterstützen mindestens 660 pt Breite und 460 pt Höhe zusätzlic
 Symbole haben Textlabels, dekorative Bilder sind ausgeblendet, Auswahl wird als ausgewählt vorgelesen. Fehler nennen eine Handlung, Erfolg erscheint erst nach erfolgreichem Speichern. Finanzbuchungen behalten Centbeträge und unterscheidbare Vorzeichen für Einnahmen/Ausgaben. Fehlende Daten und unbekannte RSS-Daten bleiben erkennbar.
 
 Die automatisierten Referenzen rendern die tatsächliche Dashboard-Kartenkomposition in Hell/Dunkel, 760/1100 pt und verschiedenen Datenzuständen. ImageRenderer erfasst keine native Fenster-/Formular- oder VoiceOver-Abnahme. Live-Prüfung und Animationen müssen auf einem entsperrten Mac geprüft werden; Details im Abschlussbericht.
+
+## Freigegebene Designs: Spatial, Bento und Fieldnotes
+
+Seit der ausdrücklichen Freigabe vom 6. November 2026 ersetzt die lokale Designauswahl die frühere einzelne Dashboard-Komposition. `AboLifeDesignStore` und `AboLifeStyle` koordinieren die Darstellung über alle Szenen, ohne Fachstores neu anzulegen. `AboLifePalette` liefert adaptive Oberflächen und lesbare Akzente. Hell/Dunkel/System bleibt eine unabhängige Wahl; die Systemeinstellung wird standardmäßig respektiert.
+
+- Spatial: räumlicher Daily-Core-Mittelpunkt, dezent transparente Panels, Navigation unten.
+- Bento: kompakte Seitenleiste, großzügig gerundete Module und Widgeteditor in Einstellungen. Drag-and-drop wird durch beschriftete Auf-/Ab-Aktionen ergänzt.
+- Fieldnotes: Papierfarben bzw. dunkle Journalflächen, Serifenschrift, Navigation oben, weniger gleichzeitig sichtbare Tagesdetails.
+
+Die bestehenden Motiontokens bleiben 120/180/350 ms mit Reduce-Motion-Unterstützung. Alle Designs öffnen denselben vorhandenen KI-Assistenten über einen beschrifteten Headerbutton. Verbindung, Kontextfreigaben, Streaming, Abbruch, Chatverlauf und Aktionsbestätigung werden nicht durch eine zweite KI-Implementierung ersetzt.
+
+Die lokale [Bildgalerie](docs/SCREENSHOTS.md) zeigt zwölf native Dashboard-Referenzen. Für die tatsächliche Fensterbedienung gelten die im [Redesign-Bericht](docs/REDESIGN_REPORT.md) benannten Prüfgrenzen.

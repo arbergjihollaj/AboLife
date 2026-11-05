@@ -22,3 +22,7 @@ Kleiner Zugang mit Sprechblasen-Symbol im Dashboard und in der Toolbar; eigener 
 Die bisherige Karten-/Ringhierarchie bleibt. System/Hell/Dunkel lässt sich in Einstellungen wählen. Gemeinsame Motiontokens animieren Metriken, Fortschritt, Sidebar und kurze Einblendung; Reduce Motion deaktiviert diese. Finanzbalken besitzen eine gemeinsame Skala. Buchungen zeigen Centbeträge, klare Vorzeichen und Filter; Planung/Kategorien liegen hinter Disclosure. Monats- und Reviewwochen sind direkt erreichbar.
 
 Newsfilter umbrechen bei kleineren Fenstern; Quellen, Veröffentlichungsdatum oder dessen Fehlen sowie Lese-/Merkstatus bleiben sichtbar. Schnellerfassung und detailliertes Training behalten Eingaben bei Fehlern, liefern echtes Speicherfeedback und scrollen bei geringerer Höhe. Neue Symbolaktionen und zentrale Headercontrols besitzen lesbare Accessibility-Labels. Das vollständige System ist in [DESIGN.md](../DESIGN.md) beschrieben.
+
+## Aktualisierung nach Designfreigabe
+
+Die freigegebene Produktoberfläche bietet jetzt Spatial, Bento und Fieldnotes unter Einstellungen. Palette, Typografie, Navigation und Dashboard-Komposition wechseln gemeinsam; Fachfunktionen und die vorhandene KI werden weiterverwendet. Die frühere einzelne matte Sidebar-Komposition ist historischer Kontext. Verbindlicher aktueller Stand: `DESIGN.md`, `AboLifeDesign.swift` und `docs/REDESIGN_REPORT.md`.

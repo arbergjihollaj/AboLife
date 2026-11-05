@@ -1,104 +1,91 @@
-<p align="center">
-  <img src="web/public/icon.png" width="88" alt="AboLife App-Icon">
-</p>
+# AboLife
 
-<h1 align="center">AboLife</h1>
-<p align="center">Ein persönlicher Alltagsbegleiter für macOS – mit adaptiver Lernplanung und privatem mobilen Webzugriff.</p>
-<p align="center"><strong>Hauptversion 0.4.1</strong> · SwiftUI · SQLite/GRDB · Node.js · Docker</p>
+Ein persönlicher Alltagsbegleiter für macOS: Finanzen, Bewegung, Gewohnheiten, Kalender und Wochenreflexion an einem Ort. Lokale SQLite-Daten, optionaler privater Webabgleich und ein lokaler KI-Assistent über BonsaiBar.
 
-AboLife verbindet Studienplanung, tägliche Gewohnheiten, Training und Budget in einer nativen Mac-App. Eine ergänzende Weboberfläche erlaubt Eingaben unterwegs. Das Projekt entstand aus dem Wunsch, diese Abläufe an einer Stelle zusammenzubringen, und dient als praktisches Softwareentwicklungsprojekt.
+**macOS 14+ · SwiftUI · GRDB/SQLite · Version 0.4.1**
 
-![Dashboard mit fiktiven Beispieldaten](docs/images/dashboard.png)
+## Eine App, drei Designs
+
+Unter **Einstellungen → Dein Design** lässt sich die gesamte Oberfläche wechseln. Daten, Fachfunktionen und KI-Verbindung bleiben dieselben.
+
+| Spatial | Bento | Fieldnotes |
+|---|---|---|
+| Räumlicher Tageskern, transparente Karten, Navigation im unteren Dock. | Kompakte Seitenleiste und umsortierbare Dashboard-Widgets. | Ruhiges Journal, warme Flächen, Serifenschrift und reduzierte Übersicht. |
+| ![Spatial dunkel](docs/images/designs/spatial-dark-1100.png) | ![Bento hell](docs/images/designs/bento-light-1100.png) | ![Fieldnotes hell](docs/images/designs/fieldnotes-light-1100.png) |
+
+Die Bilder sind automatisch gerenderte Ausschnitte der **echten nativen Dashboard-Views** mit ausdrücklich fiktiven Vorschauwerten. Sie zeigen keine persönlichen Daten und keine vollständigen Fensteraufnahmen. Die laufende Demo wurde zusätzlich manuell geprüft. [Alle 12 Ansichten und ihre Prüfmethode](docs/SCREENSHOTS.md).
+
+Akzentfarben sind unabhängig vom Design einstellbar. Hell/Dunkel/System folgt der gewählten Darstellung. Im Bento-Modus lassen sich Widgets in den Einstellungen ziehen oder über beschriftete Pfeiltasten verschieben. Reduce Motion wird berücksichtigt.
 
 ## Funktionen
 
-| Bereich | Verhalten |
-|---|---|
-| Kalender & Lernen | ICS-Import, Serien und automatische Vor-/Nacharbeit für Uni-Module. Fahrtwege, freie Lerntage, Pausen, Tageslimits und fixierte Blöcke begrenzen die Planung. |
-| Tagesübersicht | Daily Core, offene Tagespunkte, Gewohnheiten, Aktivitäten und eine kompakte Menüleiste. |
-| Finanzen | Ausgaben, Monats-/Tagesbudget, Kategorien, Fixkosten und Sparziele. Heutige Ausgaben reduzieren den heutigen Spielraum um den vollen Betrag. |
-| Training & Gewicht | Workout-Varianten, Übungen/Sätze, Gewichtseinträge, Statistiken und Wochenreview. |
-| News | Privater RSS-/Atom-Reader mit Quellenwahl, Suche, Ausschlusswörtern und Merkliste. |
-| Mac ↔ Web | Revisionsgesicherter Abgleich, Zusammenführung unabhängiger Änderungen und explizite echte Konflikte. |
-| Unterwegs | Mobile Eingaben, Lernbewertungen, Trainingsplan und Wochenreview; lokale Warteschlange für Offlineeingaben. |
-| Sicherungen | SQLite/JSON/CSV-Export und geprüfte Wiederherstellung mit Sicherung vor dem Ersetzen. |
+- **Heute:** Daily Core, offene Tagespunkte, Budget, Training, Gewohnheiten und direkte Schnellerfassung.
+- **Finanzen:** Buchungen, Monatsbudget, Kategorien, Fixkosten und Planung. Tages- und Monatsbudget haben getrennte Bedeutungen.
+- **Gesundheit:** Heimtrainingspläne mit Übungen/Sätzen, Wochenfortschritt und tatsächlich erfasste Gewichtsmessungen.
+- **Gewohnheiten und Reflexion:** Wasser, Lernen und Schlafroutine; Training wird aus Einträgen abgeleitet. Wochenreview und Statistiken fassen gespeicherte Werte zusammen.
+- **Kalender:** Termine, Serien, ICS-Import und die bestehende deterministische Modul-/Themenplanung mit Fahrtwegen und Pausen.
+- **Nachrichten:** RSS-Quellen, Filter und Lese-/Merkstatus.
+- **Mac und Web:** Optionaler revisionsgesicherter Abgleich mit einem privaten Homelab. Die mobile Weboberfläche ergänzt die Mac-App.
+- **Sicherung:** SQLite-, JSON- und CSV-Export sowie geprüfte Wiederherstellung.
 
-Ernährung und Telegram wurden mit 0.3 aus dem aktiven Produkt entfernt. Historische Datenmodelle bleiben ausschließlich für lokale Migrationen und Sicherungen erhalten.
+## Bestehende lokale KI
 
-## Technischer Aufbau
+**AboLife AI** ist in jedem Design erreichbar. Der Zugang öffnet denselben vorhandenen Assistenten mit lokalem BonsaiBar-Connector, Chatverlauf, Kontextvorschau, ausdrücklichen Freigaben und prüfbaren Aktionsvorschlägen. Eine Antwort allein verändert keine Fachdatensätze; Änderungen werden separat bestätigt.
 
-```mermaid
-flowchart TD
-  UI["SwiftUI · Views & Stores"] --> REPO["Repositories · GRDB / SQLite"]
-  REPO --> SYNC["Versionsgesicherter JSON-Vertrag"]
-  SYNC <--> API["Node.js · HTTP-API & SQLite"]
-  WEB["Mobile Weboberfläche · Offlinewarteschlange"] <--> API
-  API --> CLI["Swift-Planer als CLI"]
-  UI --> PLAN["Gemeinsamer Swift-Planer"]
-```
+Die Demo lädt keine persönlichen Verbindungsdateien und ruft kein echtes Modell auf. BonsaiBar läuft getrennt von AboLife. Die geplanten weitergehenden Analytics-/Review-/News-Erweiterungen sind nicht Teil dieses Redesigns. [KI-Architektur](docs/AI_INTEGRATION.md).
 
-- **Native App:** SwiftUI/AppKit, Stores und Repositories; persistierte Einträge bilden die Primärdaten. SQLite-Migrationen erhalten bestehende Daten.
-- **Lernplanung:** Ein gemeinsamer Swift-Kern läuft im Mac und im Homelab-Container. Dadurch werden Termin-/Fahrtregeln nicht in zwei Sprachen separat implementiert.
-- **Web:** Node-Standardbibliotheken einschließlich `node:sqlite`; keine npm-Laufzeitabhängigkeiten. Die Oberfläche verwendet HTML, CSS und JavaScript.
-- **Synchronisierung:** Revisionsprüfung und Drei-Wege-Zusammenführung. Gleichzeitige widersprüchliche Änderungen bleiben sichtbar; Beziehungen und Tagesdatensätze werden geprüft.
-- **Betrieb:** Docker mit dauerhaftem Volume, privatem HTTPS über Tailscale und konsistenten Online-Sicherungen. Zugangsdaten liegen auf dem Mac im Schlüsselbund.
+## Lokal entwickeln
 
-Die [Architektur](docs/ARCHITECTURE.md), der [Datenvertrag](docs/DATA_MODEL.md) und die [Entscheidungen und Abwägungen](docs/PROJECT_OVERVIEW.md) erläutern die Details.
-
-## Lokal starten
-
-Voraussetzungen: macOS 14 oder neuer, Xcode mit Swift 6.1 oder neuer und Internetzugriff zum einmaligen Auflösen der gepinnten GRDB-Abhängigkeit. Node 24 wird für Web-/Vertragstests benötigt.
-
-1. Repository klonen und `AboLife.xcodeproj` öffnen.
-2. Swift-Package-Abhängigkeiten auflösen.
-3. Schema **AboLife → My Mac** starten.
-
-Die Mac-Kernfunktionen benötigen weder einen Account noch ein Serverpasswort. Die Haupt-App verwendet den stabilen Datenordner `AboLife-Main`. Beim ersten Start wird ein vorhandener Kalender-Preview-Stand kopiert, ersatzweise der alte 0.1-Stand. Die Quell-Datenbanken bleiben unverändert.
-
-### Tests und Pakete
+Xcode mit macOS-SDK, Swift 5 und Node.js 24+ verwenden. In Xcode `AboLife.xcodeproj` öffnen, Schema **AboLife** wählen und den festgelegten GRDB-Stand auflösen.
 
 ```sh
+xcodebuild -resolvePackageDependencies -project AboLife.xcodeproj -scheme AboLife
+scripts/check-quality.py
 scripts/check-native.sh
 scripts/package-local-app.sh
-scripts/package-homelab.sh
-```
-
-`check-native.sh` nutzt einen vorhandenen GRDB-Checkout. Alternativ `ABOLIFE_GRDB_CHECKOUT` explizit setzen; siehe [CONTRIBUTING.md](CONTRIBUTING.md). Die Haupt-App entsteht intern unter `work/app-build.noindex/AboLife.app`, die ZIP unter `outputs/AboLife-0.4.1-macOS.zip`. Die ZIP entpacken und `AboLife.app` in den Programme-Ordner ziehen; bei Updates die bestehende App ersetzen. So bleibt eine einzige installierte Haupt-App ohne Versionsnummer im Namen. Builddateien und persönliche Daten gehören nicht in Git.
-
-### Präsentation mit Demodaten
-
-```sh
 scripts/package-demo-app.sh
 ```
 
-Die daraus erzeugte `work/app-build.noindex/AboLife-Demo.app` besitzt eine eigene App-Kennung und legt ausschließlich fiktive Daten in einer temporären Datenbank an. Sie übernimmt keine persönlichen Daten. Die Screenshots in diesem README verwenden diesen Modus. Interne Build-Bundles liegen in einem `.noindex`-Ordner, damit sie nicht als weitere installierte Apps in Spotlight erscheinen.
+`check-native.sh` nutzt einen vorhandenen GRDB-Checkout; alternativ `ABOLIFE_GRDB_CHECKOUT` setzen. Keine andere aktive Codebasis in alten ZIPs oder Buildordnern verwenden.
+
+Die Haupt-App entsteht unter `work/app-build.noindex/AboLife.app`, die aktuelle ZIP unter `outputs/AboLife-0.4.1-macOS.zip`. Für eine einzelne Installation die ZIP entpacken und `AboLife.app` im Programme-Ordner ersetzen. Interne Build-Bundles bleiben außerhalb von Spotlight.
+
+### Isolierte Demo und Design Lab
+
+`work/app-build.noindex/AboLife-Demo.app` verwendet eine eigene Bundlekennung und ausschließlich temporäre Beispieldaten. Persönliche Datenbank, Einstellungen, Sync und KI-Zugangsdaten sind getrennt.
+
+Die ursprünglichen Entwürfe und der Bewertungsprozess bleiben als separates Entwicklerwerkzeug erhalten:
+
+```sh
+npm start --prefix design-lab
+```
+
+Danach `http://127.0.0.1:4177` öffnen. [Design Lab](design-lab/README.md). Persönliches Feedback gehört nicht ins Repository.
 
 ### Privater mobiler Zugriff
 
-Die [Homelab-Anleitung](web/README.md) beschreibt Docker, Tailscale, HTTPS, Passwort und Geräteabgleich. Der Webserver ist eine selbst betriebene persönliche Anwendung; dieses Repository ist kein öffentlicher Demoserver.
+Der Webteil unter `web/` nutzt Node/SQLite und denselben Swift-Planer. Für den persönlichen Betrieb sind privates HTTPS, ein geschütztes Datenvolume und explizite Zugangsdaten notwendig. [Homelab-Anleitung](web/README.md). Es gibt keine öffentliche Beispieldatenbank und keine automatische Bereitstellung.
 
-## Prüfstand und Grenzen
+## Prüfstand des Redesigns
 
-Lokal wurden **276 native Tests entdeckt (273 ausgeführt, 3 optionale KI-Livetests übersprungen) und 26 Web-/Clienttests bestanden**, einschließlich Swift↔JavaScript-Datenvertrag, gemeinsamem Planer, Konkurrenzkonflikten, Offline-Duplikatschutz und Wiederherstellung. Eine GitHub-Actions-Konfiguration prüft Weblogik, native Verträge und den Linux-Container. Konfigurierter CI-Umfang ist keine Behauptung über bereits erfolgreiche Remote-Läufe.
+Native Tests, Webvertrag und Format-/Strukturprüfungen werden lokal ausgeführt. Der konkrete aktuelle Lauf, optionale Skips und die Einschränkungen von Xcode-/UI-Tests stehen im [Redesign-Bericht](docs/REDESIGN_REPORT.md). Die 19 Tests des separaten Design Labs prüfen dessen Prototypen und Feedbackspeicherung.
 
-Der tatsächliche Homelab-/iPhone-Abgleich und mobile Safari-/Service-Worker-Lebenszyklen benötigen weiterhin die Abnahme auf den Zielgeräten. Individuelle Satzwerte und detaillierte Lernblockverschiebungen werden am Mac bearbeitet. Eine historische CSV-Sicherung ohne vollständigen Begleitstand kann nicht verlustfrei wiederhergestellt werden.
+Die native Demo wurde mit allen drei Designs, dem Widgeteditor und dem vorhandenen KI-Dialog manuell angesehen. Die Renderbilder ersetzen keine vollständige Accessibility- oder Performanceabnahme. Ein älterer UI-Testlauf gilt nicht als Nachweis für die neue Oberfläche.
 
-[TESTING.md](TESTING.md) trennt automatisierte Prüfungen von noch offenen Liveprüfungen. [TODO.md](TODO.md) und die [Roadmap](docs/ROADMAP.md) dokumentieren den aktuellen Umfang.
+## Orientierung im Repository
 
-## Projekt und Rechte
+| Pfad | Inhalt |
+|---|---|
+| `AboLife/` | Aktive macOS-App: App, Features, DesignSystem, Charts, Persistence, Sync |
+| `AboLifeTests/`, `AboLifeUITests/` | Isolierte Fach-, Vertrags-, Render- und UI-Prüfungen |
+| `AboLife.xcodeproj/` | Explizites Xcode-Projekt mit App-, Unit- und UI-Testtarget |
+| `web/` | Privater Homelab-Server und mobile Weboberfläche |
+| `design-lab/` | Separate Konzeptgalerie; kein Produktcode |
+| `scripts/` | Prüfungen und lokale Paketierung |
+| `docs/` | Architektur, Datenmodell, Designsystem, Entscheidungen und Bildgalerie |
+| `docs/archive/`, `docs/design-assets/` | Historische Bildschirmaufnahmen und ursprüngliche Iconentwürfe |
+| `work/`, `outputs/` | Ignorierte lokale Prüf-/Buildartefakte und aktuelle Ausgaben |
 
-**Arber Gjihollaj** · persönliches Entwicklungsprojekt für Studium, Alltag und Portfolio. Der Quellcode steht zur Einsicht und zum Code-Review bereit; die Rechte regelt [LICENSE](LICENSE). Drittanbieterbedingungen: [THIRD_PARTY.md](THIRD_PARTY.md). Hinweise zum sicheren Umgang mit Daten: [SECURITY.md](SECURITY.md).
+[Architektur](docs/ARCHITECTURE.md) · [Datenmodell](docs/DATA_MODEL.md) · [Designsystem](DESIGN.md) · [Tests](TESTING.md) · [Sicherheit](SECURITY.md) · [Mitwirken](CONTRIBUTING.md)
 
-## AboLife AI · lokale BonsaiBar-Erweiterung
-
-Der zusätzliche Sparkles-Button öffnet den lokalen Assistenten. In BonsaiBar die lokale API aktivieren, Client AboLife anlegen und die Verbindungsdatei exportieren; hier importieren. Zugang liegt im Schlüsselbund. Grants starten leer, die Vorschau zeigt den tatsächlichen Anfragekontext. Budgetwerte berechnet weiterhin AboLife; freie Lernzeiten liefert der vorhandene Planer.
-
-Aktionen werden als begrenztes JSON vorgeschlagen und erst nach bestätigter Vorschau übernommen. Bekannte Fächer/IDs, Zeiten, aktueller Datenstand und Doppelübernahmen werden geprüft. Vor der additiven KI-Migration wird die Hauptdatenbank konsistent gesichert. KI-Historie und private Action-Receipts werden nicht ins Homelab synchronisiert. Ohne BonsaiBar bleiben bestehende Funktionen verfügbar. Details: [KI-Integration](docs/AI_INTEGRATION.md).
-
-## UI- und Qualitätsevolution · November 2026
-
-Die Hauptversion 0.4.1 erhält adaptive System-/Hell-/Dunkeldarstellung, reduzierte Motion, animierte Werte/Ringe, erreichbare Monats-/Reviewnavigation, robustere Formulare und einen entkoppelten News-Reader. Persönliche Daten bleiben in der bestehenden GRDB-Datenhaltung. Die vorhandene BonsaiBar-Anbindung wird in diesem Auftrag nicht erweitert.
-
-[Abschlussbericht](docs/EVOLUTION_REPORT.md) · [Designsystem](DESIGN.md) · [Arbeitsregeln](AGENTS.md) · [geprüfte Skills](docs/AGENT_SKILLS.md) · [BonsaiBar-Analytics-Plan](docs/BONSAIBAR_ANALYTICS_PLAN.md).
-
-`scripts/check-quality.py` prüft Formatierung, strukturelles Linting und private Artefakte; `scripts/check-ui.sh` führt die neuen UI-Tests ausschließlich mit isolierten Demodaten aus und benötigt einen entsperrten Mac. Alle drei grafischen Abläufe wurden lokal in der entsperrten Sitzung bestanden. Vorher die aktuelle Demo mit den beiden Paketierungsskripten bauen; der Test adressiert ausdrücklich deren isolierte Bundle-ID.
+AboLife ist ein persönliches Entwicklungs- und Lernprojekt und wird mit KI-Unterstützung entwickelt. Es enthält keine Banking-, Mail- oder HealthKit-Anbindung. Ernährung und Telegram sind als Produktfunktionen entfernt; historische Tabellen bleiben für Backupkompatibilität erhalten.

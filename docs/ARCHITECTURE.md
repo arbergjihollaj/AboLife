@@ -50,3 +50,11 @@ DesignSystem bündelt adaptive Farben, Spacing/Radius, Motion und gemeinsame Sta
 NewsModels, NewsFeedParser, NewsFeedLoader, NewsStore, NewsArticleCard und NewsView trennen Verträge, Parsing, Netzwerk, Zustand und Darstellung. Höchstens vier bekannte Quellen laufen in strukturierten Tasks; pro Quelle sind zwei MB begrenzt. Generation und Quellenauswahl verhindern überholte Ergebnisse. Beschädigte Präferenzen werden nicht mit Defaults überschrieben. Kein neuer Cache.
 
 Gewichtsauswertungen verwenden ausdrücklich Kalenderintervalle; die historische Repository-API mit Messungsanzahl bleibt kompatibel. Finanzansichten verwenden vorhandene deterministische Ergebnisse mehrfach statt sie mehrfach zu laden/berechnen. Dashboard-State wird einmal pro Reload veröffentlicht. Neue Analytics-/Review-/News-KI bleibt der [separate Plan](BONSAIBAR_ANALYTICS_PLAN.md), ohne zusätzliche Transport-/Inferenzimplementierung.
+
+## Freigegebene Designauswahl (6. November 2026)
+
+`AppSession` erzeugt einen `AboLifeDesignStore` mit derselben isolierten UserDefaults-Domain wie die übrigen Szenenpräferenzen. Ein beobachtender Szenenmodifier reicht `AboLifeStyle`, die Widgetreihenfolge und den Store an Hauptfenster, Einstellungen und Menüleiste weiter. Gemeinsame Karten und Fach-Views lesen die semantische Palette aus der SwiftUI-Environment. Es gibt keinen globalen Farbzustand und keine zweite Datenbank.
+
+`AppRouter` verwendet `AnyLayout` mit stabil identifizierten Inhalts-/Navigationsslots: Spatial unten, Bento seitlich, Fieldnotes oben. Ein Designwechsel verändert Layout, Farbpalette und Schriftgestaltung, nicht Datenbank, Sync oder AI-Store. Der vorhandene Wochenreview-Store bleibt im Router; Navigation und KI-Sheet verwenden die bestehenden Koordinatoren.
+
+Das Dashboard verwendet dieselben Karten und dieselbe konsistente Snapshotquelle in drei Kompositionen. Bento ordnet die semantisch identifizierten Widgets anhand der gespeicherten Reihenfolge an. Fieldnotes bündelt zusätzliche Details in einer Disclosure. Für Renderprüfungen wird dieselbe Dashboard-View mit einem reinen Übersichtsmodus in die Hierarchie eingebaut; ein vorzeitiger Zugriff auf die `.overview`-Property würde die Environment nicht korrekt übernehmen.

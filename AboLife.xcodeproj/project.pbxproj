@@ -419,7 +419,7 @@ FCEC705798E49C07B9CBAD79 /* AIAssistantStore.swift in Sources */,
 				AB1600000000000000000101 /* TodaySnapshotService.swift in Sources */,
 				AB9C00000000000000000101 /* NutritionTemplateRecord.swift in Sources */,
 				AB9C00000000000000000102 /* NutritionTemplateRepository.swift in Sources */,
-				
+
 				100000000000000000000129 /* TrainingView.swift in Sources */,
 				100000000000000000000130 /* TrainingStore.swift in Sources */,
 				AB1000000000000000000101 /* TrainingDomainModels.swift in Sources */,
@@ -430,26 +430,26 @@ FCEC705798E49C07B9CBAD79 /* AIAssistantStore.swift in Sources */,
 				AB0700000000000000000102 /* TrainingDoubleProgressRing.swift in Sources */,
 				AB9A00000000000000000103 /* WeightView.swift in Sources */,
 				AB9A00000000000000000104 /* WeightStore.swift in Sources */,
-				
+
 				100000000000000000000131 /* FinanceView.swift in Sources */,
 				100000000000000000000132 /* FinanceStore.swift in Sources */,
-				
+
 				100000000000000000000133 /* HabitsView.swift in Sources */,
 				100000000000000000000134 /* HabitsStore.swift in Sources */,
 				AB7C00000000000000000101 /* HabitDefinitions.swift in Sources */,
 				AB9A00000000000000000105 /* StatisticsView.swift in Sources */,
 				AB9A00000000000000000106 /* StatisticsStore.swift in Sources */,
-				
+
 				100000000000000000000135 /* WeeklyReviewView.swift in Sources */,
 				100000000000000000000136 /* WeeklyReviewStore.swift in Sources */,
 				AB7B00000000000000000101 /* WeeklyReviewTrends.swift in Sources */,
 				AB7B00000000000000000102 /* WeeklyTrendCard.swift in Sources */,
-				
+
 				100000000000000000000137 /* SettingsView.swift in Sources */,
 				100000000000000000000138 /* SettingsStore.swift in Sources */,
 				AB1300000000000000000101 /* AppNavigationCoordinator.swift in Sources */,
 				AB1300000000000000000102 /* MenuBarQuickPanelView.swift in Sources */,
-				
+
 				100000000000000000000117 /* CoreRingView.swift in Sources */,
 				100000000000000000000118 /* MiniTrendChart.swift in Sources */,
 				100000000000000000000119 /* BudgetProgressBar.swift in Sources */,

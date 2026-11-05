@@ -1,0 +1,84 @@
+{
+  "removedUnusedSource": [
+    "AboLife/Features/PlaceholderFeatureView.swift",
+    "AboLife/Features/Training/TrainingPlaceholderView.swift",
+    "AboLife/Features/Finance/FinancePlaceholderView.swift",
+    "AboLife/Features/Habits/HabitsPlaceholderView.swift",
+    "AboLife/Features/Review/WeeklyReviewPlaceholderView.swift",
+    "AboLife/Features/Settings/SettingsPlaceholderView.swift"
+  ],
+  "removedDerivedArtifacts": [
+    {
+      "path": ".understand-anything",
+      "bytes": 3648542
+    },
+    {
+      "path": "graphify-out",
+      "bytes": 12218366
+    },
+    {
+      "path": "work/ai-xcode.noindex",
+      "bytes": 706748819
+    },
+    {
+      "path": "work/retired-apps.noindex",
+      "bytes": 87749737
+    },
+    {
+      "path": "work/SidebarSelection-tests.xcresult",
+      "bytes": 652446
+    },
+    {
+      "path": "work/HealthSidebar-tests.xcresult",
+      "bytes": 305925
+    },
+    {
+      "path": "work/SettingsWindow-tests.xcresult",
+      "bytes": 653641
+    },
+    {
+      "path": "work/HealthSidebar-final-tests.xcresult",
+      "bytes": 654083
+    },
+    {
+      "path": "work/StableVersion-tests.xcresult",
+      "bytes": 648543
+    },
+    {
+      "path": "work/BudgetRingPolish-tests.xcresult",
+      "bytes": 652917
+    },
+    {
+      "path": "work/MenuBarForeground-tests.xcresult",
+      "bytes": 653323
+    },
+    {
+      "path": "work/MenuBarGlass-tests.xcresult",
+      "bytes": 652565
+    },
+    {
+      "path": "work/SettingsMenuOnly-tests.xcresult",
+      "bytes": 651160
+    },
+    {
+      "path": "outputs/AboLife-0.3-macOS.zip",
+      "bytes": 5830083
+    },
+    {
+      "path": "outputs/AboLife-0.4-macOS.zip",
+      "bytes": 6139895
+    },
+    {
+      "path": "work/evolution-baseline/swift-build",
+      "bytes": 396871208
+    },
+    {
+      "path": "outputs/AboLife.app",
+      "bytes": 16407194
+    },
+    {
+      "path": "outputs/AboLife 2.app",
+      "bytes": 15828202
+    }
+  ]
+}

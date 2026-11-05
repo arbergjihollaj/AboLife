@@ -125,3 +125,13 @@ Validierung: 240 Tests erfolgreich; Release-Build sowie native Ansichten geprüf
 - Private additive Migration v14 mit konsistenter Vorabsicherung; keine Änderung der Web-Sync-Allowlist.
 - Historische Tagesbudgetberechnung verwendet das übergebene Datum. Bestehende datumsabhängige Testfixture stabilisiert.
 - Native/Live-/Webprüfungen und isolierte UI-Demo erweitert; Dashboardaufbau und bisherige Fachfunktionen erhalten.
+
+## Unreleased – drei native Designs
+
+- Spatial, Bento und Fieldnotes als lokale Designauswahl, unabhängig von Hell/Dunkel/System.
+- Umsortierbare Bento-Widgets in Einstellungen, einschließlich Tastaturalternative.
+- Gemeinsame adaptive Farben, Serifengestaltung im Journal und erhaltene Reduce-Motion-Regeln.
+- Bestehender BonsaiBar-Assistent bleibt in allen Designs erreichbar.
+- Sechs ungenutzte Platzhalter-Views entfernt, echte Schnellerfassung in QuickAddSheet umbenannt.
+- Design Lab, zwölf native Dashboard-Referenzbilder und überarbeitete Projektdokumentation.
+- Keine Datenbankmigration, keine neue KI-Anbindung und keine Änderung der fachlichen Budgetformeln.

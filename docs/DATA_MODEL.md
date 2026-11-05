@@ -385,3 +385,7 @@ Keine neue Migration und keine Änderung persistierter Record-Schemata. GRDB ble
 Gewichtsstatistiken nutzen `summary(inLastDays:endingAt:calendar:)` mit halboffenen Kalenderintervallen, keine letzten N Messungen. `summary(days:)` bleibt als historische Messungsanzahl-API erhalten. Finanzanalysen vergangener Monate verwenden das Monatsende als Berechnungsstichtag; historische Budget-/Zielstände werden weiterhin nicht erfunden oder zusätzlich gespeichert.
 
 Darstellung liegt unter dem UserDefaults-Schlüssel `abolife.appearance`. Demo und Testsession verwenden eine eigene Suite; sie übernehmen keine persönlichen Syncpräferenzen. Geplante AI-Snapshots/Reviews/Feedback sind ausschließlich im Integrationsplan beschrieben und erzeugen noch keine Tabellen.
+
+## Darstellungseinstellungen außerhalb der Datenbank
+
+`abolife.design` (`spatial` / `bento` / `fieldnotes`), `abolife.design.accent` und `abolife.design.widgets` liegen ausschließlich in den lokalen UserDefaults der Szene. Unbekannte Werte fallen auf Spatial/Original zurück; die Widgetliste wird ohne Duplikate um fehlende bekannte Widgets ergänzt. Die Demo verwendet eine eigene temporäre Domain. Diese Präferenzen gehören nicht zum SQLite-Schema, Backupdatenvertrag oder Homelab-Sync. Es wurde keine Migration eingeführt und keine fachliche Finanzformel verändert.

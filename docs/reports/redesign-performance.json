@@ -1,0 +1,20 @@
+{
+  "dashboard" : {
+    "max_ms" : 2.0459170000000002,
+    "median_ms" : 1.904209,
+    "p95_ms" : 2.0042080000000002
+  },
+  "dashboard_state_publications_per_reload" : 1,
+  "finance" : {
+    "max_ms" : 67.891958000000002,
+    "median_ms" : 65.440458000000007,
+    "p95_ms" : 67.760458999999997
+  },
+  "fixture" : "5000 finance entries, 120 workouts, temporary SQLite",
+  "iterations" : 20,
+  "statistics" : {
+    "max_ms" : 68.069374999999994,
+    "median_ms" : 67.355084000000005,
+    "p95_ms" : 67.753749999999997
+  }
+}

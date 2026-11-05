@@ -37,3 +37,8 @@ Der Zugang bleibt auf jedem Bildschirm verfügbar. Für die Vergleichbarkeit bes
 Der Dialog zeigt den aktuellen App-Bereich, explizite Datenfreigaben ohne Standardauswahl, eine Kontextvorschau, Fragefeld und Gesprächsverlauf. Draft und Gespräch bleiben während eines Designwechsels im Arbeitsspeicher erhalten. Der Beispielaktionsvorschlag für den Wochenreview benötigt zuerst die Review-Freigabe, dann eine ausdrückliche Bestätigung; Ablehnen schreibt nichts.
 
 Das Lab simuliert ausschließlich den Ablauf, ruft kein Modell auf und kennzeichnet seine vorbereitete Antwort ausdrücklich als Demonstration. Kein Import von Zugangsdaten, keine Verbindung zu BonsaiBar und keine Speicherung persönlicher Chats. Native Verbindung, Streaming, Abbruch, Historie und reale Aktionsprüfung bleiben bestehende App-Funktionen, die bei einer späteren freigegebenen Umsetzung weiterverwendet werden.
+
+
+## Produktive Umsetzung freigegeben
+
+Am 6. November 2026 hat der Nutzer die Übernahme in die echte App, Projektbereinigung, GitHub-Meilensteine und die aktualisierte Repository-Präsentation ausdrücklich freigegeben. Die nativen Designs sind unter `AboLife/` implementiert; die Galerie bleibt ein separates Werkzeug. Aktueller Prüfstand und Grenzen: `../docs/REDESIGN_REPORT.md`.

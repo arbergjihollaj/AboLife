@@ -24,6 +24,8 @@ jobs:
           package-manager-cache: false
       - run: python3 scripts/check-publication.py
       - run: node --test web/test/*.test.mjs
+      - name: Isolated design gallery checks
+        run: npm test --prefix design-lab
   native:
     name: macOS and shared Swift contract
     runs-on: macos-15

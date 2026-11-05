@@ -4,7 +4,7 @@
 
 Aktive Haupt-App: `AboLife.xcodeproj`, Schema **AboLife**, Bundle `com.private.AboLife`, Version **0.4.1**, macOS **14+**, Swift-Sprachmodus **5**. Xcode und SwiftPM-Prüfaufbau müssen beide bauen. `work/`, `outputs/`, Graphen und alte ZIPs sind Entwicklungsartefakte, keine andere aktive Codebasis. Vorhandene Benutzeränderungen erhalten.
 
-Aktueller Auftrag vom 5. November 2026 erlaubt UI/UX-Modernisierung, gezielte Refactorings, Tests und Entwicklerwerkzeuge. BonsaiBar-Analytics/Reviews/News werden **geplant**, keine zusätzliche KI-Anbindung implementiert. Die bereits vor dem Auftrag vorhandenen `Features/AI`-Dateien sind Vorarbeiten. Ernährung/Telegram bleiben als Produktfunktionen entfernt. Keine Lernzeitoptimierung oder Stundenplanvorschläge als neue KI-Funktion.
+Freigabe vom 6. November 2026: die Designs Spatial, Bento und Fieldnotes aus dem separaten Design Lab in die echte App übernehmen; Projekt bereinigen, geprüfte Meilensteine nach GitHub übertragen und die Repository-Dokumentation mit fiktiven Bildern aktualisieren. Bestehende KI beibehalten. BonsaiBar-Analytics/Reviews/News werden **geplant**, keine zusätzliche KI-Anbindung implementiert. Die bereits vor dem Auftrag vorhandenen `Features/AI`-Dateien sind Vorarbeiten. Ernährung/Telegram bleiben als Produktfunktionen entfernt. Keine Lernzeitoptimierung oder Stundenplanvorschläge als neue KI-Funktion.
 
 ## Architektur und Verzeichnisse
 
@@ -26,7 +26,7 @@ Mutationsergebnisse müssen die UI erreichen. Eingaben nur nach erfolgreichem Co
 
 ## Design und Animation
 
-Den ursprünglichen Dashboard-Kartenaufbau und Daily-Core-Ring erhalten. Matte Flächen, Systemschrift, klare Textrollen, wenige Akzente; keine neuen dekorativen Gradienten oder dauernd laufenden Effekte. AboLifeColors und AboLifeSpacing/Radius verwenden. Standardmäßig System-Appearance respektieren; Wahl Hell/Dunkel/System über AppStorage, nicht das Datenbankschema.
+Drei freigegebene Designs: Spatial mit Tageskern und Dock, Bento mit Seitenleiste und sortierbaren Widgets, Fieldnotes mit ruhigem Journal und Serifenschrift. Daily Core und dieselben fachlichen Daten erhalten. Dezente Materialien bei Spatial, matte Bento-/Journalflächen, klare Textrollen und wenige Akzente; keine dauernd laufenden Effekte. AboLifeColors und AboLifeSpacing/Radius verwenden. Standardmäßig System-Appearance respektieren; Wahl Hell/Dunkel/System über AppStorage, nicht das Datenbankschema.
 
 AboLifeMotion verwenden: Interaktion 120 ms, Navigation 180 ms, Metriken 350 ms; wertgebundene Animationen. Reduce Motion schaltet diese aus. Keine globale Implicit-Animation. Keyboard/Fokus und systemtypische Buttons erhalten. Jede Symbolaktion benötigt ein semantisches Label. Schmale/kurze Fenster, lange Texte, Fehlermeldungen und scrollbare Sheets berücksichtigen.
 
@@ -57,6 +57,6 @@ Swift-format allein besitzt Formatierungsregeln. `.swift-format-ignore` markiert
 
 ## Git und Dokumentation
 
-Vor Änderungen Status, Branch und aktive Version prüfen; keine Resets oder pauschales Staging im schmutzigen Arbeitsbaum. Nur eigene, passende Änderungen committen. Neue Swift-Dateien im expliziten Xcode-Projekt registrieren. Source-spezifische Änderungen gegen die Ausgangskopie vergleichen. Keine Pushes, Releases, Sichtbarkeitsänderungen oder privaten Artefakte als Nebenwirkung.
+Vor Änderungen Status, Branch und aktive Version prüfen; keine Resets oder pauschales Staging im schmutzigen Arbeitsbaum. Nur eigene, passende Änderungen committen. Neue Swift-Dateien im expliziten Xcode-Projekt registrieren. Source-spezifische Änderungen gegen die Ausgangskopie vergleichen. Pushes für die freigegebenen Redesign-Meilensteine und die abschließende Repository-Aktualisierung sind ausdrücklich beauftragt. Keine Releases oder Sichtbarkeitsänderungen als Nebenwirkung; keine privaten Artefakte oder persönlichen Designbewertungen übertragen.
 
 Nach einem fachlichen Fix relevanten Regressionstest, dann vollständige Vertragsprüfung. Bei Refactoring Build und betroffene Abläufe prüfen. Änderungsbericht nennt tatsächliche Ergebnisse/Skips und offene Grenzen. Architektur-/Datengrenzen in docs/ARCHITECTURE.md und docs/DATA_MODEL.md pflegen. Projekt-Skills ergänzen diese Regeln; aktuelle Benutzeranweisungen haben Vorrang.

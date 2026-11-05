@@ -1,3 +1,20 @@
+# Aktueller Prüfstand – natives Redesign, 6. November 2026
+
+- 281 native XCTest-Prüfungen entdeckt: **278 ausgeführt, 3 echte KI-Livetests bewusst übersprungen, 0 Fehler**. Render- und Performancetests wurden mit expliziten Ausgabepfaden ausgeführt.
+- **26 Webtests** und **19 Design-Lab-Tests** bestanden. SQLite-/Swift-/Web-Verträge weiterhin konsistent.
+- Formatprüfung, strukturelles SwiftLint und lokaler Publication-Scan erfolgreich; Baseline nicht regeneriert.
+- Native Release-App gebaut, Assetkatalog kompiliert, Ad-hoc-Signatur verifiziert, aktuelle ZIP und isolierte Demo erstellt.
+- Demo über die native Oberfläche geprüft: Spatial, Bento, Fieldnotes, Widgetverschiebung in Einstellungen, Hell und Dunkel, vorhandener KI-Dialog und Escape. Dies ist kein vollständiger neuer UI-Testlauf.
+- Zwölf native Dashboard-Referenzbilder in drei Designs, Hell/Dunkel und 660/1100 pt erzeugt. Die Referenzen sind Ausschnitte der echten Views, keine vollständigen Fensteraufnahmen.
+- Xcode-Projekt syntaktisch geprüft und neue App-/Testdateien explizit registriert. `xcodebuild build-for-testing` scheitert in dieser Sitzung vor dem Build an nicht beschreibbaren SwiftPM-Manifestcaches bzw. an `sandbox-exec: sandbox_apply: Operation not permitted`. Cache-Umlenkung behebt das nicht vollständig. Deshalb ist auch der erweiterte grafische XCTest-Lauf nicht als bestanden abgenommen.
+- Keine persönliche Datenbank und keine KI-Zugangsdaten für Tests oder Bilder verwendet. Die drei Modell-Livetests wurden nicht mit einer persönlichen Verbindung ausgeführt.
+
+Details, Grenzen und Messwerte: [Redesign-Bericht](docs/REDESIGN_REPORT.md), [Bildgalerie](docs/SCREENSHOTS.md).
+
+---
+
+Die folgenden Abschnitte dokumentieren **historische Läufe vor dem neuen Redesign**. Sie sind kein Nachweis eines aktuellen Xcode- oder grafischen UI-Testlaufs.
+
 # Prüfstand – 5. November 2026
 
 Aktueller lokaler Lauf: **276 native XCTest-Tests entdeckt, 273 ausgeführt, 3 optionale KI-Livetests übersprungen, 0 Fehler**; **26 Node-Tests bestanden**. Die optionalen Render- und Performancetests wurden mit gesetzten Ausgabepfaden tatsächlich ausgeführt. 16 isolierte Dashboard-Komponentenrenderings decken Hell/Dunkel, 760/1100 pt, leeren Stand, Budgetüberschreitung und lange Texte ab.
