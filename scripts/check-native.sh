@@ -37,5 +37,5 @@ swift test --package-path work/native-harness --disable-sandbox --cache-path "$A
 cmp web/schema.json work/schema-verified.json
 node --test web/test/*.test.mjs > work/web-tests.log 2>&1
 printf 'Native tests: '
-rg 'Executed [0-9]+ tests' work/swift-tests.log | tail -1
+grep -E 'Executed [0-9]+ tests' work/swift-tests.log | tail -1
 cat work/web-tests.log | tail -9
