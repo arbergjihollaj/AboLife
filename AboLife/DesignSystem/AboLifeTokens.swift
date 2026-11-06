@@ -16,7 +16,7 @@ enum AboLifeRadius {
 
 enum AboLifeMotion {
     enum Kind {
-        case interaction, navigation, metric
+        case interaction, navigation, metric, liquid
     }
 
     static func animation(for kind: Kind, reduceMotion: Bool) -> Animation? {
@@ -25,6 +25,7 @@ enum AboLifeMotion {
         case .interaction: return .easeOut(duration: 0.12)
         case .navigation: return .easeInOut(duration: 0.18)
         case .metric: return .smooth(duration: 0.35, extraBounce: 0)
+        case .liquid: return .spring(response: 0.38, dampingFraction: 0.72)
         }
     }
 }

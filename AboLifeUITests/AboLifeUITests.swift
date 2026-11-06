@@ -81,6 +81,29 @@ final class AboLifeUITests: XCTestCase {
         }
     }
 
+    func testNavigationIsCenteredWhenSpacePermits() throws {
+        guard app.windows.firstMatch.frame.width > 1000 else {
+            throw XCTSkip("Use a window wider than 1000 points to verify intrinsic dock centering")
+        }
+        app.typeKey(",", modifierFlags: .command)
+        app.radioButtons["Spatial"].click()
+        app.typeKey("w", modifierFlags: .command)
+        let first = app.buttons["navigation.dashboard"].frame
+        let last = app.buttons["navigation.weeklyReview"].frame
+        XCTAssertEqual((first.minX + last.maxX) / 2, app.windows.firstMatch.frame.midX, accuracy: 8)
+
+        app.typeKey(",", modifierFlags: .command)
+        app.radioButtons["Bento"].click()
+        app.typeKey("w", modifierFlags: .command)
+        let rail = app.scrollViews["navigation.rail"]
+        XCTAssertTrue(rail.waitForExistence(timeout: 5))
+        if rail.frame.height > 720 {
+            let top = app.buttons["navigation.dashboard"].frame.minY
+            let bottom = app.buttons["navigation.rail.ai"].frame.maxY
+            XCTAssertEqual((top + bottom) / 2, rail.frame.midY, accuracy: 8)
+        }
+    }
+
     private func capture(_ name: String) throws {
         let screenshot = app.screenshot()
         let attachment = XCTAttachment(screenshot: screenshot)

@@ -137,61 +137,10 @@ struct AppRouter: View {
         .background(style.colors.cardBackground.opacity(style.design == .spatial ? 0.8 : 1))
     }
 
-    @ViewBuilder
     private var designNavigation: some View {
-        if style.design == .bento {
-            ScrollView {
-                VStack(spacing: 8) {
-                    ForEach(AppSection.allCases) { section in navigationButton(section, stacked: true) }
-                    Divider().padding(.vertical, 8)
-                    Button {
-                        ai.open(for: navigation.selectedSection ?? .dashboard)
-                    } label: {
-                        Label("AboLife AI", systemImage: "bubble.left.and.text.bubble.right")
-                            .font(.caption).frame(maxWidth: .infinity)
-                    }.buttonStyle(.plain).padding(8)
-                }.padding(10)
-            }
-            .frame(width: 112)
-            .background(style.colors.cardBackground)
-        } else {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: style.design == .spatial ? 6 : 14) {
-                    ForEach(AppSection.allCases) { section in
-                        navigationButton(section, stacked: style.design == .spatial)
-                    }
-                }
-                .padding(10)
-            }
-            .background(
-                style.design == .spatial
-                    ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(style.colors.cardBackground)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: style.design == .spatial ? 20 : 0))
-            .padding(.horizontal, style.design == .spatial ? 24 : 0)
-            .padding(.bottom, style.design == .spatial ? 12 : 0)
+        AboLifeNavigationBar(design: style.design, selection: $navigation.selectedSection) {
+            ai.open(for: navigation.selectedSection ?? .dashboard)
         }
-    }
-
-    private func navigationButton(_ section: AppSection, stacked: Bool) -> some View {
-        let selected = (navigation.selectedSection ?? .dashboard) == section
-        return Button {
-            navigation.select(section)
-        } label: {
-            let layout = stacked ? AnyLayout(VStackLayout(spacing: 6)) : AnyLayout(HStackLayout(spacing: 8))
-            layout {
-                Image(systemName: section.systemImage).font(.system(size: 17))
-                Text(section.title).font(.system(size: stacked ? 10 : 12, weight: selected ? .semibold : .regular))
-            }
-            .frame(minWidth: stacked ? 68 : 0, minHeight: stacked ? 42 : 28)
-            .padding(7)
-            .background(selected ? style.colors.subtleFill : .clear, in: RoundedRectangle(cornerRadius: 12))
-            .foregroundStyle(selected ? style.colors.action : style.colors.secondaryText)
-        }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier("navigation.\(section.rawValue)")
-        .accessibilityAddTraits(selected ? .isSelected : [])
-        .aboLifeMotion(value: selected, kind: .navigation)
     }
 
     @ViewBuilder
@@ -207,5 +156,93 @@ struct AppRouter: View {
         case .statistics: StatisticsView(database: appDatabase)
         case .weeklyReview: WeeklyReviewView(store: reviewStore)
         }
+    }
+}
+
+/// Center intrinsic navigation content; overflow stays scrollable on smaller windows.
+struct AboLifeNavigationBar: View {
+    let design: AboLifeDesign
+    @Binding var selection: AppSection?
+    var onAssistant: () -> Void
+    @Environment(\.aboLifeStyle) private var style
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var selectedTab
+
+    var body: some View {
+        if design == .bento {
+            GeometryReader { viewport in
+                ScrollView {
+                    VStack(spacing: 8) {
+                        tabs(stacked: true)
+                        Divider().padding(.vertical, 8)
+                        Button(action: onAssistant) {
+                            Label("AboLife AI", systemImage: "bubble.left.and.text.bubble.right")
+                                .font(.caption).frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.plain).padding(8)
+                        .accessibilityIdentifier("navigation.rail.ai")
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: viewport.size.height, alignment: .center)
+                }
+                .accessibilityIdentifier("navigation.rail")
+            }
+            .frame(width: 112)
+            .background(style.colors.cardBackground)
+        } else if design == .spatial {
+            ViewThatFits(in: .horizontal) {
+                dockContents
+                ScrollView(.horizontal, showsIndicators: false) { dockContents }
+                    .frame(height: 80)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 12)
+        } else {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) { tabs(stacked: false) }.padding(10)
+            }
+            .background(style.colors.cardBackground)
+        }
+    }
+
+    private var dockContents: some View {
+        HStack(spacing: 6) { tabs(stacked: true) }
+            .padding(10)
+            .fixedSize(horizontal: true, vertical: false)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    @ViewBuilder
+    private func tabs(stacked: Bool) -> some View {
+        ForEach(AppSection.allCases) { section in
+            tab(section, stacked: stacked)
+        }
+    }
+
+    private func tab(_ section: AppSection, stacked: Bool) -> some View {
+        let selected = (selection ?? .dashboard) == section
+        let liquid = design != .fieldnotes
+        return Button {
+            withAnimation(AboLifeMotion.animation(for: liquid ? .liquid : .navigation, reduceMotion: reduceMotion)) {
+                selection = section
+            }
+        } label: {
+            let layout = stacked ? AnyLayout(VStackLayout(spacing: 6)) : AnyLayout(HStackLayout(spacing: 8))
+            layout {
+                Image(systemName: section.systemImage).font(.system(size: 17))
+                Text(section.title).font(.system(size: stacked ? 10 : 12, weight: selected ? .semibold : .regular))
+            }
+            .frame(minWidth: stacked ? 68 : 0, minHeight: stacked ? 42 : 28)
+            .padding(7)
+            .background {
+                AboLifeLiquidSelection(isSelected: selected, namespace: selectedTab, enabled: liquid)
+            }
+            .foregroundStyle(selected ? style.colors.action : style.colors.secondaryText)
+        }
+        .buttonStyle(AboLifeLiquidTabStyle(enabled: liquid))
+        .accessibilityIdentifier("navigation.\(section.rawValue)")
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }

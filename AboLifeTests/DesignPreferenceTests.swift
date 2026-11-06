@@ -58,6 +58,33 @@ final class DesignPreferenceTests: XCTestCase {
 }
 
 @MainActor
+final class NavigationMotionTests: XCTestCase {
+    func testRestingSurfaceMatchesItsHitAreaAndBulgeExpandsOutsideIt() {
+        let rect = CGRect(x: 10, y: 20, width: 90, height: 50)
+        let rest = AboLifeLiquidBulgeShape(amount: 0).path(in: rect).boundingRect
+        XCTAssertEqual(rest.minX, rect.minX, accuracy: 0.001)
+        XCTAssertEqual(rest.maxY, rect.maxY, accuracy: 0.001)
+        let peak = AboLifeLiquidBulgeShape(amount: 1).path(in: rect).boundingRect
+        XCTAssertLessThan(peak.minX, rect.minX)
+        XCTAssertLessThan(peak.minY, rect.minY)
+        XCTAssertGreaterThan(peak.maxX, rect.maxX)
+        XCTAssertGreaterThan(peak.maxY, rect.maxY)
+    }
+
+    func testDeformationIsBoundedEvenWhenAnimationOvershoots() {
+        let rect = CGRect(x: 0, y: 0, width: 82, height: 56)
+        let peak = AboLifeLiquidBulgeShape(amount: 1).path(in: rect).boundingRect
+        XCTAssertEqual(AboLifeLiquidBulgeShape(amount: 20).path(in: rect).boundingRect, peak)
+        XCTAssertEqual(AboLifeLiquidBulgeShape(amount: -20).path(in: rect).boundingRect, rect)
+    }
+
+    func testReduceMotionDisablesTheLiquidTransition() {
+        XCTAssertNil(AboLifeMotion.animation(for: .liquid, reduceMotion: true))
+        XCTAssertNotNil(AboLifeMotion.animation(for: .liquid, reduceMotion: false))
+    }
+}
+
+@MainActor
 final class DesignRenderingTests: XCTestCase {
     func testRenderThreeNativeDesigns() throws {
         guard let path = ProcessInfo.processInfo.environment["ABOLIFE_DESIGN_RENDER_DIR"] else {
